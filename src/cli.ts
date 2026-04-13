@@ -9,7 +9,7 @@ program
   .description(
     "CLI tool for Le Socle — a human-first method for working with AI agents"
   )
-  .version("0.1.0");
+  .version("0.1.1");
 
 program.addCommand(initCommand);
 program.addCommand(boardCommand);
