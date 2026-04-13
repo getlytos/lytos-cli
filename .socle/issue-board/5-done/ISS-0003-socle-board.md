@@ -7,10 +7,11 @@ effort: M
 complexity: standard
 domain: [cli, board]
 skill: code-structure
-status: 2-sprint
+status: 5-done
 branch: "feat/ISS-0003-socle-board"
 depends: [ISS-0001]
 created: 2026-04-13
+updated: 2026-04-13
 ---
 
 # ISS-0003 — Implement `socle board` command

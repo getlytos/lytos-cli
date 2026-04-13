@@ -1,5 +1,6 @@
 import { Command } from "commander";
 import { initCommand } from "./commands/init.js";
+import { boardCommand } from "./commands/board.js";
 
 const program = new Command();
 
@@ -11,9 +12,9 @@ program
   .version("0.0.0");
 
 program.addCommand(initCommand);
+program.addCommand(boardCommand);
 
 // Future commands:
-// program.addCommand(boardCommand);
 // program.addCommand(lintCommand);
 // program.addCommand(doctorCommand);
 // program.addCommand(statusCommand);
