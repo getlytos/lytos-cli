@@ -1,0 +1,170 @@
+/**
+ * Integration tests for `socle init`.
+ *
+ * Each test runs the actual CLI binary in a temp directory,
+ * then checks the file system and output.
+ */
+
+import { describe, it, expect, afterEach } from "vitest";
+import { execSync } from "child_process";
+import { existsSync, readFileSync, writeFileSync } from "fs";
+import { resolve, join } from "path";
+import {
+  createEmptyFixture,
+  createNodeProjectFixture,
+  type Fixture,
+} from "../helpers/fixtures.js";
+
+const CLI = resolve(__dirname, "../../dist/cli.js");
+
+function run(args: string, cwd: string): { stdout: string; stderr: string; exitCode: number } {
+  try {
+    const stdout = execSync(`node ${CLI} ${args}`, {
+      cwd,
+      encoding: "utf-8",
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+    return { stdout, stderr: "", exitCode: 0 };
+  } catch (err: unknown) {
+    const e = err as { stdout?: string; stderr?: string; status?: number };
+    return {
+      stdout: e.stdout || "",
+      stderr: e.stderr || "",
+      exitCode: e.status || 1,
+    };
+  }
+}
+
+let fixture: Fixture;
+
+afterEach(() => {
+  if (fixture) fixture.cleanup();
+});
+
+describe("socle init", () => {
+  it("creates .socle/ directory with essential files", () => {
+    fixture = createEmptyFixture();
+    const result = run('init --name "Test Project" --tool none --yes', fixture.cwd);
+
+    // Should succeed
+    expect(result.exitCode).toBe(0);
+
+    // Essential directories exist
+    expect(existsSync(join(fixture.cwd, ".socle"))).toBe(true);
+    expect(existsSync(join(fixture.cwd, ".socle", "memory", "cortex"))).toBe(true);
+    expect(existsSync(join(fixture.cwd, ".socle", "issue-board", "3-in-progress"))).toBe(true);
+    expect(existsSync(join(fixture.cwd, ".socle", "skills"))).toBe(true);
+    expect(existsSync(join(fixture.cwd, ".socle", "rules"))).toBe(true);
+
+    // Essential files exist
+    expect(existsSync(join(fixture.cwd, ".socle", "manifest.md"))).toBe(true);
+    expect(existsSync(join(fixture.cwd, ".socle", "memory", "MEMORY.md"))).toBe(true);
+    expect(existsSync(join(fixture.cwd, ".socle", "issue-board", "BOARD.md"))).toBe(true);
+  });
+
+  it("pre-fills manifest with project name", () => {
+    fixture = createEmptyFixture();
+    run('init --name "My Awesome API" --tool none --yes', fixture.cwd);
+
+    const manifest = readFileSync(
+      join(fixture.cwd, ".socle", "manifest.md"),
+      "utf-8"
+    );
+
+    expect(manifest).toContain("# Manifest — My Awesome API");
+    expect(manifest).toContain("| Name | My Awesome API |");
+  });
+
+  it("detects Node.js/TypeScript stack from package.json", () => {
+    fixture = createNodeProjectFixture();
+    run('init --name "Test" --tool none --yes', fixture.cwd);
+
+    const manifest = readFileSync(
+      join(fixture.cwd, ".socle", "manifest.md"),
+      "utf-8"
+    );
+
+    expect(manifest).toContain("TypeScript");
+    expect(manifest).toContain("Next.js");
+    expect(manifest).toContain("Vitest");
+  });
+
+  it("creates CLAUDE.md when --tool claude", () => {
+    fixture = createEmptyFixture();
+    run('init --name "Test" --tool claude --yes', fixture.cwd);
+
+    expect(existsSync(join(fixture.cwd, "CLAUDE.md"))).toBe(true);
+
+    const content = readFileSync(join(fixture.cwd, "CLAUDE.md"), "utf-8");
+    expect(content).toContain("Le Socle");
+    expect(content).toContain("manifest.md");
+  });
+
+  it("creates .cursorrules when --tool cursor", () => {
+    fixture = createEmptyFixture();
+    run('init --name "Test" --tool cursor --yes', fixture.cwd);
+
+    expect(existsSync(join(fixture.cwd, ".cursorrules"))).toBe(true);
+  });
+
+  it("does not create tool config when --tool none", () => {
+    fixture = createEmptyFixture();
+    run('init --name "Test" --tool none --yes', fixture.cwd);
+
+    expect(existsSync(join(fixture.cwd, "CLAUDE.md"))).toBe(false);
+    expect(existsSync(join(fixture.cwd, ".cursorrules"))).toBe(false);
+  });
+
+  it("fails if .socle/ already exists", () => {
+    fixture = createEmptyFixture();
+    // First init
+    run('init --name "Test" --tool none --yes', fixture.cwd);
+    // Second init should fail
+    const result = run('init --name "Test" --tool none --yes', fixture.cwd);
+
+    expect(result.exitCode).toBe(2);
+  });
+
+  it("succeeds with --force when .socle/ already exists", () => {
+    fixture = createEmptyFixture();
+    run('init --name "Test" --tool none --yes', fixture.cwd);
+    const result = run('init --name "Test v2" --tool none --yes --force', fixture.cwd);
+
+    expect(result.exitCode).toBe(0);
+
+    const manifest = readFileSync(
+      join(fixture.cwd, ".socle", "manifest.md"),
+      "utf-8"
+    );
+    expect(manifest).toContain("Test v2");
+  });
+
+  it("creates cortex files with example content", () => {
+    fixture = createEmptyFixture();
+    run('init --name "Test" --tool none --yes', fixture.cwd);
+
+    const arch = readFileSync(
+      join(fixture.cwd, ".socle", "memory", "cortex", "architecture.md"),
+      "utf-8"
+    );
+    expect(arch).toContain("Architecture");
+    expect(arch).toContain("Example to adapt or remove");
+  });
+
+  it("detects Python stack from requirements.txt", () => {
+    fixture = createEmptyFixture();
+    writeFileSync(
+      join(fixture.cwd, "requirements.txt"),
+      "fastapi==0.110.0\nsqlalchemy==2.0.0\npytest==8.0.0\n"
+    );
+    run('init --name "Test" --tool none --yes', fixture.cwd);
+
+    const manifest = readFileSync(
+      join(fixture.cwd, ".socle", "manifest.md"),
+      "utf-8"
+    );
+    expect(manifest).toContain("Python");
+    expect(manifest).toContain("FastAPI");
+    expect(manifest).toContain("Pytest");
+  });
+});

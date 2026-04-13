@@ -6,7 +6,7 @@ priority: P1-high
 effort: S
 complexity: standard
 skill: testing
-status: 2-sprint
+status: 5-done
 branch: "test/ISS-0005-tests-board"
 depends: [ISS-0003]
 created: 2026-04-13

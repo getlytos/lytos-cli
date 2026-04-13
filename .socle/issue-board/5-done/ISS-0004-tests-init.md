@@ -6,7 +6,7 @@ priority: P1-high
 effort: M
 complexity: standard
 skill: testing
-status: 2-sprint
+status: 5-done
 branch: "test/ISS-0004-tests-init"
 depends: [ISS-0002]
 created: 2026-04-13
