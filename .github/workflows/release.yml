@@ -4,8 +4,9 @@
 #   npm version patch    # bumps 0.1.0 → 0.1.1 (or minor/major)
 #   git push --tags      # triggers this workflow
 #
-# The workflow runs the full CI chain first (lint, typecheck, test, build),
-# then publishes to npm only if everything passes.
+# Uses npm Trusted Publishing (provenance) — no token needed.
+# The GitHub Actions OIDC token proves to npm that this is a
+# legitimate publish from this repo.
 
 name: Release
 
@@ -20,6 +21,7 @@ jobs:
 
     permissions:
       contents: read
+      id-token: write
 
     steps:
       - name: Checkout code
@@ -53,6 +55,6 @@ jobs:
           node dist/cli.js --help
 
       - name: Publish to npm
-        run: npm publish --access public
+        run: npm publish --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
