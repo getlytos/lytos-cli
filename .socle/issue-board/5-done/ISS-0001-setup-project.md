@@ -6,9 +6,10 @@ priority: P0-critical
 effort: M
 complexity: standard
 skill: code-structure
-status: 2-sprint
+status: 5-done
 depends: []
 created: 2026-04-13
+updated: 2026-04-13
 ---
 
 # ISS-0001 — Setup Node.js project
