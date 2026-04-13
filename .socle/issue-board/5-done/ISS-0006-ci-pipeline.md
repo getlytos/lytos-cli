@@ -6,7 +6,7 @@ priority: P1-high
 effort: S
 complexity: light
 skill: deployment
-status: 2-sprint
+status: 5-done
 branch: "chore/ISS-0006-ci-pipeline"
 depends: [ISS-0004, ISS-0005]
 created: 2026-04-13

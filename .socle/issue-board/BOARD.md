@@ -25,7 +25,6 @@ _No issues._
 
 | # | Title | Priority | Effort | Depends |
 |---|-------|----------|--------|---------|
-| [ISS-0006](2-sprint/ISS-0006-ci-pipeline.md) | CI pipeline (GitHub Actions) | P1-high | S | ISS-0004, ISS-0005 |
 | [ISS-0007](2-sprint/ISS-0007-npm-publish.md) | npm publish setup and first release | P1-high | S | ISS-0006 |
 
 ### 3-in-progress (in dev)
@@ -45,6 +44,7 @@ _No issues._
 | [ISS-0003](5-done/ISS-0003-socle-board.md) | Implement socle board command | 2026-04-13 |
 | [ISS-0004](5-done/ISS-0004-tests-init.md) | Integration tests for socle init | ? |
 | [ISS-0005](5-done/ISS-0005-tests-board.md) | Integration tests for socle board | ? |
+| [ISS-0006](5-done/ISS-0006-ci-pipeline.md) | CI pipeline (GitHub Actions) | ? |
 
 ---
 

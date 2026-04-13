@@ -1,0 +1,52 @@
+# CI pipeline — runs on every push and pull request.
+#
+# Steps: install deps → lint → typecheck → test → build → verify binary.
+# If any step fails, the whole pipeline fails and the PR is blocked.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20, 22]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify binary works
+        run: |
+          node dist/cli.js --version
+          node dist/cli.js --help
+          node dist/cli.js board --help
+          node dist/cli.js init --help

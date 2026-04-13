@@ -1,5 +1,7 @@
 # socle-cli
 
+[![CI](https://github.com/le-socle/socle-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/le-socle/socle-cli/actions/workflows/ci.yml)
+
 > The command-line tool for [Le Socle](https://github.com/le-socle/socle) — a human-first method for working with AI agents.
 
 **Status: In development (Sprint #01)**

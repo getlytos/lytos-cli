@@ -8,13 +8,13 @@
 
 import { Command } from "commander";
 import { existsSync, readFileSync, writeFileSync } from "fs";
-import { resolve, join } from "path";
+import { join } from "path";
 import {
   collectIssues,
   generateBoardMarkdown,
   boardToJson,
 } from "../lib/board-generator.js";
-import { info, ok, warn, error } from "../lib/output.js";
+import { ok, warn, error } from "../lib/output.js";
 
 function findBoardDir(cwd: string): string | null {
   // Try .socle/issue-board/ first, then issue-board/

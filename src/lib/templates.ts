@@ -290,7 +290,7 @@ _No issues._
 `;
 }
 
-export function claudeTemplate(ctx: TemplateContext): string {
+export function claudeTemplate(_ctx: TemplateContext): string {
   return `# CLAUDE.md
 
 This project uses **Le Socle** — a human-first method for working with AI agents.
@@ -323,7 +323,7 @@ Documentation: ${REPO_URL}
 `;
 }
 
-export function cursorrTemplate(ctx: TemplateContext): string {
+export function cursorrTemplate(_ctx: TemplateContext): string {
   return `This project uses Le Socle — a human-first method for working with AI agents.
 
 First session (setup): if the manifest is empty, read @.socle/SOCLE.md to understand the method.

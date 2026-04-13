@@ -7,7 +7,7 @@
  */
 
 import { readdirSync, readFileSync, existsSync } from "fs";
-import { join, basename } from "path";
+import { join } from "path";
 import { parseFrontmatter, type Frontmatter } from "./frontmatter.js";
 
 export interface Issue {
