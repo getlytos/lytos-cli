@@ -14,6 +14,7 @@ import {
   generateBoardMarkdown,
   boardToJson,
 } from "../lib/board-generator.js";
+import { displayBoard } from "../lib/board-display.js";
 import { ok, warn, error } from "../lib/output.js";
 
 function findBoardDir(cwd: string): string | null {
@@ -90,11 +91,13 @@ export const boardCommand = new Command("board")
       }
     }
 
-    // Default mode — write BOARD.md
+    // Default mode — display board + write BOARD.md
+    displayBoard(data);
+
     const boardPath = join(boardDir, "BOARD.md");
     writeFileSync(boardPath, newContent, "utf-8");
 
     ok(
-      `BOARD.md generated: ${data.issues.length} issues found`
+      `BOARD.md regenerated`
     );
   });
