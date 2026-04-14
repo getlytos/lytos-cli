@@ -30,7 +30,7 @@ function findBoardDir(cwd: string): string | null {
 }
 
 export const boardCommand = new Command("board")
-  .description("Regenerate BOARD.md from issue frontmatter")
+  .description("Display board overview and regenerate BOARD.md")
   .option(
     "--check",
     "Check if BOARD.md is up to date (exit 1 if not)",
