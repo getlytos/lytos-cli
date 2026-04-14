@@ -6,7 +6,7 @@ priority: P0-critical
 effort: L
 complexity: standard
 skill: ~
-status: 2-sprint
+status: 5-done
 branch: "refactor/ISS-0012-rename-cli-repo"
 depends: []
 created: 2026-04-14

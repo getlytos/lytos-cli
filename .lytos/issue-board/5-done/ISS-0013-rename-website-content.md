@@ -6,7 +6,7 @@ priority: P0-critical
 effort: M
 complexity: standard
 skill: ~
-status: 2-sprint
+status: 5-done
 branch: "refactor/ISS-0013-rename-website"
 depends: []
 created: 2026-04-14

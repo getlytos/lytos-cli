@@ -6,7 +6,7 @@ priority: P0-critical
 effort: S
 complexity: light
 skill: ~
-status: 2-sprint
+status: 5-done
 depends: [ISS-0012]
 created: 2026-04-14
 updated: 2026-04-14
