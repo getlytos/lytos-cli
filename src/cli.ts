@@ -1,7 +1,9 @@
 import { Command } from "commander";
+import { execSync } from "child_process";
 import { initCommand } from "./commands/init.js";
 import { boardCommand } from "./commands/board.js";
 import { checkForUpdates } from "./lib/update-check.js";
+import { ok, error, bold, dim, green } from "./lib/output.js";
 
 const program = new Command();
 
@@ -38,6 +40,22 @@ program
   .action(() => {
     console.error("Coming soon. Follow https://github.com/getlytos/lytos-cli for updates.");
     process.exit(0);
+  });
+
+program
+  .command("update")
+  .description("Update lytos-cli to the latest version")
+  .action(() => {
+    console.error(`\n  ${bold("Updating lytos-cli...")}\n`);
+    try {
+      execSync("npm install -g lytos-cli@latest", { stdio: "inherit" });
+      const newVersion = execSync("lyt --version", { encoding: "utf-8" }).trim();
+      console.error("");
+      ok(`Updated to ${green(newVersion)}`);
+    } catch {
+      error("Update failed. Try manually: npm install -g lytos-cli@latest");
+      process.exit(1);
+    }
   });
 
 const VERSION = "0.2.1";

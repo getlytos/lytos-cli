@@ -115,7 +115,7 @@ export async function checkForUpdates(currentVersion: string): Promise<void> {
       `  ${yellow("⚠")} Update available: ${dim(currentVersion)} → ${bold(latest)}`
     );
     console.error(
-      `    Run ${bold("npm install -g lytos-cli")} to update`
+      `    Run ${bold("lyt update")} to update`
     );
     console.error("");
   }
