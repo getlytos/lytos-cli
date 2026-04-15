@@ -186,12 +186,14 @@ function detectProjectName(cwd: string): string {
  */
 export function displayBoard(data: BoardData): void {
   const projectName = detectProjectName(process.cwd());
-  const line = "─".repeat(52);
+  const innerWidth = 52;
+  const titleText = `  LYTOS BOARD — ${projectName}  `;
+  const padding = Math.max(0, innerWidth - titleText.length);
 
   console.log("");
-  console.log(`  ${boldCyan("╔")}${boldCyan("═".repeat(52))}${boldCyan("╗")}`);
-  console.log(`  ${boldCyan("║")}  ${bold("LYTOS BOARD")} — ${projectName}${" ".repeat(Math.max(0, 38 - projectName.length))}${boldCyan("║")}`);
-  console.log(`  ${boldCyan("╚")}${boldCyan("═".repeat(52))}${boldCyan("╝")}`);
+  console.log(`  ${boldCyan("╔")}${boldCyan("═".repeat(innerWidth))}${boldCyan("╗")}`);
+  console.log(`  ${boldCyan("║")}  ${bold("LYTOS BOARD")} — ${projectName}${" ".repeat(padding + 2)}${boldCyan("║")}`);
+  console.log(`  ${boldCyan("╚")}${boldCyan("═".repeat(innerWidth))}${boldCyan("╝")}`);
   console.log("");
 
   // Count per status
