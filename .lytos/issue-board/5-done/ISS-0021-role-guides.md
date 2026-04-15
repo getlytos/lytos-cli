@@ -6,7 +6,7 @@ priority: P1-high
 effort: M
 complexity: standard
 skill: documentation
-status: 1-backlog
+status: 5-done
 branch: "docs/ISS-0021-role-guides"
 depends: []
 created: 2026-04-14

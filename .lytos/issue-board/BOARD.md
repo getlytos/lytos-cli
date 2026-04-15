@@ -23,7 +23,6 @@ _No issues._
 | [ISS-0016](1-backlog/ISS-0016-clarify-method-structure.md) | Clarify the 5 pillars and reorganize repo structure | P1-high | M | — |
 | [ISS-0019](1-backlog/ISS-0019-lyt-upgrade-command.md) | Implement lyt upgrade — update method files without overwriting user work | P1-high | L | — |
 | [ISS-0020](1-backlog/ISS-0020-claim-assignee.md) | Add issue assignment with lyt claim/unclaim and board display | P1-high | M | — |
-| [ISS-0021](1-backlog/ISS-0021-role-guides.md) | Create role-based guides: developer and lead developer | P1-high | M | — |
 | [ISS-0023](1-backlog/ISS-0023-archive-system.md) | Archive system — separate done issues from active board for token efficiency | P1-high | M | — |
 | [ISS-0025](1-backlog/ISS-0025-fr-templates.md) | Generate French templates when language is fr | P1-high | M | ISS-0024 |
 
@@ -57,6 +56,7 @@ _No issues._
 | [ISS-0015](5-done/ISS-0015-configure-domains.md) | Configure lytos.org and lytos.dev domains | 2026-04-14 |
 | [ISS-0017](5-done/ISS-0017-board-terminal-display.md) | Enhance lyt board with rich terminal display | 2026-04-14 |
 | [ISS-0018](5-done/ISS-0018-rule-no-work-without-issue.md) | Add rule: no work without issue, mandatory close phase | 2026-04-14 |
+| [ISS-0021](5-done/ISS-0021-role-guides.md) | Create role-based guides: developer and lead developer | 2026-04-14 |
 | [ISS-0022](5-done/ISS-0022-add-codex-tool-option.md) | Add Codex (OpenAI) as AI tool option in lyt init | 2026-04-15 |
 | [ISS-0024](5-done/ISS-0024-onboarding-profiles-i18n.md) | Onboarding: user profiles, language selection, and guided briefing | 2026-04-15 |
 
