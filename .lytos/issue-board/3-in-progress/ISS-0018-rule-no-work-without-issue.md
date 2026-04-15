@@ -6,7 +6,7 @@ priority: P1-high
 effort: S
 complexity: light
 skill: documentation
-status: 1-backlog
+status: 3-in-progress
 branch: "feat/ISS-0018-rule-close-phase"
 depends: []
 created: 2026-04-14
