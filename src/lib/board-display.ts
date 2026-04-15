@@ -200,11 +200,15 @@ export function displayBoard(data: BoardData): void {
     counts[status] = data.issues.filter((i) => i.status === status).length;
   }
 
-  // Active statuses with issues or always shown
-  const shownStatuses = ["1-backlog", "2-sprint", "3-in-progress", "4-review"];
+  // Display statuses in pipeline order
+  const displayOrder = ["0-icebox", "1-backlog", "2-sprint", "3-in-progress", "4-review"];
 
-  for (const status of shownStatuses) {
+  for (const status of displayOrder) {
     const issues = data.issues.filter((i) => i.status === status);
+
+    // Skip empty icebox
+    if (status === "0-icebox" && issues.length === 0) continue;
+
     console.log(`  ${colorStatus(status, issues.length)}`);
 
     if (issues.length === 0) {
@@ -214,19 +218,6 @@ export function displayBoard(data: BoardData): void {
 
     console.log(`  ${dim("│")}`);
     const tree = buildTree(issues);
-    for (const di of tree) {
-      console.log(`  ${dim("│")} ${formatIssue(di)}`);
-    }
-    console.log("");
-  }
-
-  // Icebox — only show if non-empty
-  const iceboxCount = counts["0-icebox"];
-  if (iceboxCount > 0) {
-    console.log(`  ${colorStatus("0-icebox", iceboxCount)}`);
-    const iceboxIssues = data.issues.filter((i) => i.status === "0-icebox");
-    console.log(`  ${dim("│")}`);
-    const tree = buildTree(iceboxIssues);
     for (const di of tree) {
       console.log(`  ${dim("│")} ${formatIssue(di)}`);
     }
