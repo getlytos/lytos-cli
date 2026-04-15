@@ -231,7 +231,7 @@ export function displayBoard(data: BoardData): void {
   console.log("");
 
   // Summary line
-  console.log(`  ${dim(line)}`);
+  console.log(`  ${dim("─".repeat(innerWidth))}`);
   const parts = [
     `${bold(String(data.issues.length))} issues`,
     counts["1-backlog"] ? `${counts["1-backlog"]} backlog` : null,

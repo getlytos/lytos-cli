@@ -56,6 +56,8 @@ const REMOTE_FILES = [
 export interface ScaffoldOptions {
   projectName: string;
   tool: "claude" | "cursor" | "codex" | "none";
+  lang: "en" | "fr";
+  profile: "vibe-coder" | "developer" | "lead";
   stack: Partial<DetectedStack>;
   cwd: string;
   dryRun: boolean;
@@ -180,6 +182,14 @@ export async function scaffold(
       result
     );
   }
+
+  // Write config.yml with user preferences
+  writeFile(
+    join(lytosDir, "config.yml"),
+    `# Lytos configuration\nlanguage: ${options.lang}\nprofile: ${options.profile}\n`,
+    options.dryRun,
+    result
+  );
 
   // Download remote files (skills, rules, LYTOS.md, templates)
   for (const file of REMOTE_FILES) {

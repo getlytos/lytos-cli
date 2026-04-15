@@ -7,7 +7,7 @@ effort: L
 complexity: standard
 skill: code-structure
 skills_aux: [documentation]
-status: 1-backlog
+status: 3-in-progress
 branch: "feat/ISS-0024-onboarding"
 depends: []
 created: 2026-04-15
