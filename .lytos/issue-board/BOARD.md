@@ -25,7 +25,6 @@ _No issues._
 | [ISS-0026](1-backlog/ISS-0026-board-all-multi-repo.md) | Add lyt board --all for multi-repo overview | P2-normal | M | — |
 | [ISS-0027](1-backlog/ISS-0027-launch-readiness.md) | Launch readiness — fix CI badge, screenshots, demo, discussions | P0-critical | M | — |
 | [ISS-0032](1-backlog/ISS-0032-reproducible-init.md) | Make lyt init reproducible — bundle method files in npm package | P1-high | L | ISS-0031 |
-| [ISS-0033](1-backlog/ISS-0033-git-hook-branch-guard.md) | Install git pre-commit hook to enforce branch naming convention | P1-high | M | — |
 
 ### 2-sprint (committed)
 
@@ -67,6 +66,7 @@ _No issues._
 | [ISS-0029](5-done/ISS-0029-lyt-start.md) | Implement lyt start — automate the mandatory start phase | 2026-04-16 |
 | [ISS-0030](5-done/ISS-0030-lyt-close.md) | Implement lyt close — automate the mandatory close phase | 2026-04-16 |
 | [ISS-0031](5-done/ISS-0031-oss-cleanup.md) | OSS cleanup — lint errors, README drift, detectStack bug, update check | 2026-04-16 |
+| [ISS-0033](5-done/ISS-0033-git-hook-branch-guard.md) | Install git pre-commit hook to enforce branch naming convention | 2026-04-16 |
 
 ---
 

@@ -1,18 +1,18 @@
 ---
 id: ISS-0033
-title: "Install git pre-commit hook to enforce branch naming convention"
+title: Install git pre-commit hook to enforce branch naming convention
 type: feat
 priority: P1-high
 effort: M
 complexity: standard
 skill: code-structure
 skills_aux: [testing, security]
-status: 1-backlog
-branch: "feat/ISS-0033-git-hook-branch-guard"
+status: 5-done
+branch: feat/ISS-0033-git-hook-branch-guard
 depends: []
 created: 2026-04-16
+updated: 2026-04-16
 ---
-
 # ISS-0033 — Install git pre-commit hook to enforce branch naming convention
 
 ## Context

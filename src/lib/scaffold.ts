@@ -18,6 +18,7 @@ import {
   cursorrTemplate,
 } from "./templates.js";
 import type { DetectedStack } from "./detect-stack.js";
+import { installPreCommitHook } from "./hooks.js";
 
 const REPO_RAW =
   "https://raw.githubusercontent.com/getlytos/lytos-method/main";
@@ -230,6 +231,16 @@ export async function scaffold(
       options.dryRun,
       result
     );
+  }
+
+  // Install git pre-commit hook (branch naming guard)
+  const hookResult = installPreCommitHook(options.cwd, options.dryRun);
+  if (hookResult === "installed" || hookResult === "dry-run") {
+    result.filesCreated.push(join(options.cwd, ".git/hooks/pre-commit"));
+  } else if (hookResult === "updated") {
+    result.filesCreated.push(join(options.cwd, ".git/hooks/pre-commit"));
+  } else if (hookResult === "no-git") {
+    result.warnings.push("No .git/ directory found — pre-commit hook not installed. Run `git init` first.");
   }
 
   return result;
