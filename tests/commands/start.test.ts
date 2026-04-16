@@ -10,6 +10,7 @@ import {
   createEmptyFixture,
   type Fixture,
 } from "../helpers/fixtures.js";
+import { isValidBranchName } from "../../src/lib/issue-ops.js";
 
 const CLI = resolve(__dirname, "../../dist/cli.js");
 
@@ -107,6 +108,27 @@ afterEach(() => {
   if (fixture) fixture.cleanup();
 });
 
+describe("isValidBranchName", () => {
+  it("accepts valid branch names", () => {
+    expect(isValidBranchName("feat/ISS-0001-test")).toBe(true);
+    expect(isValidBranchName("fix/ISS-0034-command-injection")).toBe(true);
+    expect(isValidBranchName("chore/ISS-0010-update_deps")).toBe(true);
+  });
+
+  it("rejects branch names with shell metacharacters", () => {
+    expect(isValidBranchName("feat/ISS-0001; rm -rf /")).toBe(false);
+    expect(isValidBranchName("feat/ISS-0001 && echo pwned")).toBe(false);
+    expect(isValidBranchName("feat/ISS-0001$(whoami)")).toBe(false);
+    expect(isValidBranchName("feat/ISS-0001`whoami`")).toBe(false);
+    expect(isValidBranchName("feat/ISS-0001|cat /etc/passwd")).toBe(false);
+  });
+
+  it("rejects empty or too long names", () => {
+    expect(isValidBranchName("")).toBe(false);
+    expect(isValidBranchName("a".repeat(201))).toBe(false);
+  });
+});
+
 describe("lyt start", () => {
   it("moves issue to in-progress and creates branch", () => {
     fixture = createEmptyFixture();
@@ -170,5 +192,50 @@ describe("lyt start", () => {
     const data = JSON.parse(result.stdout);
     expect(data.status).toBe("started");
     expect(data.branch).toBe("feat/ISS-0001-test-feature");
+  });
+
+  it("rejects malicious branch names with shell metacharacters", () => {
+    fixture = createEmptyFixture();
+    const lyt = (p: string) => resolve(fixture.cwd, ".lytos", p);
+
+    for (const dir of [
+      "skills", "rules", "memory/cortex",
+      "issue-board/0-icebox", "issue-board/1-backlog",
+      "issue-board/2-sprint", "issue-board/3-in-progress",
+      "issue-board/4-review", "issue-board/5-done",
+    ]) {
+      mkdirSync(lyt(dir), { recursive: true });
+    }
+
+    // Issue with malicious branch name
+    writeFileSync(
+      lyt("issue-board/1-backlog/ISS-0099-malicious.md"),
+      `---
+id: ISS-0099
+title: "Malicious issue"
+type: feat
+priority: P1-high
+effort: S
+status: 1-backlog
+branch: "feat/ISS-0099-test; echo PWNED"
+depends: []
+created: 2026-04-16
+---
+
+# ISS-0099 — Malicious
+`
+    );
+
+    execSync("git init -b main", { cwd: fixture.cwd, stdio: "pipe" });
+    execSync("git add -A && git commit -m 'init' --no-gpg-sign", { cwd: fixture.cwd, stdio: "pipe" });
+
+    const result = run("start ISS-0099", fixture.cwd);
+
+    // Should still start (move issue, update board) but warn about branch
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).toContain("invalid characters");
+    // The branch was NOT created (no git checkout executed with malicious input)
+    expect(result.stderr).not.toContain("Branch created");
+    expect(result.stderr).not.toContain("Switched to");
   });
 });

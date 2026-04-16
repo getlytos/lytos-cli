@@ -89,6 +89,8 @@ export const startCommand = new Command("start")
       info(`Branch ${green(branchName)} created`);
     } else if (branchResult === "switched") {
       info(`Switched to existing branch ${green(branchName)}`);
+    } else if (branchResult === "invalid") {
+      warn(`Branch name "${branchName}" contains invalid characters — create it manually`);
     } else {
       warn(`Could not create branch ${branchName} — create it manually`);
     }

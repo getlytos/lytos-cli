@@ -7,7 +7,7 @@
 
 import { existsSync, readFileSync, writeFileSync, renameSync, readdirSync } from "fs";
 import { join } from "path";
-import { execSync } from "child_process";
+import { execFileSync } from "child_process";
 import { parseFrontmatter, serializeFrontmatter } from "./frontmatter.js";
 import { collectIssues, generateBoardMarkdown } from "./board-generator.js";
 
@@ -104,23 +104,36 @@ export function regenerateBoard(lytosDir: string): void {
 }
 
 /**
- * Create a git branch if it doesn't already exist.
- * Returns "created", "switched", or "error".
+ * Validate a branch name — reject shell metacharacters.
+ * Only allows: a-z, A-Z, 0-9, hyphens, underscores, slashes, dots.
  */
-export function ensureBranch(branchName: string): "created" | "switched" | "error" {
+export function isValidBranchName(name: string): boolean {
+  return /^[a-zA-Z0-9/_.\-]+$/.test(name) && name.length > 0 && name.length <= 200;
+}
+
+/**
+ * Create a git branch if it doesn't already exist.
+ * Returns "created", "switched", "invalid", or "error".
+ * Uses execFileSync (no shell) to prevent command injection.
+ */
+export function ensureBranch(branchName: string): "created" | "switched" | "invalid" | "error" {
+  if (!isValidBranchName(branchName)) {
+    return "invalid";
+  }
+
   try {
-    // Check if branch exists
-    const branches = execSync("git branch --list", { encoding: "utf-8" });
+    // Check if branch exists (no shell — safe)
+    const branches = execFileSync("git", ["branch", "--list"], { encoding: "utf-8" });
     const exists = branches.split("\n").some(
       (b) => b.trim().replace("* ", "") === branchName
     );
 
     if (exists) {
-      execSync(`git checkout ${branchName}`, { stdio: "pipe" });
+      execFileSync("git", ["checkout", branchName], { stdio: "pipe" });
       return "switched";
     }
 
-    execSync(`git checkout -b ${branchName}`, { stdio: "pipe" });
+    execFileSync("git", ["checkout", "-b", branchName], { stdio: "pipe" });
     return "created";
   } catch {
     return "error";
