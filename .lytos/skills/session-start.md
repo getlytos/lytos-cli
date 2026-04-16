@@ -125,6 +125,28 @@ The agent is now ready to work.
 
 ---
 
+## Mid-session ideas — the reactive trap
+
+During a session, the human will have new ideas, spot problems, think of improvements. This is normal and healthy. But it's also the moment where process breaks down.
+
+**When an unplanned idea arrives:**
+
+1. **Stop.** Do not start coding.
+2. **Reformulate.** Tell the human: "Here's what I understood — [restate the idea]. Is this what you want?"
+3. **Assess priority.** Is this P0 (blocks current work)? P1 (important but can wait)? P2 (nice to have)?
+4. **Create an issue.** Always. Even if it takes 30 seconds.
+5. **Decide together.** Start it now (P0/P1) or put it in backlog (P2+)?
+6. **If starting now:** follow the normal start phase — `lyt start ISS-XXXX`, branch, board.
+
+**Why this matters:**
+- An idea that skips the process becomes invisible work
+- Invisible work creates drift, broken assumptions, undocumented changes
+- The process exists to protect the project from impulse — including good impulse
+
+> The best ideas deserve the same discipline as planned work. Urgency is not a reason to bypass the process.
+
+---
+
 ## What NOT to do at startup
 
 - **Do not read all memory files** — only the relevant sections

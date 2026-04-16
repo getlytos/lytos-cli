@@ -105,6 +105,7 @@ No magic values in production code.
 | Mandatory close phase | After completing a task, the agent **must**: (1) update the issue frontmatter to `5-done`, (2) move the issue file to `5-done/`, (3) run `lyt board` to regenerate BOARD.md, (4) write to memory if learning occurred. No issue stays in `3-in-progress` when its work is complete |
 | Incomplete items generate follow-ups | Before closing an issue, review all checklist items. Any unchecked item must either be completed now or generate a new follow-up issue. Never close an issue with silent gaps |
 | No overlapping issues | Two issues must never cover the same scope. When a new issue makes an existing one obsolete, the old issue must be closed with `superseded_by: ISS-XXXX` in its frontmatter. When a new issue reduces the scope of an existing one, update the existing issue. Never leave ambiguity about which issue owns a piece of work |
+| No reactive coding | When a new idea, constraint, or feedback arrives mid-session — **stop**. Do not start coding immediately. The agent must: (1) reformulate the idea clearly, (2) validate it with the human ("here's what I understood — is this what you want?"), (3) create an issue, (4) include it in the workflow (backlog or sprint depending on priority). Only then can work begin via the normal start phase. Impulse and urgency are not reasons to bypass the process |
 
 ---
 
