@@ -21,15 +21,12 @@ function c(code: string, text: string): string {
 
 const bold = (t: string) => c("1", t);
 const dim = (t: string) => c("2", t);
-const red = (t: string) => c("31", t);
 const green = (t: string) => c("32", t);
 const yellow = (t: string) => c("33", t);
-const blue = (t: string) => c("34", t);
 const magenta = (t: string) => c("35", t);
 const cyan = (t: string) => c("36", t);
 const white = (t: string) => c("37", t);
 const bgRed = (t: string) => c("41", t);
-const boldRed = (t: string) => c("1;31", t);
 const boldYellow = (t: string) => c("1;33", t);
 const boldBlue = (t: string) => c("1;34", t);
 const boldGreen = (t: string) => c("1;32", t);

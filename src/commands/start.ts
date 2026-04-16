@@ -15,7 +15,7 @@ import {
   ensureBranch,
 } from "../lib/issue-ops.js";
 import { parseIssueDetail } from "../lib/show.js";
-import { ok, info, warn, error, bold, green, yellow, dim } from "../lib/output.js";
+import { ok, info, warn, error, bold, green } from "../lib/output.js";
 
 export const startCommand = new Command("start")
   .description("Start working on an issue — move to in-progress, create branch, update board")

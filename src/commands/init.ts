@@ -12,6 +12,11 @@ import { createInterface } from "readline";
 import { detectStack } from "../lib/detect-stack.js";
 import { scaffold } from "../lib/scaffold.js";
 import { info, ok, warn, error, bold, green, blue, dim, yellow } from "../lib/output.js";
+import { checkForUpdates } from "../lib/update-check.js";
+import { createRequire } from "module";
+
+const _require = createRequire(import.meta.url);
+const { version: VERSION } = _require("../package.json");
 
 function prompt(question: string, defaultValue?: string): Promise<string> {
   const rl = createInterface({
@@ -339,4 +344,7 @@ export const initCommand = new Command("init")
 
     // Show adapted briefing
     showBriefing(profile, lang);
+
+    // Non-blocking update check (init already uses network)
+    checkForUpdates(VERSION);
   });

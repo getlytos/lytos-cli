@@ -24,7 +24,7 @@ interface Detector {
 const detectors: Detector[] = [
   {
     file: "package.json",
-    detect: (content) => {
+    detect: (content, cwd) => {
       const pkg = JSON.parse(content);
       const deps = {
         ...pkg.dependencies,
@@ -63,10 +63,10 @@ const detectors: Detector[] = [
       else if (deps["@playwright/test"]) stack.tests = "Playwright";
       else if (deps.mocha) stack.tests = "Mocha";
 
-      // Package manager
-      if (existsSync("bun.lockb")) stack.packageManager = "Bun";
-      else if (existsSync("pnpm-lock.yaml")) stack.packageManager = "pnpm";
-      else if (existsSync("yarn.lock")) stack.packageManager = "Yarn";
+      // Package manager (resolve relative to cwd, not process.cwd())
+      if (existsSync(join(cwd, "bun.lockb"))) stack.packageManager = "Bun";
+      else if (existsSync(join(cwd, "pnpm-lock.yaml"))) stack.packageManager = "pnpm";
+      else if (existsSync(join(cwd, "yarn.lock"))) stack.packageManager = "Yarn";
       else stack.packageManager = "npm";
 
       return stack;

@@ -17,20 +17,6 @@ const CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
 const CACHE_DIR = join(homedir(), ".lytos");
 const CACHE_FILE = join(CACHE_DIR, "last-update-check");
 
-/** Read current version from package.json (bundled at build time) */
-function getCurrentVersion(): string {
-  // Version is set in cli.ts via .version(), but we read it from the source
-  try {
-    const pkgPath = join(import.meta.dirname || ".", "..", "package.json");
-    if (existsSync(pkgPath)) {
-      return JSON.parse(readFileSync(pkgPath, "utf-8")).version;
-    }
-  } catch {
-    // ignore
-  }
-  return "0.0.0";
-}
-
 /** Compare two semver strings. Returns true if remote > local. */
 function isNewer(remote: string, local: string): boolean {
   const r = remote.split(".").map(Number);
@@ -98,10 +84,11 @@ function fetchLatestVersion(): Promise<string | null> {
 }
 
 /**
- * Run the update check. Call this at the end of any command.
- * Non-blocking, silent on failure, checks max once per day.
+ * Run the update check. Non-blocking, silent on failure, max once per day.
+ * Disabled with LYT_NO_UPDATE_CHECK=1 env var.
  */
 export async function checkForUpdates(currentVersion: string): Promise<void> {
+  if (process.env.LYT_NO_UPDATE_CHECK) return;
   if (!shouldCheck()) return;
 
   saveCheckTimestamp();

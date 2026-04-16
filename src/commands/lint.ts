@@ -9,7 +9,7 @@ import { Command } from "commander";
 import { existsSync } from "fs";
 import { resolve } from "path";
 import { lint, type LintResult } from "../lib/linter.js";
-import { ok, warn, error, bold, green, red, yellow, dim } from "../lib/output.js";
+import { ok, error, bold, red, yellow, dim } from "../lib/output.js";
 
 function displayResults(result: LintResult): void {
   if (result.findings.length === 0) {

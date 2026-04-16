@@ -6,7 +6,7 @@
  */
 
 import { existsSync, readFileSync, writeFileSync, renameSync, readdirSync } from "fs";
-import { join, basename } from "path";
+import { join } from "path";
 import { execSync } from "child_process";
 import { parseFrontmatter, serializeFrontmatter } from "./frontmatter.js";
 import { collectIssues, generateBoardMarkdown } from "./board-generator.js";
@@ -73,7 +73,7 @@ export function moveIssue(
   const targetPath = join(boardDir, targetDir, issue.fileName);
 
   // Update frontmatter
-  const updatedFm = { ...issue.frontmatter, status: targetDir };
+  const updatedFm: Record<string, string | string[]> = { ...issue.frontmatter, status: targetDir };
   if (extraFields) {
     for (const [key, value] of Object.entries(extraFields)) {
       updatedFm[key] = value;

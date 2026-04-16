@@ -51,11 +51,14 @@ npx lytos-cli init
 
 | Command | What it does |
 |---------|-------------|
-| `lytos init` | Scaffold `.lytos/` in your project (interactive, detects your stack) |
-| `lytos board` | Regenerate BOARD.md from issue YAML frontmatter |
-| `lytos lint` | Validate `.lytos/` structure and content *(coming soon)* |
-| `lytos doctor` | Full diagnostic — missing files, broken links, stale memory *(coming soon)* |
-| `lytos status` | Display sprint DAG in terminal *(coming soon)* |
+| `lyt init` | Scaffold `.lytos/` in your project (interactive, detects your stack) |
+| `lyt board` | Regenerate BOARD.md from issue YAML frontmatter |
+| `lyt lint` | Validate `.lytos/` structure and content |
+| `lyt doctor` | Full diagnostic — broken links, stale memory, missing skills, health score |
+| `lyt show [ISS-XXXX]` | Display issue detail with progress bar, or all in-progress issues |
+| `lyt start ISS-XXXX` | Start an issue — move to in-progress, create branch, update board |
+| `lyt close ISS-XXXX` | Close an issue — move to done, update board (warns about unchecked items) |
+| `lyt update` | Update lytos-cli to the latest version |
 
 ---
 
@@ -100,9 +103,9 @@ your-project/
 
 ## Design principles
 
-- **Offline-first** — no network needed (except `lytos init` to download templates)
+- **Offline-first** — `lyt lint`, `lyt doctor`, `lyt board`, `lyt show`, `lyt start`, `lyt close` never need network
 - **Zero lock-in** — plain markdown files, works with any AI tool
-- **No telemetry** — no tracking, no analytics, ever
+- **No telemetry** — no tracking, no analytics, ever. Update check opt-out: `LYT_NO_UPDATE_CHECK=1`
 - **Human-first** — the human defines the method, the AI follows it
 
 ---

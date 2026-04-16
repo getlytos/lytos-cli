@@ -10,7 +10,7 @@ import { Command } from "commander";
 import { existsSync } from "fs";
 import { resolve } from "path";
 import { diagnose, type DiagnosticResult } from "../lib/doctor.js";
-import { ok, warn, error, bold, green, red, yellow, blue, dim } from "../lib/output.js";
+import { ok, error, bold, green, red, yellow, blue, dim } from "../lib/output.js";
 
 const CATEGORY_LABELS: Record<string, string> = {
   "broken-link": "Broken Links",

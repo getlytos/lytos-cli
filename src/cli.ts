@@ -8,8 +8,7 @@ import { doctorCommand } from "./commands/doctor.js";
 import { showCommand } from "./commands/show.js";
 import { startCommand } from "./commands/start.js";
 import { closeCommand } from "./commands/close.js";
-import { checkForUpdates } from "./lib/update-check.js";
-import { ok, error, bold, dim, green } from "./lib/output.js";
+import { ok, error, bold, green } from "./lib/output.js";
 
 const require = createRequire(import.meta.url);
 const { version: VERSION } = require("../package.json");
@@ -48,6 +47,3 @@ program
   });
 
 program.parse();
-
-// Non-blocking update check after command execution
-checkForUpdates(VERSION);
