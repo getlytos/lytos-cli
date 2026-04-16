@@ -6,6 +6,8 @@ import { boardCommand } from "./commands/board.js";
 import { lintCommand } from "./commands/lint.js";
 import { doctorCommand } from "./commands/doctor.js";
 import { showCommand } from "./commands/show.js";
+import { startCommand } from "./commands/start.js";
+import { closeCommand } from "./commands/close.js";
 import { checkForUpdates } from "./lib/update-check.js";
 import { ok, error, bold, dim, green } from "./lib/output.js";
 
@@ -26,14 +28,8 @@ program.addCommand(boardCommand);
 program.addCommand(lintCommand);
 program.addCommand(doctorCommand);
 program.addCommand(showCommand);
-
-program
-  .command("status")
-  .description("Display sprint DAG in terminal (coming soon)")
-  .action(() => {
-    console.error("Coming soon. Follow https://github.com/getlytos/lytos-cli for updates.");
-    process.exit(0);
-  });
+program.addCommand(startCommand);
+program.addCommand(closeCommand);
 
 program
   .command("update")

@@ -104,6 +104,7 @@ No magic values in production code.
 | Mandatory start phase | Before writing any code, the agent **must**: (1) move the issue file to `3-in-progress/` and update its frontmatter to `status: 3-in-progress`, (2) run `lyt board` to regenerate BOARD.md, (3) create a git branch `type/ISS-XXXX-slug` from main. **Never code on main.** If the agent starts coding without a branch, the human must stop it |
 | Mandatory close phase | After completing a task, the agent **must**: (1) update the issue frontmatter to `5-done`, (2) move the issue file to `5-done/`, (3) run `lyt board` to regenerate BOARD.md, (4) write to memory if learning occurred. No issue stays in `3-in-progress` when its work is complete |
 | Incomplete items generate follow-ups | Before closing an issue, review all checklist items. Any unchecked item must either be completed now or generate a new follow-up issue. Never close an issue with silent gaps |
+| No overlapping issues | Two issues must never cover the same scope. When a new issue makes an existing one obsolete, the old issue must be closed with `superseded_by: ISS-XXXX` in its frontmatter. When a new issue reduces the scope of an existing one, update the existing issue. Never leave ambiguity about which issue owns a piece of work |
 
 ---
 
