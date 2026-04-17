@@ -1,45 +1,28 @@
-# Lytos — CLI
+# Lytos CLI
 
-[![CI](https://github.com/getlytos/lytos-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/getlytos/lytos-cli/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/lytos-cli)](https://www.npmjs.com/package/lytos-cli)
+[![CI](https://github.com/getlytos/lytos-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/getlytos/lytos-cli/actions/workflows/ci.yml)
 
-> The command-line tool for [Lytos](https://github.com/getlytos/lytos-method) — a human-first method for working with AI agents.
+> The command-line tool for [Lytos](https://lytos.org) — a human-first method for working with AI agents.
 
-**Lytos** gives your AI agents a structured context: what the project is, how to work, what "done" means, what's in progress, and what's been learned. Everything in markdown. No vendor lock-in, no API, no account.
-
----
-
-## The problem
-
-AI agents (Claude, Cursor, GPT...) are powerful but stateless. Every session starts from zero. They don't know your project's conventions, your sprint priorities, or what was tried last week.
-
-**Lytos** solves this by creating a `.lytos/` directory in your project — a structured context that any AI can read, and that you own.
+**[Documentation — lytos.org](https://lytos.org)** · **[The method](https://github.com/getlytos/lytos-method)**
 
 ---
 
-## The 5 pillars
+### What this tool does
 
-`lytos init` scaffolds a `.lytos/` directory built on 5 pillars:
+Lytos is a method. The CLI makes it effortless to adopt.
 
-| Pillar | Purpose | File / Directory |
-|--------|---------|-----------------|
-| **Intent** | Why the project exists — its constitution | `manifest.md` |
-| **Design** | Procedures for recurring tasks (code review, testing, deployment...) | `skills/` |
-| **Standards** | Non-negotiable quality criteria | `rules/` |
-| **Progress** | Issues, sprint, what's moving and what's blocked | `issue-board/` |
-| **Memory** | What's been learned — sovereign, portable, model-independent | `memory/` |
+One command scaffolds the full `.lytos/` structure in any project — manifest, skills, rules, issue board, memory. From that point on, any AI agent reads the project's context at the start of each session. No re-explaining. No generic output.
 
-These 5 pillars are the method. The AI agent reads them at the start of each session and follows them.
-
----
-
-## Install
+The CLI also manages the workflow: starting and closing issues, regenerating the board, validating the structure, diagnosing problems.
 
 ```bash
 npm install -g lytos-cli
+lyt init
 ```
 
-Or use without installing:
+Or without installing:
 
 ```bash
 npx lytos-cli init
@@ -51,7 +34,7 @@ npx lytos-cli init
 
 | Command | What it does |
 |---------|-------------|
-| `lyt init` | Scaffold `.lytos/` in your project (interactive, detects your stack) |
+| `lyt init` | Scaffold `.lytos/` in a project (interactive, detects the stack) |
 | `lyt board` | Regenerate BOARD.md from issue YAML frontmatter |
 | `lyt lint` | Validate `.lytos/` structure and content |
 | `lyt doctor` | Full diagnostic — broken links, stale memory, missing skills, health score |
@@ -62,14 +45,14 @@ npx lytos-cli init
 
 ---
 
-## What `lytos init` generates
+## What `lyt init` generates
 
 ```
-your-project/
+project/
 └── .lytos/
     ├── manifest.md              # Intent — project identity and constraints
     ├── LYTOS.md                 # Method reference
-    ├── sprint.md                # Current sprint
+    ├── config.yml               # Language and profile preferences
     ├── skills/                  # Design — 9 reusable procedures
     │   ├── session-start.md
     │   ├── code-structure.md
@@ -90,42 +73,63 @@ your-project/
     │   ├── 3-in-progress/
     │   ├── 4-review/
     │   └── 5-done/
-    └── memory/                  # Memory — accumulated knowledge
-        ├── MEMORY.md
-        └── cortex/
-            ├── architecture.md
-            ├── patterns.md
-            ├── bugs.md
-            └── ...
+    ├── memory/                  # Memory — accumulated knowledge
+    │   ├── MEMORY.md
+    │   └── cortex/
+    └── templates/               # Issue and sprint templates
 ```
+
+`lyt init` also detects the project's stack (language, framework, test runner, package manager) and pre-fills the manifest. It generates the appropriate adapter file for the chosen AI tool — `CLAUDE.md`, `.cursorrules`, or `agents.md`.
+
+A pre-commit hook is installed to enforce branch naming conventions (`type/ISS-XXXX-slug`). This prevents untracked work on `main` — regardless of which AI tool or model is used.
+
+---
+
+## Works with any AI tool
+
+| Tool | What `lyt init` generates |
+|------|--------------------------|
+| **Claude Code** | `CLAUDE.md` at project root |
+| **Cursor** | `.cursorrules` at project root |
+| **Codex (OpenAI)** | `agents.md` at project root |
+| **Others** | The `.lytos/` directory is plain Markdown — any LLM can read it |
+
+> *"Choose your AI. Don't belong to it."*
 
 ---
 
 ## Design principles
 
 - **Offline-first** — `lyt lint`, `lyt doctor`, `lyt board`, `lyt show`, `lyt start`, `lyt close` never need network
-- **Zero lock-in** — plain markdown files, works with any AI tool
-- **No telemetry** — no tracking, no analytics, ever. Update check opt-out: `LYT_NO_UPDATE_CHECK=1`
+- **Zero lock-in** — plain Markdown files, portable across any AI tool
+- **No telemetry** — no tracking, no analytics, ever. Opt-out for update check: `LYT_NO_UPDATE_CHECK=1`
 - **Human-first** — the human defines the method, the AI follows it
+- **Fail with context** — when something is wrong, the CLI says what, where, and how to fix it
 
 ---
 
 ## Built with Lytos
 
-This project uses Lytos to develop itself. The `.lytos/` directory contains the real manifest, sprint, issues, and memory for this project — not templates.
+This CLI is developed using Lytos itself. The `.lytos/` directory in this repository contains the real manifest, sprint, issues, and memory — not templates. Every feature was tracked as an issue, started with `lyt start`, and closed with `lyt close`.
+
+[Browse the issue board →](.lytos/issue-board/BOARD.md)
 
 ---
 
 ## Links
 
-- [Lytos Method](https://github.com/getlytos/lytos-method) — the method itself
-- [Documentation](https://github.com/getlytos/lytos-website) — full docs (EN/FR)
+- **Documentation** — [lytos.org](https://lytos.org)
+- **The method** — [github.com/getlytos/lytos-method](https://github.com/getlytos/lytos-method)
+- **npm** — [npmjs.com/package/lytos-cli](https://www.npmjs.com/package/lytos-cli)
 
 ---
 
 ## Author
 
-Created by **Frederic Galline** — [ubeez.com](https://ubeez.com)
+Created by **Frederic Galliné**
+
+- GitHub: [@FredericGalline](https://github.com/FredericGalline)
+- X: [@fred](https://x.com/fred)
 
 ---
 
