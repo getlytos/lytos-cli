@@ -31,7 +31,7 @@ _No issues._
 
 ### Done
 
-_No archived issues yet._
+37 issues archived → [archive/INDEX.md](archive/INDEX.md)
 
 ---
 
