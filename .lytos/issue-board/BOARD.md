@@ -17,7 +17,6 @@ _No issues._
 
 | # | Title | Priority | Effort | Depends |
 |---|-------|----------|--------|---------|
-| [ISS-0016](1-backlog/ISS-0016-clarify-method-structure.md) | Clarify the 5 pillars and reorganize repo structure | P1-high | M | — |
 | [ISS-0019](1-backlog/ISS-0019-lyt-upgrade-command.md) | Implement lyt upgrade — update method files without overwriting user work | P1-high | L | — |
 | [ISS-0020](1-backlog/ISS-0020-claim-assignee.md) | Add issue assignment with lyt claim/unclaim and board display | P1-high | M | — |
 | [ISS-0023](1-backlog/ISS-0023-archive-system.md) | Archive system — separate done issues from active board for token efficiency | P1-high | M | — |
@@ -59,6 +58,7 @@ _No issues._
 | [ISS-0013](5-done/ISS-0013-rename-website-content.md) | Replace all socle references in website repo | 2026-04-14 |
 | [ISS-0014](5-done/ISS-0014-publish-npm-and-deprecate.md) | Publish lytos on npm, deprecate le-socle | 2026-04-14 |
 | [ISS-0015](5-done/ISS-0015-configure-domains.md) | Configure lytos.org and lytos.dev domains | 2026-04-14 |
+| [ISS-0016](5-done/ISS-0016-clarify-method-structure.md) | Clarify the 5 pillars and reorganize repo structure | 2026-04-18 |
 | [ISS-0017](5-done/ISS-0017-board-terminal-display.md) | Enhance lyt board with rich terminal display | 2026-04-14 |
 | [ISS-0018](5-done/ISS-0018-rule-no-work-without-issue.md) | Add rule: no work without issue, mandatory close phase | 2026-04-14 |
 | [ISS-0021](5-done/ISS-0021-role-guides.md) | Create role-based guides: developer and lead developer | 2026-04-14 |

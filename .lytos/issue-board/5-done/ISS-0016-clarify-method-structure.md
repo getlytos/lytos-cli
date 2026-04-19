@@ -6,11 +6,18 @@ priority: P1-high
 effort: M
 complexity: standard
 skill: documentation
-status: 1-backlog
+status: 5-done
 branch: "docs/ISS-0016-clarify-method-structure"
 depends: []
 created: 2026-04-14
-updated: 2026-04-14
+updated: 2026-04-18
+---
+
+> **TRANSFERRED — not done.** This issue was misfiled: all the work (moving `agents/`, `adapters/`, updating `LYTOS.md`, `MANIFESTO.md`, `starter/`) happens in the **lytos-method** repo, not lytos-cli. Per the one-issue-per-repo convention (see `lytos-method/ISS-0016`), it was closed here and replaced by **`lytos-method/ISS-0018`** which carries the remaining scope (the READMEs were already updated with the 5 pillars section, so that checklist shrank).
+>
+> Closed as "done" here only because Lytos has no dedicated "transferred/moved" status. The active work lives at:
+> `/Users/fredericgalline/Dropbox/dev/lytos-method/issue-board/1-backlog/ISS-0018-reorg-repo-and-pillars.md`
+
 ---
 
 # ISS-0016 — Clarify the 5 pillars and reorganize repo structure
