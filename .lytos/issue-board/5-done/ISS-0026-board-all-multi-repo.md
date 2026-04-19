@@ -7,11 +7,11 @@ effort: M
 complexity: standard
 skill: code-structure
 skills_aux: [testing]
-status: 3-in-progress
+status: 5-done
 branch: feat/ISS-0026-board-all
 depends: []
 created: 2026-04-15
-updated: 2026-04-15
+updated: 2026-04-19
 ---
 # ISS-0026 — Add lyt board --all for multi-repo overview
 
