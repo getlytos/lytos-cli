@@ -21,9 +21,7 @@ _No issues._
 
 ### 2-sprint (committed)
 
-| # | Title | Priority | Effort |
-|---|-------|----------|--------|
-| [ISS-0019](2-sprint/ISS-0019-lyt-upgrade-command.md) | Implement lyt upgrade — update method files without overwriting user work | P1-high | L |
+_No issues._
 
 ### 3-in-progress (in dev)
 

@@ -7,7 +7,7 @@ effort: L
 complexity: standard
 skill: code-structure
 skills_aux: [testing]
-status: 2-sprint
+status: 5-done
 branch: feat/ISS-0019-lyt-upgrade
 depends: []
 created: 2026-04-14
