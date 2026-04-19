@@ -13,6 +13,8 @@ import {
   collectIssues,
   generateBoardMarkdown,
   boardToJson,
+  archiveIssues,
+  countArchived,
 } from "../lib/board-generator.js";
 import { displayBoard } from "../lib/board-display.js";
 import { ok, warn, error } from "../lib/output.js";
@@ -48,8 +50,12 @@ export const boardCommand = new Command("board")
       process.exit(2);
     }
 
+    // Archive completed issues from 5-done/
+    archiveIssues(boardDir);
+
     // Collect issues
     const data = collectIssues(boardDir);
+    const archivedCount = countArchived(boardDir);
 
     // Show warnings
     for (const w of data.warnings) {
@@ -63,7 +69,7 @@ export const boardCommand = new Command("board")
     }
 
     // Generate markdown
-    const newContent = generateBoardMarkdown(data);
+    const newContent = generateBoardMarkdown(data, archivedCount);
 
     // Check mode — compare with existing BOARD.md
     if (opts.check) {

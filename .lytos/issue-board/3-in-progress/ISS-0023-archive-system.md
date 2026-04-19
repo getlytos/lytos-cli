@@ -1,19 +1,18 @@
 ---
 id: ISS-0023
-title: "Archive system — separate done issues from active board for token efficiency"
+title: Archive system — separate done issues from active board for token efficiency
 type: feature
 priority: P1-high
 effort: M
 complexity: standard
 skill: code-structure
 skills_aux: [testing]
-status: 1-backlog
-branch: "feat/ISS-0023-archive-system"
+status: 3-in-progress
+branch: feat/ISS-0023-archive-system
 depends: []
 created: 2026-04-15
 updated: 2026-04-15
 ---
-
 # ISS-0023 — Archive system — separate done issues from active board for token efficiency
 
 ## Context

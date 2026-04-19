@@ -54,15 +54,22 @@ describe("lytos board", () => {
       "utf-8"
     );
 
-    // Should contain all issues
+    // Active issues appear in board
     expect(board).toContain("ISS-0001");
     expect(board).toContain("ISS-0002");
-    expect(board).toContain("ISS-0003");
     expect(board).toContain("Setup database");
     expect(board).toContain("Create REST API");
 
-    // 5-done section should have the completed issue
-    expect(board).toContain("Initialize project");
+    // Done issues are archived — board shows archive summary
+    expect(board).toContain("archive/INDEX.md");
+
+    // ISS-0003 should be in archive INDEX
+    const index = readFileSync(
+      join(fixture.cwd, ".lytos", "issue-board", "archive", "INDEX.md"),
+      "utf-8"
+    );
+    expect(index).toContain("ISS-0003");
+    expect(index).toContain("Initialize project");
 
     // Next number should be ISS-0005
     expect(board).toContain("ISS-0005");
@@ -76,7 +83,7 @@ describe("lytos board", () => {
 
     const data = JSON.parse(result.stdout);
     expect(data.nextNumber).toBe("ISS-0005");
-    expect(data.columns).toHaveLength(6);
+    expect(data.columns).toHaveLength(5);
 
     // Find the 3-in-progress column
     // ISS-0002 is genuinely in-progress. ISS-0004 is in 1-backlog/ folder
