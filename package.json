@@ -12,9 +12,9 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && mkdir -p dist/method && cp -r method/. dist/method",
     "dev": "tsup --watch",
-    "pretest": "tsup",
+    "pretest": "tsup && mkdir -p dist/method && cp -r method/. dist/method",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint src/",

@@ -5,8 +5,9 @@
  * Downloads skills, rules, and LYTOS.md from the Lytos GitHub repo.
  */
 
-import { mkdirSync, writeFileSync, existsSync } from "fs";
-import { join } from "path";
+import { mkdirSync, writeFileSync, existsSync, readFileSync } from "fs";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
 import {
   manifestTemplate,
   memoryTemplate,
@@ -20,8 +21,10 @@ import {
 import type { DetectedStack } from "./detect-stack.js";
 import { installPreCommitHook } from "./hooks.js";
 
-const REPO_RAW =
-  "https://raw.githubusercontent.com/getlytos/lytos-method/main";
+const METHOD_DIR = join(
+  dirname(fileURLToPath(import.meta.url)),
+  "method"
+);
 
 const SKILLS = [
   "session-start",
@@ -70,12 +73,8 @@ export interface ScaffoldResult {
   warnings: string[];
 }
 
-async function download(url: string): Promise<string> {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Failed to download ${url}: ${response.status}`);
-  }
-  return response.text();
+function readBundled(relativePath: string): string {
+  return readFileSync(join(METHOD_DIR, relativePath), "utf-8");
 }
 
 function ensureDir(dir: string, dryRun: boolean): void {
@@ -99,9 +98,7 @@ function writeFile(
   result.filesCreated.push(path);
 }
 
-export async function scaffold(
-  options: ScaffoldOptions
-): Promise<ScaffoldResult> {
+export function scaffold(options: ScaffoldOptions): ScaffoldResult {
   const result: ScaffoldResult = {
     filesCreated: [],
     filesSkipped: [],
@@ -192,19 +189,14 @@ export async function scaffold(
     result
   );
 
-  // Download remote files (skills, rules, LYTOS.md, templates)
+  // Copy bundled method files (skills, rules, LYTOS.md, templates)
   for (const file of REMOTE_FILES) {
     try {
-      const content = await download(`${REPO_RAW}/${file.remote}`);
-      writeFile(
-        join(lytosDir, file.local),
-        content,
-        options.dryRun,
-        result
-      );
+      const content = readBundled(file.remote);
+      writeFile(join(lytosDir, file.local), content, options.dryRun, result);
     } catch (err) {
       result.warnings.push(
-        `Could not download ${file.remote}: ${err instanceof Error ? err.message : String(err)}`
+        `Could not read bundled file ${file.remote}: ${err instanceof Error ? err.message : String(err)}`
       );
     }
   }

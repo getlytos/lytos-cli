@@ -322,7 +322,7 @@ export const initCommand = new Command("init")
     info(lang === "fr" ? "Installation de Lytos dans .lytos/..." : "Installing Lytos in .lytos/...");
     console.error("");
 
-    const result = await scaffold({
+    const result = scaffold({
       projectName,
       tool: tool as "claude" | "cursor" | "codex" | "none",
       lang,
