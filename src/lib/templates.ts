@@ -13,6 +13,7 @@ interface TemplateContext {
   projectName: string;
   date: string;
   stack: Partial<DetectedStack>;
+  lang?: "en" | "fr";
 }
 
 export function manifestTemplate(ctx: TemplateContext): string {
@@ -22,6 +23,92 @@ export function manifestTemplate(ctx: TemplateContext): string {
     `| Database | ${ctx.stack.database || ""} |`,
     `| Tests | ${ctx.stack.tests || ""} |`,
   ].join("\n");
+
+  if (ctx.lang === "fr") {
+    return `# Manifest — ${ctx.projectName}
+
+*Ce fichier est la constitution du projet. Il est lu par les agents au démarrage de chaque session de travail.*
+
+---
+
+## Identité
+
+| Champ | Valeur |
+|-------|--------|
+| Nom | ${ctx.projectName} |
+| Description | |
+| Propriétaire | |
+| Repo | |
+
+---
+
+## Pourquoi ce projet existe
+
+*3-5 phrases. Le "pourquoi" de ce projet.*
+
+---
+
+## Ce que ce projet est
+
+-
+
+## Ce que ce projet n'est pas
+
+-
+
+---
+
+## Stack technique
+
+| Composant | Technologie |
+|-----------|-------------|
+${stackRows}
+
+---
+
+## Vocabulaire du projet
+
+| Terme | Définition |
+|-------|------------|
+| | |
+
+---
+
+## Principes de développement
+
+*Quand un agent hésite entre deux approches, il consulte ces principes pour décider. Formuler comme des arbitrages : "on préfère X plutôt que Y, parce que Z."*
+
+-
+-
+
+---
+
+## Modèles IA par complexité
+
+*Mappez vos propres modèles selon votre budget et vos outils. Mettez à jour quand de meilleurs modèles sortent.*
+
+| Complexité | Usage | Modèle |
+|------------|-------|--------|
+| \`light\` | Documentation, formatage, renommage, boilerplate | |
+| \`standard\` | Développement quotidien, code review, tests | |
+| \`heavy\` | Architecture complexe, algorithmes critiques, sécurité | |
+
+---
+
+## Liens importants
+
+| Ressource | URL |
+|-----------|-----|
+| Repo principal | |
+| Documentation | |
+| Staging | |
+| Production | |
+
+---
+
+*Dernière mise à jour : ${ctx.date}*
+`;
+  }
 
   return `# Manifest — ${ctx.projectName}
 
@@ -109,6 +196,40 @@ ${stackRows}
 }
 
 export function memoryTemplate(ctx: TemplateContext): string {
+  if (ctx.lang === "fr") {
+    return `# Mémoire — ${ctx.projectName}
+
+*Ce fichier est la table des matières de la mémoire du projet. Ne pas tout lire — charger uniquement ce qui est pertinent pour la tâche en cours.*
+
+> **Dernière mise à jour** : ${ctx.date}
+> **Nombre d'entrées** : 0
+
+---
+
+## Index des sections
+
+| Fichier | Contenu | Charger quand... |
+|---------|---------|-----------------|
+| [architecture.md](./cortex/architecture.md) | Décisions architecturales, choix techniques | Toute tâche structurelle |
+| [backend.md](./cortex/backend.md) | Patterns et pièges côté serveur | Tâche backend |
+| [frontend.md](./cortex/frontend.md) | Patterns et pièges côté client | Tâche frontend |
+| [patterns.md](./cortex/patterns.md) | Patterns de code récurrents | Code review, nouveau code |
+| [bugs.md](./cortex/bugs.md) | Problèmes récurrents et solutions | Debug, correction |
+| [business.md](./cortex/business.md) | Contexte métier, vocabulaire | Logique métier, UX |
+| [sprints.md](./cortex/sprints.md) | Historique des sprints | Planification |
+
+---
+
+## Résumé vivant
+
+*3-5 lignes. L'état actuel du projet en un coup d'œil.*
+
+---
+
+*Le dossier est la structure. Le fichier est le contenu. Cette table des matières est la carte.*
+`;
+  }
+
   return `# Memory — ${ctx.projectName}
 
 *This file is the project memory's table of contents. Do not read everything — load only what is relevant to the current task.*
@@ -227,8 +348,81 @@ const cortexFiles: CortexFile[] = [
   },
 ];
 
-export function cortexTemplate(file: CortexFile): string {
-  return `# Memory — ${file.title}
+const cortexFilesFr: CortexFile[] = [
+  {
+    name: "architecture.md",
+    title: "Architecture & Décisions techniques",
+    description: "Charger ce fichier pour toute tâche affectant la structure du projet.",
+    example: `### ${new Date().toISOString().slice(0, 10)} — Choix de base de données
+
+**Contexte** : Hésitation entre SQLite (simple) et PostgreSQL (robuste).
+**Décision** : PostgreSQL dès le départ.
+**Conséquence** : Nécessite Docker en local, mais pas de migration douloureuse plus tard.`,
+  },
+  {
+    name: "backend.md",
+    title: "Backend",
+    description: "Charger ce fichier pour toute tâche backend : API, base de données, services.",
+    example: `### Fichiers clés
+
+| Fichier | Rôle |
+|---------|------|
+| \`src/main.py\` | Point d'entrée de l'application |
+| \`src/models/\` | Modèles de données |
+| \`src/routes/\` | Endpoints API |`,
+  },
+  {
+    name: "frontend.md",
+    title: "Frontend",
+    description: "Charger ce fichier pour toute tâche frontend : UI, composants, styles.",
+    example: `### Fichiers clés
+
+| Fichier | Rôle |
+|---------|------|
+| \`src/App.tsx\` | Composant racine |
+| \`src/components/\` | Composants réutilisables |
+| \`src/hooks/\` | Hooks personnalisés |`,
+  },
+  {
+    name: "patterns.md",
+    title: "Patterns découverts",
+    description: "Charger ce fichier pour la code review, le refactoring ou l'écriture de nouveau code.",
+    example: `### Nom du pattern
+
+**Quoi** : Description en une phrase du pattern.
+**Où** : Fichier(s) où il est appliqué.
+**Pourquoi ça marche** : Ce qui le rend efficace dans ce contexte.`,
+  },
+  {
+    name: "bugs.md",
+    title: "Problèmes récurrents & Solutions",
+    description: "Charger ce fichier avant de déboguer — le problème a peut-être déjà été résolu.",
+    example: `| Problème | Cause | Solution |
+|----------|-------|----------|
+| Les tests échouent en CI mais passent en local | Variables d'env manquantes dans le pipeline | Ajouter les secrets dans les paramètres CI |`,
+  },
+  {
+    name: "business.md",
+    title: "Contexte métier",
+    description: "Charger ce fichier pour toute tâche impliquant de la logique métier ou de l'UX.",
+    example: `### Nom du concept métier
+
+**Règle** : Ce que le métier exige.
+**Pourquoi** : La raison métier (pas technique).
+**Impact code** : Ce que ça signifie concrètement dans le code.`,
+  },
+  {
+    name: "sprints.md",
+    title: "Historique des sprints",
+    description: "Charger ce fichier au démarrage d'un sprint, en rétrospective ou en planification.",
+    example: `| Sprint | Objectif | Résultat | Apprentissage clé |
+|--------|----------|----------|-------------------|`,
+  },
+];
+
+export function cortexTemplate(file: CortexFile, lang?: "en" | "fr"): string {
+  const heading = lang === "fr" ? "Mémoire" : "Memory";
+  return `# ${heading} — ${file.title}
 
 *${file.description}*
 
@@ -242,11 +436,55 @@ ${file.example}
 `;
 }
 
-export function getCortexFiles(): CortexFile[] {
-  return cortexFiles;
+export function getCortexFiles(lang?: "en" | "fr"): CortexFile[] {
+  return lang === "fr" ? cortexFilesFr : cortexFiles;
 }
 
 export function boardTemplate(ctx: TemplateContext): string {
+  if (ctx.lang === "fr") {
+    return `# Issue Board — ${ctx.projectName}
+
+> Chaque issue = un fichier \`ISS-XXXX-titre.md\` dans le dossier correspondant à son statut.
+>
+> **Dernière mise à jour** : ${ctx.date}
+> **Prochain numéro** : ISS-0001
+
+> Régénérer : \`npx lytos board\`
+
+---
+
+## Index des issues
+
+### 0-icebox (idées)
+
+_Aucune issue._
+
+### 1-backlog (priorisé)
+
+_Aucune issue._
+
+### 2-sprint (engagé)
+
+_Aucune issue._
+
+### 3-in-progress (en cours)
+
+_Aucune issue._
+
+### 4-review (révision)
+
+_Aucune issue._
+
+### Done
+
+_Aucune issue archivée._
+
+---
+
+*Le frontmatter YAML est la source de vérité. Le dossier est le statut visuel. Le BOARD.md est la carte.*
+`;
+  }
+
   return `# Issue Board — ${ctx.projectName}
 
 > Each issue = a \`ISS-XXXX-title.md\` file in the folder matching its status.

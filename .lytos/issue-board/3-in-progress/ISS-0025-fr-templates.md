@@ -1,19 +1,18 @@
 ---
 id: ISS-0025
-title: "Generate French templates when language is fr"
+title: Generate French templates when language is fr
 type: fix
 priority: P1-high
 effort: M
 complexity: standard
 skill: code-structure
 skills_aux: [testing]
-status: 1-backlog
-branch: "feat/ISS-0025-fr-templates"
+status: 3-in-progress
+branch: feat/ISS-0025-fr-templates
 depends: [ISS-0024]
 created: 2026-04-15
 updated: 2026-04-15
 ---
-
 # ISS-0025 — Generate French templates when language is fr
 
 ## Context

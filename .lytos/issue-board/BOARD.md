@@ -15,12 +15,11 @@ _No issues._
 
 ### 1-backlog (prioritized)
 
-| # | Title | Priority | Effort | Depends |
-|---|-------|----------|--------|---------|
-| [ISS-0019](1-backlog/ISS-0019-lyt-upgrade-command.md) | Implement lyt upgrade — update method files without overwriting user work | P1-high | L | — |
-| [ISS-0020](1-backlog/ISS-0020-claim-assignee.md) | Add issue assignment with lyt claim/unclaim and board display | P1-high | M | — |
-| [ISS-0025](1-backlog/ISS-0025-fr-templates.md) | Generate French templates when language is fr | P1-high | M | ISS-0024 |
-| [ISS-0026](1-backlog/ISS-0026-board-all-multi-repo.md) | Add lyt board --all for multi-repo overview | P2-normal | M | — |
+| # | Title | Priority | Effort |
+|---|-------|----------|--------|
+| [ISS-0019](1-backlog/ISS-0019-lyt-upgrade-command.md) | Implement lyt upgrade — update method files without overwriting user work | P1-high | L |
+| [ISS-0020](1-backlog/ISS-0020-claim-assignee.md) | Add issue assignment with lyt claim/unclaim and board display | P1-high | M |
+| [ISS-0026](1-backlog/ISS-0026-board-all-multi-repo.md) | Add lyt board --all for multi-repo overview | P2-normal | M |
 
 ### 2-sprint (committed)
 
@@ -28,7 +27,9 @@ _No issues._
 
 ### 3-in-progress (in dev)
 
-_No issues._
+| # | Title | Priority | Effort | Depends |
+|---|-------|----------|--------|---------|
+| [ISS-0025](3-in-progress/ISS-0025-fr-templates.md) | Generate French templates when language is fr | P1-high | M | ISS-0024 |
 
 ### 4-review (review/test)
 

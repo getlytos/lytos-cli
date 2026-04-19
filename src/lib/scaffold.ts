@@ -111,6 +111,7 @@ export function scaffold(options: ScaffoldOptions): ScaffoldResult {
     projectName: options.projectName,
     date: today,
     stack: options.stack,
+    lang: options.lang,
   };
 
   // Create directory structure
@@ -179,10 +180,10 @@ export function scaffold(options: ScaffoldOptions): ScaffoldResult {
   );
 
   // Generate cortex files with examples
-  for (const cortexFile of getCortexFiles()) {
+  for (const cortexFile of getCortexFiles(options.lang)) {
     writeFile(
       join(lytosDir, "memory", "cortex", cortexFile.name),
-      cortexTemplate(cortexFile),
+      cortexTemplate(cortexFile, options.lang),
       options.dryRun,
       result
     );
