@@ -28,9 +28,7 @@ _No issues._
 
 ### 3-in-progress (in dev)
 
-| # | Title | Priority | Effort |
-|---|-------|----------|--------|
-| [ISS-0023](3-in-progress/ISS-0023-archive-system.md) | Archive system — separate done issues from active board for token efficiency | P1-high | M |
+_No issues._
 
 ### 4-review (review/test)
 
@@ -38,7 +36,7 @@ _No issues._
 
 ### Done
 
-32 issues archived → [archive/INDEX.md](archive/INDEX.md)
+_No archived issues yet._
 
 ---
 

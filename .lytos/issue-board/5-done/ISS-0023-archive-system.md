@@ -7,11 +7,11 @@ effort: M
 complexity: standard
 skill: code-structure
 skills_aux: [testing]
-status: 3-in-progress
+status: 5-done
 branch: feat/ISS-0023-archive-system
 depends: []
 created: 2026-04-15
-updated: 2026-04-15
+updated: 2026-04-19
 ---
 # ISS-0023 — Archive system — separate done issues from active board for token efficiency
 
