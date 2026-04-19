@@ -7,7 +7,7 @@ effort: M
 complexity: standard
 skill: code-structure
 skills_aux: [testing]
-status: 5-done
+status: 3-in-progress
 branch: feat/ISS-0023-archive-system
 depends: []
 created: 2026-04-15
@@ -20,6 +20,15 @@ updated: 2026-04-19
 BOARD.md currently contains all issues including done. On a project with 1000+ issues, this means the AI loads hundreds of irrelevant lines at every session. This wastes tokens and context window space.
 
 The method should always optimize for token economy — load only what's needed.
+
+## Audit note — 2026-04-19
+
+Reopened after lead-dev audit.
+
+- The archive mechanism exists and `archive/INDEX.md` is generated.
+- The board generator still computes `Next number` from active issues only.
+- Current visible symptom: `BOARD.md` advertises `ISS-0027` / `ISS-0028` even though the archive already contains issues up to `ISS-0037`.
+- This reintroduces issue-ID collision risk, so the archive system is not done yet.
 
 ## Proposed solution
 

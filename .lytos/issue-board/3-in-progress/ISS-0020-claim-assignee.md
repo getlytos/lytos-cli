@@ -7,7 +7,7 @@ effort: M
 complexity: standard
 skill: code-structure
 skills_aux: [testing]
-status: 5-done
+status: 3-in-progress
 branch: feat/ISS-0020-claim-assignee
 depends: []
 created: 2026-04-14
@@ -20,6 +20,14 @@ updated: 2026-04-19
 In a team context, the lead developer needs to see who is working on what. Currently there's no way to assign an issue or see assignments in `lyt board`. Two developers could unknowingly start working on the same issue.
 
 This is also the foundation for the future SaaS team dashboard.
+
+## Audit note — 2026-04-19
+
+Reopened after lead-dev audit.
+
+- `lyt claim` / `lyt unclaim` and assignee display exist in code.
+- The issue explicitly promised tests for claim, unclaim, double-claim, and board display.
+- There is currently no dedicated `tests/commands/claim.test.ts`, so the regression coverage described by the issue is missing.
 
 ## Proposed solution
 

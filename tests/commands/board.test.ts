@@ -138,6 +138,40 @@ describe("lytos board", () => {
     expect(result.exitCode).toBe(0);
   });
 
+  it("--all --dirs scans explicit directories and shows overview", () => {
+    fixture = createBoardFixture();
+    // Run from parent of fixture so --dirs can point at it
+    const result = run(`board --all --dirs ${fixture.cwd}`, fixture.cwd);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("LYTOS OVERVIEW");
+    // basename of fixture dir is some tmp name; ensure at least the total line is present
+    expect(result.stdout).toContain("projects");
+  });
+
+  it("--all --json outputs repo array", () => {
+    fixture = createBoardFixture();
+    const result = run(`board --all --dirs ${fixture.cwd} --json`, fixture.cwd);
+
+    expect(result.exitCode).toBe(0);
+    const data = JSON.parse(result.stdout);
+    expect(Array.isArray(data)).toBe(true);
+    expect(data).toHaveLength(1);
+    expect(data[0]).toHaveProperty("counts");
+    expect(data[0]).toHaveProperty("archived");
+    expect(data[0].counts["1-backlog"]).toBe(1);
+    expect(data[0].counts["3-in-progress"]).toBe(2);
+  });
+
+  it("--all with no Lytos projects prints an empty overview", () => {
+    fixture = createEmptyFixture();
+    const result = run(`board --all --dirs ${fixture.cwd}`, fixture.cwd);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("LYTOS OVERVIEW");
+    expect(result.stdout).toContain("No Lytos projects found.");
+  });
+
   it("--check returns 1 when BOARD.md is outdated", () => {
     fixture = createBoardFixture();
     // Generate, then manually modify BOARD.md
