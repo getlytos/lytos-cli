@@ -23,7 +23,6 @@ _No issues._
 | [ISS-0025](1-backlog/ISS-0025-fr-templates.md) | Generate French templates when language is fr | P1-high | M | ISS-0024 |
 | [ISS-0026](1-backlog/ISS-0026-board-all-multi-repo.md) | Add lyt board --all for multi-repo overview | P2-normal | M | — |
 | [ISS-0032](1-backlog/ISS-0032-reproducible-init.md) | Make lyt init reproducible — bundle method files in npm package | P1-high | L | ISS-0031 |
-| [ISS-0035](1-backlog/ISS-0035-update-readme-homepage.md) | Update lytos-method READMEs and lytos.org homepage for launch | P1-high | M | — |
 
 ### 2-sprint (committed)
 
@@ -70,6 +69,7 @@ _No issues._
 | [ISS-0031](5-done/ISS-0031-oss-cleanup.md) | OSS cleanup — lint errors, README drift, detectStack bug, update check | 2026-04-16 |
 | [ISS-0033](5-done/ISS-0033-git-hook-branch-guard.md) | Install git pre-commit hook to enforce branch naming convention | 2026-04-16 |
 | [ISS-0034](5-done/ISS-0034-fix-command-injection.md) | Fix command injection in git operations — sanitize branch names | 2026-04-16 |
+| [ISS-0035](5-done/ISS-0035-update-readme-homepage.md) | Update lytos-method READMEs and lytos.org homepage for launch | 2026-04-18 |
 | [ISS-0036](5-done/ISS-0036-add-learn-references.md) | Reference lytos-learn in method README, trainer kit, and org profile | 2026-04-17 |
 | [ISS-0037](5-done/ISS-0037-semantic-color-palette.md) | Semantic color palette — readable on dark backgrounds, red reserved for errors | 2026-04-19 |
 
