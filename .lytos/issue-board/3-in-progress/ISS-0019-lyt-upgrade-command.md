@@ -7,7 +7,7 @@ effort: L
 complexity: standard
 skill: code-structure
 skills_aux: [testing]
-status: 5-done
+status: 3-in-progress
 branch: feat/ISS-0019-lyt-upgrade
 depends: []
 created: 2026-04-14
@@ -20,6 +20,17 @@ updated: 2026-04-19
 Currently `lyt init` only creates the `.lytos/` directory. Users who installed Lytos never receive updates to skills, rules, or templates. If we add a new rule or fix a skill, existing users miss it.
 
 We need a `lyt upgrade` command that safely brings in new method files without destroying user customizations.
+
+## Audit note — 2026-04-19
+
+Reopened after lead-dev audit.
+
+- A first `lyt upgrade` command exists and upgrades bundled method files.
+- The issue contract is not fulfilled yet:
+- no automated tests cover the upgrade scenarios promised by the issue;
+- the command does not track a method version or categorize files as proposed;
+- it currently overwrites any differing upgradeable file after a yes/no prompt, which is weaker than the planned "safe update vs conflict" behavior;
+- the repo quality gate is still red on `src/commands/upgrade.ts` because of an unused import, so this feature is not integrated cleanly.
 
 ## Proposed solution
 

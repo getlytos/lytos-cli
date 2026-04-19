@@ -17,6 +17,7 @@ import {
   countArchived,
 } from "../lib/board-generator.js";
 import { displayBoard } from "../lib/board-display.js";
+import { discoverRepos, displayOverview, listSiblings } from "../lib/board-overview.js";
 import { ok, warn, error } from "../lib/output.js";
 
 function findBoardDir(cwd: string): string | null {
@@ -39,8 +40,42 @@ export const boardCommand = new Command("board")
     false
   )
   .option("--json", "Output board data as JSON", false)
+  .option("--all", "Show consolidated overview of sibling Lytos projects", false)
+  .option(
+    "--dirs <paths>",
+    "Comma-separated list of directories to include in overview"
+  )
   .action((opts) => {
     const cwd = process.cwd();
+
+    // Multi-repo overview mode
+    if (opts.all || opts.dirs) {
+      const candidates: string[] = opts.dirs
+        ? String(opts.dirs).split(",").map((p) => p.trim()).filter(Boolean)
+        : listSiblings(cwd);
+      const repos = discoverRepos(candidates);
+
+      if (opts.json) {
+        console.log(
+          JSON.stringify(
+            repos.map((r) => ({
+              name: r.name,
+              path: r.path,
+              counts: r.counts,
+              archived: r.archived,
+              total: r.total,
+            })),
+            null,
+            2
+          )
+        );
+        return;
+      }
+
+      displayOverview(repos);
+      return;
+    }
+
     const boardDir = findBoardDir(cwd);
 
     if (!boardDir) {

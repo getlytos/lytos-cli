@@ -6,7 +6,7 @@ priority: P0-critical
 effort: M
 complexity: standard
 skill: documentation
-status: 5-done
+status: 3-in-progress
 branch: chore/ISS-0027-launch-readiness
 depends: [ISS-0037]
 created: 2026-04-15
@@ -17,6 +17,15 @@ updated: 2026-04-19
 ## Context
 
 Before pushing Lytos to Hacker News, Product Hunt, Reddit, and dev communities, several quick wins are needed to make the first impression credible. A "failing" CI badge and a text-only README will hurt adoption.
+
+## Audit note — 2026-04-19
+
+Reopened after lead-dev audit.
+
+- README screenshots and demo assets are now present, so the issue moved forward materially.
+- The issue was archived too early relative to its own checklist and done criteria.
+- Direct repo evidence still missing: star-history badge, Show HN draft, X/Twitter thread draft.
+- External deliverables such as GitHub Discussions are not traceable from the repository state, so the issue should stay open until launch evidence is centralized.
 
 ## Checklist (sequential)
 

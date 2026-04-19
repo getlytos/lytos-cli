@@ -7,7 +7,7 @@ effort: M
 complexity: standard
 skill: code-structure
 skills_aux: [testing]
-status: 5-done
+status: 3-in-progress
 branch: feat/ISS-0025-fr-templates
 depends: [ISS-0024]
 created: 2026-04-15
@@ -20,6 +20,15 @@ updated: 2026-04-19
 ISS-0024 added language selection to `lyt init` but only translated the CLI messages and briefings. The generated templates (manifest.md, memory/MEMORY.md, board/BOARD.md, cortex files) are still in English even when the user selects French.
 
 A vibe coder who chooses "Français" and opens manifest.md sees "Why this project exists" — that breaks the promise.
+
+## Audit note — 2026-04-19
+
+Reopened after lead-dev audit.
+
+- French templates are partially implemented and the main sections are translated.
+- The work is not fully complete against the issue contract:
+- There are still English stack labels in the French manifest (`Language`, `Framework`, `Database`, `Tests`).
+- There are no automated tests covering `--lang fr` vs `--lang en`, even though the issue explicitly required them.
 
 ## Checklist
 
