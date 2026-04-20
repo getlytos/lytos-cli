@@ -7,7 +7,7 @@ effort: M
 complexity: standard
 skill: code-structure
 skills_aux: [testing, documentation]
-status: 3-in-progress
+status: 4-review
 branch: "feat/ISS-0039-more-tool-adapters"
 depends: [ISS-0038]
 created: 2026-04-19
@@ -48,13 +48,13 @@ Without these adapters, users on those tools have to hand-write a bridge file th
 
 ## Checklist
 
-- [ ] Add `copilot | gemini | windsurf` to the `tool` type and CLI flag
-- [ ] Create three new templates in `src/lib/templates.ts`
-- [ ] Wire into `scaffold.ts` with case-correct filenames
-- [ ] Update the interactive prompt list in `commands/init.ts`
-- [ ] Tests for each tool (filename + content sanity)
-- [ ] Update lytos-cli README (EN + FR)
-- [ ] Update lytos-website `/cli/overview` and a new `/compatibility` page listing every supported tool and its bridge file
+- [x] Add `copilot | gemini | windsurf` to the `tool` type and CLI flag
+- [x] Create three new templates in `src/lib/templates.ts`
+- [x] Wire into `scaffold.ts` with case-correct filenames
+- [x] Update the interactive prompt list in `commands/init.ts`
+- [x] Tests for each tool (filename + content sanity) — 3 tests, all green; 103/103 overall
+- [x] Update lytos-cli README — bridge table now lists all 6 tools
+- [x] Update lytos-website `/method/compatibility` page (EN + FR) — 3 rows moved from "planned" to "shipping"
 
 ## Definition of done
 
