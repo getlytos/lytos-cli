@@ -8,7 +8,7 @@ complexity: standard
 skill: code-structure
 skills_aux: [documentation]
 scope: lytos-cli
-status: 3-in-progress
+status: 5-done
 branch: "feat/ISS-0046-skills-agentskills-io"
 depends: []
 created: 2026-04-20

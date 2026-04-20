@@ -31,9 +31,7 @@ _No issues._
 
 ### 3-in-progress (in dev)
 
-| # | Title | Priority | Effort | Branch |
-|---|-------|----------|--------|--------|
-| [ISS-0046](3-in-progress/ISS-0046-skills-agentskills-io-conformance.md) | Adopt agentskills.io format for Lytos task skills | P1-high | M | `feat/ISS-0046-skills-agentskills-io` |
+_No issues._
 
 ### 4-review (review/test)
 
@@ -44,6 +42,7 @@ _No issues._
 | # | Title | Completed |
 |---|-------|-----------|
 | [ISS-0044](5-done/ISS-0044-website-breadcrumbs.md) | [website] Add breadcrumbs to sub-pages + cross-links between siblings | 2026-04-20 |
+| [ISS-0046](5-done/ISS-0046-skills-agentskills-io-conformance.md) | Adopt agentskills.io format for Lytos task skills | 2026-04-20 |
 
 ### Done (archived)
 
