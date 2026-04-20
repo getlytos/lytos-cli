@@ -42,6 +42,7 @@
 | ISS-0038 | Fix AGENTS.md casing for Codex tool — breaks on Linux/CI |  | 2026-04-20 | 2026-Q2 |
 | ISS-0041 | lyt claim/start: fetch + check origin before moving an issue |  | 2026-04-20 | 2026-Q2 |
 | ISS-0044 | [website] Add breadcrumbs to sub-pages + cross-links between siblings |  | 2026-04-20 | 2026-Q2 |
+| ISS-0045 | [website] Replace stub index pages + add Open Graph / Twitter Card meta |  | 2026-04-20 | 2026-Q2 |
 | ISS-0046 | Adopt agentskills.io format for Lytos task skills |  | 2026-04-20 | 2026-Q2 |
 | ISS-0048 | Introduce review step before close — skill + batch `lyt close` |  | 2026-04-20 | 2026-Q2 |
 
