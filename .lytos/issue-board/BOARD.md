@@ -22,7 +22,7 @@ _No issues._
 | [ISS-0043](1-backlog/ISS-0043-board-all-remote.md) | lyt board --all --remote: lead-view from origin, not local | P2-normal | S | — |
 | [ISS-0047](1-backlog/ISS-0047-skill-import.md) | lyt skill: import agentskills.io skills into a Lytos project | P2-normal | L | ISS-0046 |
 | [ISS-0049](1-backlog/ISS-0049-scaffold-gitignore-private-notes.md) | lyt init: ship a .lytos/.gitignore that protects 6-private-notes/ automatically | P2-normal | XS | — |
-| [ISS-0050](1-backlog/ISS-0050-cursor-rules-modern-convention.md) | lyt init --tool cursor: use modern `.cursor/rules/*.mdc` convention | P2-normal | XS | — |
+| [ISS-0050](1-backlog/ISS-0050-cursor-rules-modern-convention.md) | lyt init --tool cursor: use modern .cursor/rules/*.mdc convention | P2-normal | XS | — |
 
 ### 2-sprint (committed)
 
