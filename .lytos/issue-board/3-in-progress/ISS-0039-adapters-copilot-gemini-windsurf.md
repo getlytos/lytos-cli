@@ -7,10 +7,11 @@ effort: M
 complexity: standard
 skill: code-structure
 skills_aux: [testing, documentation]
-status: 1-backlog
+status: 3-in-progress
 branch: "feat/ISS-0039-more-tool-adapters"
 depends: [ISS-0038]
 created: 2026-04-19
+updated: 2026-04-20
 ---
 
 # ISS-0039 — Add --tool adapters for Copilot, Gemini and Windsurf
