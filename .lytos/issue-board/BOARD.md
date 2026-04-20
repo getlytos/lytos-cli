@@ -29,9 +29,7 @@ _No issues._
 
 ### 3-in-progress (in dev)
 
-| # | Title | Priority | Effort |
-|---|-------|----------|--------|
-| [ISS-0045](3-in-progress/ISS-0045-website-seo-stubs-og.md) | [website] Replace stub index pages + add Open Graph / Twitter Card meta | P1-high | M |
+_No issues._
 
 ### 4-review (review/test)
 
@@ -39,7 +37,7 @@ _No issues._
 
 ### Done
 
-42 issues archived → [archive/INDEX.md](archive/INDEX.md)
+_No archived issues yet._
 
 ---
 

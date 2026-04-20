@@ -1,6 +1,6 @@
 ---
 id: ISS-0045
-title: "[website] Replace stub index pages + add Open Graph / Twitter Card meta"
+title: [website] Replace stub index pages + add Open Graph / Twitter Card meta
 type: feature
 priority: P1-high
 effort: M
@@ -8,13 +8,12 @@ complexity: standard
 skill: code-structure
 skills_aux: [documentation]
 scope: lytos-website
-status: 4-review
-branch: "feat/ISS-0045-website-seo-stubs-og"
+status: 5-done
+branch: feat/ISS-0045-website-seo-stubs-og
 depends: []
 created: 2026-04-20
 updated: 2026-04-20
 ---
-
 # ISS-0045 — Fix stub section-index pages + add Open Graph / Twitter Card meta
 
 ## Context
