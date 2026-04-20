@@ -31,9 +31,9 @@ _No issues._
 
 ### 3-in-progress (in dev)
 
-| # | Title | Priority | Effort | Branch |
-|---|-------|----------|--------|--------|
-| [ISS-0038](3-in-progress/ISS-0038-fix-agents-md-casing.md) | Fix AGENTS.md casing for Codex tool — breaks on Linux/CI | P1-high | XS | `fix/ISS-0038-agents-md-casing` |
+| # | Title | Priority | Effort |
+|---|-------|----------|--------|
+| [ISS-0038](3-in-progress/ISS-0038-fix-agents-md-casing.md) | Fix AGENTS.md casing for Codex tool — breaks on Linux/CI | P1-high | XS |
 
 ### 4-review (review/test)
 
