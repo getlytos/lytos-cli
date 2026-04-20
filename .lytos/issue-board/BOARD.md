@@ -31,9 +31,7 @@ _No issues._
 
 ### 3-in-progress (in dev)
 
-| # | Title | Priority | Effort | Branch |
-|---|-------|----------|--------|--------|
-| [ISS-0048](3-in-progress/ISS-0048-review-flow.md) | Introduce review step before close — skill + batch `lyt close` | P1-high | S | `feat/ISS-0048-review-flow` |
+_No issues._
 
 ### 4-review (review/test)
 
@@ -44,6 +42,7 @@ _No issues._
 | # | Title | Completed |
 |---|-------|-----------|
 | [ISS-0038](5-done/ISS-0038-fix-agents-md-casing.md) | Fix AGENTS.md casing for Codex tool — breaks on Linux/CI | 2026-04-20 |
+| [ISS-0048](5-done/ISS-0048-review-flow.md) | Introduce review step before close — skill + batch `lyt close` | 2026-04-20 |
 
 ### Done (archived)
 
