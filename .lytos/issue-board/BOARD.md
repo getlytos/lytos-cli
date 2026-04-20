@@ -34,13 +34,11 @@ _No issues._
 
 ### 4-review (review/test)
 
-| # | Title | Priority | Effort | Branch |
-|---|-------|----------|--------|--------|
-| [ISS-0041](4-review/ISS-0041-claim-fetch-check.md) | lyt claim/start: fetch + check origin before moving an issue | P1-high | S | `fix/ISS-0041-claim-fetch-check` |
+_No issues._
 
 ### Done
 
-41 issues archived → [archive/INDEX.md](archive/INDEX.md)
+_No archived issues yet._
 
 ---
 
