@@ -8,10 +8,11 @@ complexity: light
 skill: code-structure
 skills_aux: [documentation]
 scope: lytos-website
-status: 1-backlog
+status: 5-done
 branch: "feat/ISS-0044-website-breadcrumbs"
 depends: []
 created: 2026-04-19
+updated: 2026-04-20
 ---
 
 # ISS-0044 — Breadcrumbs on sub-pages + cross-links between siblings
