@@ -9,6 +9,7 @@ skill: documentation
 status: 4-review
 depends: []
 created: 2026-04-21
+updated: 2026-04-21
 ---
 # ISS-0058 — Update `LYTOS.md` to reflect review-first workflow and bridge preservation
 
@@ -31,3 +32,15 @@ Apply a small documentation update to `method/LYTOS.md` and `.lytos/LYTOS.md` so
 
 - No code-path change in this issue; documentation-only alignment.
 - Bundled and local copies updated together.
+
+## Audit de review — 2026-04-21
+
+**Verdict: GO**
+
+L'audit de review donne un GO.
+
+Points revérifiés :
+
+- `method/LYTOS.md` mentionne bien le flux `3-in-progress -> 4-review -> 5-done`
+- `method/LYTOS.md` mentionne la préservation par défaut des bridge files existants
+- `.lytos/LYTOS.md` est bien synchronisé avec la version bundle

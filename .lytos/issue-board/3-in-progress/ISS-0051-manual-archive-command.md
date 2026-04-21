@@ -8,7 +8,7 @@ complexity: standard
 domain: [cli, board]
 skill: ""
 skills_aux: []
-status: 4-review
+status: 3-in-progress
 branch: "feat/ISS-0051-manual-archive"
 depends: []
 created: 2026-04-21
@@ -118,3 +118,25 @@ This change lives in `lytos-method` (where the hook is installed), not in `lytos
 - **Why not a config knob (`.lytos/config.yml`)?** Lytos avoids hidden config; the explicit flag in the command is sufficient. If multiple projects need different defaults, that's a follow-up.
 - **Backwards compatibility.** Some users currently rely on `lyt board` archiving. Communicate the change in the release notes — and document the equivalent: `lyt board && lyt archive --all` reproduces the old behavior.
 - **Trigger for this issue:** archival behavior surfaced as a friction during the 2026-04-21 conversation about home page restructuring. See the post-task feedback in MEMORY (when added) for the original framing.
+
+## Audit de review — 2026-04-21
+
+**Verdict: NO_GO**
+
+L'audit de review donne un NO_GO. La base CLI existe, mais plusieurs critères explicites de la feature ne sont pas terminés.
+
+Ce qui ne va pas :
+
+- `lyt archive` ne régénère pas `BOARD.md` après archivage ; il demande encore de lancer `lyt board` manuellement
+- `README.md` et `docs/fr/README.md` ne listent pas `lyt archive`
+- la doc website n'a ni page `cli/archive`, ni entrée de sidebar, ni mise à jour de `cli/overview`
+- `method/issue-board` ne documente pas encore le passage manuel vers l'archive
+- le hook git n'autorise pas le cas "archive-only" et aucun follow-up dédié n'a été ouvert ici
+
+Points à corriger :
+
+- faire régénérer `BOARD.md` automatiquement par `lyt archive`
+- ajouter `lyt archive` à la doc CLI locale et website
+- créer les pages `cli/archive` EN/FR et l'entrée `astro.config.mjs`
+- mettre à jour `method/issue-board` pour documenter `5-done -> archive`
+- traiter le hook archive-only dans le bon repo, ou ouvrir l'issue de suivi explicitement

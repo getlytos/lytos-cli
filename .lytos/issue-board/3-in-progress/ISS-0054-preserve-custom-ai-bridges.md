@@ -8,7 +8,7 @@ complexity: standard
 domain: [cli, init, upgrade]
 skill: 
 skills_aux: [code-structure, documentation]
-status: 4-review
+status: 3-in-progress
 branch: feat/ISS-0054-preserve-custom-ai-bridges
 depends: []
 created: 2026-04-21
@@ -81,3 +81,20 @@ The desired behavior is not "never touch bridges again". It is "preserve user-au
   - explicit overwrite with `--overwrite-bridges`
   - nested bridge preservation (`.github/copilot-instructions.md`)
 - Full test suite green at review handoff: `112/112`.
+
+## Audit de review — 2026-04-21
+
+**Verdict: NO_GO**
+
+L'audit de review donne un NO_GO. Le comportement CLI et les tests sont bons, mais la documentation livrée n'explique pas encore la politique de préservation comme demandé.
+
+Ce qui ne va pas :
+
+- `README.md` ne documente pas la préservation par défaut des bridge files existants
+- la doc utilisateur n'explique pas clairement quand utiliser `--overwrite-bridges`
+
+Points à corriger :
+
+- ajouter une section explicite dans `README.md` sur "preserve by default / overwrite explicitly"
+- répliquer l'information dans `docs/fr/README.md`
+- ajouter au moins un exemple concret de ré-init avec `--force --overwrite-bridges`

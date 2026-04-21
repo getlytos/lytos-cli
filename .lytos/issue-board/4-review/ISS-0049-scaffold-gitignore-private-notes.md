@@ -12,7 +12,7 @@ status: 4-review
 branch: "feat/ISS-0049-scaffold-gitignore"
 depends: []
 created: 2026-04-20
-updated: 2026-04-20
+updated: 2026-04-21
 ---
 
 # ISS-0049 — `lyt init`: scaffold a `.lytos/.gitignore` protecting `6-private-notes/`
@@ -84,3 +84,16 @@ What to do:
 - [x] Extend `lyt upgrade` to recreate `issue-board/6-private-notes/.gitkeep` and its parent folder when the existing install is missing them. *(PR #3, branch `fix/ISS-0049-upgrade-private-notes`)*
 - [x] Add a regression test in `tests/commands/upgrade.test.ts` covering a legacy project without `.lytos/.gitignore` and without `issue-board/6-private-notes/.gitkeep`. *(2 tests added in PR #3: `--force` recreation + `--dry-run` preview)*
 - [ ] Re-validate that `lyt init` and `lyt upgrade` provide the same level of protection against accidental commits of private notes. *(manual check by reviewer after merge)*
+
+## Audit de review — 2026-04-21
+
+**Verdict: GO**
+
+L'audit de review donne un GO.
+
+Points revérifiés :
+
+- `method/.gitignore` est bien bundle puis copié dans `.lytos/.gitignore`
+- `lyt init` crée `issue-board/6-private-notes/.gitkeep`
+- `lyt upgrade` recrée maintenant les `.gitkeep` manquants pour les projets legacy
+- les régressions sont couvertes dans `tests/commands/init.test.ts` et `tests/commands/upgrade.test.ts`

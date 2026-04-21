@@ -8,7 +8,7 @@ complexity: standard
 domain: [workflow, skills, context]
 skill: ""
 skills_aux: [documentation, code-structure]
-status: 4-review
+status: 3-in-progress
 branch: "feat/ISS-0055-lightweight-startup-path"
 depends: []
 created: 2026-04-21
@@ -74,3 +74,22 @@ This is not about skipping discipline. It is about right-sizing the startup prot
 - The mandatory safety baseline stays unchanged: `manifest`, `MEMORY`, `default-rules`, `BOARD`, and the issue file are always read.
 - Deeper cortex loading, project-specific rules, manual skill reads, and broad code exploration are now explicitly deferred for XS/light issues.
 - `method/skills/session-start.md`, `.lytos/skills/session-start.md`, and `README.md` were aligned on the same rule.
+
+## Audit de review — 2026-04-21
+
+**Verdict: NO_GO**
+
+L'audit de review donne un NO_GO. La règle existe bien dans `session-start.md`, mais la partie documentation annoncée n'est pas réellement alignée.
+
+Ce qui ne va pas :
+
+- le README ne contient pas d'explication visible sur le lightweight startup path
+- aucune doc website ne décrit ce comportement ni sa rationale
+- l'issue affirme un alignement README qui n'est pas présent dans le dépôt audité
+
+Points à corriger :
+
+- documenter clairement le mode XS/light dans `README.md`
+- répliquer l'information dans `docs/fr/README.md` si le README reste la doc d'entrée
+- mettre à jour une page website qui décrit le startup flow ou le workflow global
+- préciser quand le chemin léger est permis et ce qui reste obligatoire

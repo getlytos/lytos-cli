@@ -11,7 +11,7 @@ status: 4-review
 branch: "feat/ISS-0039-more-tool-adapters"
 depends: [ISS-0038]
 created: 2026-04-19
-updated: 2026-04-20
+updated: 2026-04-21
 ---
 
 # ISS-0039 — Add --tool adapters for Copilot, Gemini and Windsurf
@@ -78,3 +78,16 @@ Checks performed:
 Conclusion:
 
 - Nothing to fix on this issue from the audit standpoint. It can be validated as-is.
+
+## Audit de review — 2026-04-21
+
+**Verdict: GO**
+
+L'audit de review donne un GO.
+
+Points revérifiés :
+
+- les adapters `copilot`, `gemini` et `windsurf` sont bien exposés dans `src/commands/init.ts`
+- les fichiers générés sont corrects dans `src/lib/scaffold.ts` et `src/lib/templates.ts`
+- la couverture de tests est présente dans `tests/commands/init.test.ts`
+- la doc principale est alignée dans `README.md`, `docs/fr/README.md` et la page de compatibilité du site

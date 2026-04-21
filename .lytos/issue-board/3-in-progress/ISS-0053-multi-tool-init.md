@@ -8,7 +8,7 @@ complexity: standard
 domain: [cli, init]
 skill: ""
 skills_aux: []
-status: 4-review
+status: 3-in-progress
 branch: "feat/ISS-0053-multi-tool-init"
 depends: []
 created: 2026-04-21
@@ -78,3 +78,22 @@ If `none` is in the list with other tools, treat it as a no-op for that slot (ge
 - **Why it matters**: surfaced by a user running `lyt init` on a team repo where devs use different AI tools. Expectation: "if I install Lytos, every bridge is there so anyone can pick up the repo with their tool of choice."
 - **Non-goal**: we don't generate a `.claude/` directory or anything inside tool-owned dotfolders. Each tool's own settings stay untouched. Lytos only writes the **instruction file** each tool expects at the documented path.
 - **Follow-up candidate**: `lyt upgrade --add-tool <name>` to add a bridge to an existing install without re-running `lyt init`.
+
+## Audit de review — 2026-04-21
+
+**Verdict: NO_GO**
+
+L'audit de review donne un NO_GO. La mécanique CLI multi-tool fonctionne, mais la documentation promise n'est pas au niveau attendu.
+
+Ce qui ne va pas :
+
+- `README.md` et `docs/fr/README.md` ne montrent pas d'exemple multi-tool ni `--all-tools`
+- les pages website `cli/init` EN/FR ne documentent pas le mode multi-tool
+- les pages website `cli/init` décrivent encore des options obsolètes, ce qui contredit le comportement réel
+
+Points à corriger :
+
+- ajouter des exemples `--tool claude,cursor,copilot` et `--all-tools` dans les README EN/FR
+- mettre à jour `../lytos-website/src/content/docs/en/cli/init.md`
+- mettre à jour `../lytos-website/src/content/docs/fr/cli/init.md`
+- vérifier que la doc explique bien le comportement de `none` dans une liste mixte

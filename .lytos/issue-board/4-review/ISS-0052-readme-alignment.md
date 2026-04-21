@@ -69,3 +69,16 @@ Mirror the EN structure 1:1 with French copy aligned to the website's FR home (s
 
 - This is the first of three parallel README alignments (cli, method, org-profile). Track method and org as separate issues in their respective repos.
 - The website FR home wording (`src/content/docs/fr/index.mdx`) is the source of truth for the French translations; reuse verbatim where it fits to keep voice consistent.
+
+## Audit de review — 2026-04-21
+
+**Verdict: GO**
+
+L'audit de review donne un GO.
+
+Points revérifiés :
+
+- `README.md` suit bien la structure hook + audience + install + commandes
+- `docs/fr/README.md` existe et renvoie vers la version anglaise
+- `package.json` a une description et des keywords alignés avec la discoverability visée
+- `npm pack --dry-run --cache /tmp/lytos-npm-cache` confirme que `README.md` part bien dans le package publié
