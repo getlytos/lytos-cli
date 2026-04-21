@@ -1,7 +1,7 @@
 {
   "name": "lytos-cli",
   "version": "0.10.0",
-  "description": "CLI tool for Lytos — a human-first method for working with AI agents",
+  "description": "Markdown-based context for AI coding agents — manifest, rules, skills, memory, issue board. Lives in your repo. Model-independent.",
   "type": "module",
   "bin": {
     "lyt": "dist/cli.js",
@@ -31,7 +31,17 @@
     "methodology",
     "skills",
     "memory",
-    "rules"
+    "rules",
+    "issue-board",
+    "kanban",
+    "context-engineering",
+    "ai-coding",
+    "claude-code",
+    "cursor",
+    "codex",
+    "copilot",
+    "gemini",
+    "windsurf"
   ],
   "author": "Frederic Galliné <frederic@galline.fr> (https://ubeez.com)",
   "license": "MIT",

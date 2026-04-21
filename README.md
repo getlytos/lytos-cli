@@ -3,19 +3,36 @@
 [![npm](https://img.shields.io/npm/v/lytos-cli)](https://www.npmjs.com/package/lytos-cli)
 [![CI](https://github.com/getlytos/lytos-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/getlytos/lytos-cli/actions/workflows/ci.yml)
 
-> The command-line tool for [Lytos](https://lytos.org) — a human-first method for working with AI agents.
+> The command-line tool for [Lytos](https://lytos.org) — a human-first method for working with AI coding agents.
 
-**[Documentation — lytos.org](https://lytos.org)** · **[The method](https://github.com/getlytos/lytos-method)**
+**[Documentation — lytos.org](https://lytos.org)** · **[The method](https://github.com/getlytos/lytos-method)** · **[Lire en français](./docs/fr/README.md)**
 
 ---
 
-### What this tool does
+## Do you develop with AI?
 
-Lytos is a method. The CLI makes it effortless to adopt.
+You switch models. You open a new session. You go from Claude to Codex.
+And each time, the same ritual: re-supply the context, repeat the conventions, correct the same drifts.
 
-One command scaffolds the full `.lytos/` structure in any project — manifest, skills, rules, issue board, memory. From that point on, any AI agent reads the project's context at the start of each session. No re-explaining. No generic output.
+Meanwhile, the debt sets in. Today's generated code no longer matches yesterday's. Conventions slip. The project grows faster than the AI's ability to find its way in it.
 
-The CLI also manages the workflow: starting and closing issues, regenerating the board, validating the structure, diagnosing problems.
+Many have come to accept this friction as normal. It isn't.
+
+**Lytos addresses this by anchoring the context where it belongs: in the repo.**
+
+---
+
+## Who it's for
+
+| Profile | Typical setup | What Lytos brings |
+|---|---|---|
+| **Vibe-coder / maker** | Claude Code, Codex, AI apps + GitHub | A manifest the AI reads every session. Less re-explaining, a context that compounds. |
+| **Developer** | IDE + Git (GitHub / GitLab) + AI as a tool | Versioned rules, a memory that builds, a board that traces the work — in the repo, not in a SaaS. |
+| **Team** | IDE + Git + CI + reviews + product ticketing | Shared manifest, skills, rules. The AI produces in the project's style. Technical specs for the AI live in the repo, next to the code. |
+
+---
+
+## Install
 
 ```bash
 npm install -g lytos-cli
@@ -27,6 +44,8 @@ Or without installing:
 ```bash
 npx lytos-cli init
 ```
+
+In 2 minutes, your repo has its manifest, rules, and board. From there, the AI knows your project.
 
 ![Lytos demo](docs/screenshots/lytos.gif)
 
