@@ -155,4 +155,19 @@ describe("lyt archive", () => {
     const doneDir = join(fixture.cwd, ".lytos", "issue-board", "5-done");
     expect(readdirSync(doneDir)).toContain("ISS-9006-sample.md");
   });
+
+  it("regenerates BOARD.md after archiving so archive counts stay in sync (ISS-0051)", () => {
+    fixture = createEmptyBoardFixture();
+    writeDoneIssue(fixture.cwd, "ISS-9100", daysAgoISO(30));
+
+    const result = run("archive --all", fixture.cwd);
+    expect(result.exitCode).toBe(0);
+
+    const boardPath = join(fixture.cwd, ".lytos", "issue-board", "BOARD.md");
+    expect(existsSync(boardPath)).toBe(true);
+    const board = readFileSync(boardPath, "utf-8");
+    // BOARD.md references the archive index once issues have been archived
+    expect(board).toContain("archive/INDEX.md");
+    expect(result.stderr).toContain("BOARD.md refreshed");
+  });
 });

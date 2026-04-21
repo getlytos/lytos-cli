@@ -34,18 +34,19 @@ _No issues._
 | # | Title | Priority | Effort |
 |---|-------|----------|--------|
 | [ISS-0050](3-in-progress/ISS-0050-cursor-rules-modern-convention.md) | lyt init --tool cursor: use modern .cursor/rules/*.mdc convention | P2-normal | XS |
-| [ISS-0051](3-in-progress/ISS-0051-manual-archive-command.md) | Replace auto-archive in lyt board with a manual lyt archive command | P2-normal | M |
 | [ISS-0053](3-in-progress/ISS-0053-multi-tool-init.md) | lyt init: scaffold multiple tool bridges in one run (team-mixed case) | P2-normal | S |
 | [ISS-0054](3-in-progress/ISS-0054-preserve-custom-ai-bridges.md) | Preserve custom AI bridge files on init/upgrade instead of overwriting them | P1-high | M |
 | [ISS-0055](3-in-progress/ISS-0055-lightweight-startup-path-xs-issues.md) | Add a lightweight startup path for XS issues to reduce context overhead | P1-high | M |
 
 ### 4-review (review/test)
 
-_No issues._
+| # | Title | Priority | Effort |
+|---|-------|----------|--------|
+| [ISS-0051](4-review/ISS-0051-manual-archive-command.md) | Replace auto-archive in lyt board with a manual lyt archive command | P2-normal | M |
 
 ### Done
 
-_No archived issues yet._
+47 issues archived → [archive/INDEX.md](archive/INDEX.md)
 
 ---
 
