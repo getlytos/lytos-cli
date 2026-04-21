@@ -7,7 +7,7 @@
 
 import { describe, it, expect, afterEach } from "vitest";
 import { execSync } from "child_process";
-import { readFileSync } from "fs";
+import { readFileSync, readdirSync, existsSync } from "fs";
 import { resolve, join } from "path";
 import {
   createBoardFixture,
@@ -60,16 +60,15 @@ describe("lytos board", () => {
     expect(board).toContain("Setup database");
     expect(board).toContain("Create REST API");
 
-    // Done issues are archived — board shows archive summary
-    expect(board).toContain("archive/INDEX.md");
-
-    // ISS-0003 should be in archive INDEX
-    const index = readFileSync(
-      join(fixture.cwd, ".lytos", "issue-board", "archive", "INDEX.md"),
-      "utf-8"
-    );
-    expect(index).toContain("ISS-0003");
-    expect(index).toContain("Initialize project");
+    // `lyt board` is read-only on the filesystem since ISS-0051:
+    // archival is driven manually by `lyt archive`. ISS-0003 stays in
+    // 5-done/ and no archive index is written.
+    const doneDir = join(fixture.cwd, ".lytos", "issue-board", "5-done");
+    expect(readdirSync(doneDir)).toContain("ISS-0003-init-project.md");
+    expect(
+      existsSync(join(fixture.cwd, ".lytos", "issue-board", "archive", "INDEX.md"))
+    ).toBe(false);
+    expect(board).toContain("No archived issues yet");
 
     // Next number should be ISS-0005
     expect(board).toContain("ISS-0005");

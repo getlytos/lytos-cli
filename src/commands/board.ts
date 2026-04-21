@@ -13,7 +13,6 @@ import {
   collectIssues,
   generateBoardMarkdown,
   boardToJson,
-  archiveIssues,
   countArchived,
 } from "../lib/board-generator.js";
 import { displayBoard } from "../lib/board-display.js";
@@ -85,10 +84,8 @@ export const boardCommand = new Command("board")
       process.exit(2);
     }
 
-    // Archive completed issues from 5-done/
-    archiveIssues(boardDir);
-
-    // Collect issues
+    // Collect issues. `lyt board` is read-only on the filesystem since
+    // ISS-0051 — archival is driven explicitly by `lyt archive`.
     const data = collectIssues(boardDir);
     const archivedCount = countArchived(boardDir);
 

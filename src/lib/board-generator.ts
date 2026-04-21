@@ -97,21 +97,57 @@ function writeArchiveIndex(archiveDir: string, issues: ArchivedIssue[]): void {
   writeFileSync(join(archiveDir, "INDEX.md"), lines.join("\n"), "utf-8");
 }
 
-export function archiveIssues(boardDir: string): number {
+export interface ArchiveOptions {
+  /**
+   * Only archive issues whose `updated` date is at least this many days old.
+   * Defaults to `Infinity` (archive nothing) so callers must opt in explicitly.
+   * The `lyt archive` command passes `7` by default; `--all` / `--older-than 0d`
+   * passes `0` to archive everything.
+   */
+  olderThanDays?: number;
+  /** Preview only — do not move files or write the index. */
+  dryRun?: boolean;
+}
+
+export interface ArchiveMove {
+  id: string;
+  ageDays: number;
+  quarter: string;
+}
+
+export interface ArchiveResult {
+  moved: ArchiveMove[];
+  skippedTooRecent: Array<{ id: string; ageDays: number }>;
+}
+
+function daysBetween(fromISO: string, today: Date): number {
+  const from = new Date(fromISO + "T00:00:00Z");
+  if (Number.isNaN(from.getTime())) return 0;
+  const diffMs = today.getTime() - from.getTime();
+  return Math.floor(diffMs / 86_400_000);
+}
+
+export function archiveIssues(
+  boardDir: string,
+  options: ArchiveOptions = {}
+): ArchiveResult {
+  const result: ArchiveResult = { moved: [], skippedTooRecent: [] };
   const doneDir = join(boardDir, "5-done");
   const archiveDir = join(boardDir, "archive");
 
-  if (!existsSync(doneDir)) return 0;
+  if (!existsSync(doneDir)) return result;
 
   const files = readdirSync(doneDir)
     .filter(f => f.startsWith("ISS-") && f.endsWith(".md"))
     .sort();
 
-  if (files.length === 0) return 0;
+  if (files.length === 0) return result;
 
   const existing = readArchiveIndex(archiveDir);
   const existingIds = new Set(existing.map(i => i.id));
   const newEntries: ArchivedIssue[] = [];
+  const olderThanDays = options.olderThanDays ?? Infinity;
+  const today = new Date();
 
   for (const file of files) {
     const srcPath = join(doneDir, file);
@@ -123,22 +159,32 @@ export function archiveIssues(boardDir: string): number {
     if (existingIds.has(id)) continue;
 
     const completed = typeof fm.updated === "string" ? fm.updated : new Date().toISOString().slice(0, 10);
+    const ageDays = daysBetween(completed, today);
+
+    if (ageDays < olderThanDays) {
+      result.skippedTooRecent.push({ id, ageDays });
+      continue;
+    }
+
     const quarter = dateToQuarter(completed);
     const title = typeof fm.title === "string" ? fm.title : "?";
     const tags = Array.isArray(fm.tags) ? fm.tags : [];
 
-    const quarterDir = join(archiveDir, quarter);
-    mkdirSync(quarterDir, { recursive: true });
-    renameSync(srcPath, join(quarterDir, file));
+    if (!options.dryRun) {
+      const quarterDir = join(archiveDir, quarter);
+      mkdirSync(quarterDir, { recursive: true });
+      renameSync(srcPath, join(quarterDir, file));
+    }
 
     newEntries.push({ id, title, tags, completed, quarter });
+    result.moved.push({ id, ageDays, quarter });
   }
 
-  if (newEntries.length > 0) {
+  if (!options.dryRun && newEntries.length > 0) {
     writeArchiveIndex(archiveDir, [...existing, ...newEntries]);
   }
 
-  return newEntries.length;
+  return result;
 }
 
 export function countArchived(boardDir: string): number {

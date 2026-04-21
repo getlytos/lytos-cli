@@ -3,6 +3,7 @@ import { execSync } from "child_process";
 import { createRequire } from "module";
 import { initCommand } from "./commands/init.js";
 import { boardCommand } from "./commands/board.js";
+import { archiveCommand } from "./commands/archive.js";
 import { lintCommand } from "./commands/lint.js";
 import { doctorCommand } from "./commands/doctor.js";
 import { showCommand } from "./commands/show.js";
@@ -26,6 +27,7 @@ program
 
 program.addCommand(initCommand);
 program.addCommand(boardCommand);
+program.addCommand(archiveCommand);
 program.addCommand(lintCommand);
 program.addCommand(doctorCommand);
 program.addCommand(showCommand);
