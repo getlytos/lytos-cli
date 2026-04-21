@@ -196,6 +196,72 @@ describe("lytos init", () => {
     expect(entries).not.toContain("agents.md");
   });
 
+  it("scaffolds multiple bridges when --tool is a CSV (ISS-0053)", () => {
+    fixture = createEmptyFixture();
+    const result = run(
+      'init --name "Test" --tool claude,cursor,copilot --yes',
+      fixture.cwd
+    );
+
+    expect(result.exitCode).toBe(0);
+    expect(existsSync(join(fixture.cwd, "CLAUDE.md"))).toBe(true);
+    expect(existsSync(join(fixture.cwd, ".cursor", "rules", "lytos.mdc"))).toBe(true);
+    expect(existsSync(join(fixture.cwd, ".github", "copilot-instructions.md"))).toBe(true);
+    // Unrequested tools stay absent
+    expect(existsSync(join(fixture.cwd, "AGENTS.md"))).toBe(false);
+    expect(existsSync(join(fixture.cwd, "GEMINI.md"))).toBe(false);
+    expect(existsSync(join(fixture.cwd, ".windsurfrules"))).toBe(false);
+  });
+
+  it("scaffolds every bridge when --all-tools (ISS-0053)", () => {
+    fixture = createEmptyFixture();
+    const result = run('init --name "Test" --all-tools --yes', fixture.cwd);
+
+    expect(result.exitCode).toBe(0);
+    expect(existsSync(join(fixture.cwd, "CLAUDE.md"))).toBe(true);
+    expect(existsSync(join(fixture.cwd, ".cursor", "rules", "lytos.mdc"))).toBe(true);
+    expect(existsSync(join(fixture.cwd, "AGENTS.md"))).toBe(true);
+    expect(existsSync(join(fixture.cwd, ".github", "copilot-instructions.md"))).toBe(true);
+    expect(existsSync(join(fixture.cwd, "GEMINI.md"))).toBe(true);
+    expect(existsSync(join(fixture.cwd, ".windsurfrules"))).toBe(true);
+  });
+
+  it("tolerates whitespace and dedupes in --tool CSV (ISS-0053)", () => {
+    fixture = createEmptyFixture();
+    const result = run(
+      'init --name "Test" --tool " claude , cursor , claude " --yes',
+      fixture.cwd
+    );
+
+    expect(result.exitCode).toBe(0);
+    expect(existsSync(join(fixture.cwd, "CLAUDE.md"))).toBe(true);
+    expect(existsSync(join(fixture.cwd, ".cursor", "rules", "lytos.mdc"))).toBe(true);
+  });
+
+  it("exits 2 when --tool contains an unknown value (ISS-0053)", () => {
+    fixture = createEmptyFixture();
+    const result = run(
+      'init --name "Test" --tool claude,not-a-tool --yes',
+      fixture.cwd
+    );
+
+    expect(result.exitCode).toBe(2);
+    expect(result.stderr).toContain("Unknown --tool");
+    // No partial scaffold — .lytos/ should not exist
+    expect(existsSync(join(fixture.cwd, ".lytos"))).toBe(false);
+  });
+
+  it("treats 'none' in a mixed CSV as a no-op and still writes the others (ISS-0053)", () => {
+    fixture = createEmptyFixture();
+    const result = run(
+      'init --name "Test" --tool none,claude --yes',
+      fixture.cwd
+    );
+
+    expect(result.exitCode).toBe(0);
+    expect(existsSync(join(fixture.cwd, "CLAUDE.md"))).toBe(true);
+  });
+
   it("fails if .lytos/ already exists", () => {
     fixture = createEmptyFixture();
     // First init

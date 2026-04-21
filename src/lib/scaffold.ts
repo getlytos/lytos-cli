@@ -78,9 +78,28 @@ export type LytosTool =
   | "windsurf"
   | "none";
 
+/**
+ * Every tool that produces a bridge file (i.e. `none` excluded). Used as
+ * the expansion target for `--all-tools` and to validate CLI input.
+ */
+export const ALL_BRIDGE_TOOLS: readonly LytosTool[] = [
+  "claude",
+  "cursor",
+  "codex",
+  "copilot",
+  "gemini",
+  "windsurf",
+];
+
 export interface ScaffoldOptions {
   projectName: string;
-  tool: LytosTool;
+  /**
+   * AI tools to generate bridges for. Each one writes its convention file
+   * (`CLAUDE.md`, `.cursor/rules/lytos.mdc`, `AGENTS.md`, …) so mixed teams
+   * can adopt Lytos without one member forcing a single tool on others.
+   * `none` in the list is a no-op for that slot.
+   */
+  tools: LytosTool[];
   lang: "en" | "fr";
   profile: "vibe-coder" | "developer" | "lead";
   stack: Partial<DetectedStack>;
@@ -232,56 +251,61 @@ export function scaffold(options: ScaffoldOptions): ScaffoldResult {
     }
   }
 
-  // Create AI tool config at project root.
+  // Create AI tool config at project root for each requested tool.
   // Each tool has a well-established file-name convention; see the bridge
-  // table in README.md / the website compatibility page.
-  if (options.tool === "claude") {
-    writeFile(
-      join(options.cwd, "CLAUDE.md"),
-      claudeTemplate(ctx),
-      options.dryRun,
-      result
-    );
-  } else if (options.tool === "cursor") {
-    // Modern Cursor convention: per-rule .mdc file under .cursor/rules/
-    // (the legacy `.cursorrules` flat file is still read but is on the way
-    // out; the new format supports scoping and activation metadata).
-    writeFile(
-      join(options.cwd, ".cursor", "rules", "lytos.mdc"),
-      cursorRulesTemplate(ctx),
-      options.dryRun,
-      result
-    );
-  } else if (options.tool === "codex") {
-    writeFile(
-      join(options.cwd, "AGENTS.md"),
-      codexTemplate(ctx),
-      options.dryRun,
-      result
-    );
-  } else if (options.tool === "copilot") {
-    // Copilot expects `.github/copilot-instructions.md` (nested — writeFile
-    // creates parent dirs).
-    writeFile(
-      join(options.cwd, ".github", "copilot-instructions.md"),
-      copilotTemplate(ctx),
-      options.dryRun,
-      result
-    );
-  } else if (options.tool === "gemini") {
-    writeFile(
-      join(options.cwd, "GEMINI.md"),
-      geminiTemplate(ctx),
-      options.dryRun,
-      result
-    );
-  } else if (options.tool === "windsurf") {
-    writeFile(
-      join(options.cwd, ".windsurfrules"),
-      windsurfTemplate(ctx),
-      options.dryRun,
-      result
-    );
+  // table in README.md / the website compatibility page. Mixed-team repos
+  // can request several tools to have every bridge ready from day one.
+  const uniqueTools = Array.from(new Set(options.tools));
+  for (const tool of uniqueTools) {
+    if (tool === "claude") {
+      writeFile(
+        join(options.cwd, "CLAUDE.md"),
+        claudeTemplate(ctx),
+        options.dryRun,
+        result
+      );
+    } else if (tool === "cursor") {
+      // Modern Cursor convention: per-rule .mdc file under .cursor/rules/
+      // (the legacy `.cursorrules` flat file is still read but is on the way
+      // out; the new format supports scoping and activation metadata).
+      writeFile(
+        join(options.cwd, ".cursor", "rules", "lytos.mdc"),
+        cursorRulesTemplate(ctx),
+        options.dryRun,
+        result
+      );
+    } else if (tool === "codex") {
+      writeFile(
+        join(options.cwd, "AGENTS.md"),
+        codexTemplate(ctx),
+        options.dryRun,
+        result
+      );
+    } else if (tool === "copilot") {
+      // Copilot expects `.github/copilot-instructions.md` (nested — writeFile
+      // creates parent dirs).
+      writeFile(
+        join(options.cwd, ".github", "copilot-instructions.md"),
+        copilotTemplate(ctx),
+        options.dryRun,
+        result
+      );
+    } else if (tool === "gemini") {
+      writeFile(
+        join(options.cwd, "GEMINI.md"),
+        geminiTemplate(ctx),
+        options.dryRun,
+        result
+      );
+    } else if (tool === "windsurf") {
+      writeFile(
+        join(options.cwd, ".windsurfrules"),
+        windsurfTemplate(ctx),
+        options.dryRun,
+        result
+      );
+    }
+    // `none` is a no-op — keeps CSV parsing simple for mixed lists.
   }
 
   // Install git pre-commit hook (branch naming guard)
