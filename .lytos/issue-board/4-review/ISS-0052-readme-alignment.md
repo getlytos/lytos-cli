@@ -8,7 +8,7 @@ complexity: light
 domain: [docs, npm]
 skill: ""
 skills_aux: []
-status: 3-in-progress
+status: 4-review
 branch: "chore/ISS-0052-readme-alignment"
 depends: []
 created: 2026-04-21
