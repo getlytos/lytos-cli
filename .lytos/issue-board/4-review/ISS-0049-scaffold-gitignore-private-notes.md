@@ -71,16 +71,16 @@ Two tiny changes:
 
 ## Audit — 2026-04-21
 
-**Statut : remarques à corriger avant validation**
+**Status: blocking remarks to fix before validation**
 
-Remarque bloquante :
+Blocking remark:
 
-- Le scaffold initial est correct, mais `lyt upgrade` ne recrée pas `issue-board/6-private-notes/.gitkeep` pour les anciens projets.
-- Dans `src/commands/upgrade.ts`, la liste `UPGRADEABLE_FILES` ne contient que des fichiers de méthode, et la boucle d'upgrade n'ajoute que ces fichiers. Elle peut donc restaurer `.lytos/.gitignore`, mais pas recréer `issue-board/6-private-notes/` ni son `.gitkeep`.
-- Vérification manuelle faite le 2026-04-21 : dans un dossier temporaire avec seulement `.lytos/`, `node dist/cli.js upgrade --force` ajoute bien `.lytos/.gitignore`, mais laisse `issue-board/6-private-notes/.gitkeep` absent.
+- The initial scaffold is correct, but `lyt upgrade` doesn't recreate `issue-board/6-private-notes/.gitkeep` for legacy projects.
+- In `src/commands/upgrade.ts`, the `UPGRADEABLE_FILES` list only contains method files, and the upgrade loop only adds those files. It can restore `.lytos/.gitignore`, but cannot recreate `issue-board/6-private-notes/` nor its `.gitkeep`.
+- Manual check on 2026-04-21: in a temp folder with only `.lytos/`, `node dist/cli.js upgrade --force` does add `.lytos/.gitignore`, but leaves `issue-board/6-private-notes/.gitkeep` absent.
 
-Ce qu'il faut faire :
+What to do:
 
-- [x] Étendre `lyt upgrade` pour recréer `issue-board/6-private-notes/.gitkeep` et le dossier parent si l'installation existante en est dépourvue. *(PR #3, branche `fix/ISS-0049-upgrade-private-notes`)*
-- [x] Ajouter un test de régression dans `tests/commands/upgrade.test.ts` couvrant un ancien projet sans `.lytos/.gitignore` et sans `issue-board/6-private-notes/.gitkeep`. *(2 tests ajoutés en PR #3 : recréation `--force` + `--dry-run` preview)*
-- [ ] Revalider ensuite que `lyt init` et `lyt upgrade` garantissent le même niveau de protection contre les commits accidentels de notes privées. *(à faire manuellement par le reviewer après merge)*
+- [x] Extend `lyt upgrade` to recreate `issue-board/6-private-notes/.gitkeep` and its parent folder when the existing install is missing them. *(PR #3, branch `fix/ISS-0049-upgrade-private-notes`)*
+- [x] Add a regression test in `tests/commands/upgrade.test.ts` covering a legacy project without `.lytos/.gitignore` and without `issue-board/6-private-notes/.gitkeep`. *(2 tests added in PR #3: `--force` recreation + `--dry-run` preview)*
+- [ ] Re-validate that `lyt init` and `lyt upgrade` provide the same level of protection against accidental commits of private notes. *(manual check by reviewer after merge)*
