@@ -7,11 +7,11 @@ effort: M
 complexity: standard
 skill: code-structure
 skills_aux: [testing, documentation]
-status: 4-review
+status: 5-done
 branch: "feat/ISS-0039-more-tool-adapters"
 depends: [ISS-0038]
 created: 2026-04-19
-updated: 2026-04-20
+updated: 2026-04-21
 ---
 
 # ISS-0039 — Add --tool adapters for Copilot, Gemini and Windsurf
@@ -62,3 +62,17 @@ Without these adapters, users on those tools have to hand-write a bridge file th
 - Every bridge file points at `.lytos/` and survives `lyt upgrade`
 - Docs list the supported tools with exact file-path convention
 - 7 tests pass (one per tool filename assertion)
+
+## Review verdict — 2026-04-21
+
+**GO**
+
+Pourquoi :
+
+- Les adaptateurs `copilot`, `gemini` et `windsurf` sont bien exposés par `lyt init` et scaffoldés aux bons chemins.
+- Les tests `init` passent et couvrent les trois bridges ajoutés.
+- Le README du CLI et la page de compatibilité du site listent bien ces adaptateurs comme supportés.
+
+Décision :
+
+- La carte passe en `done`.

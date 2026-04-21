@@ -40,6 +40,7 @@
 | ISS-0036 | Reference lytos-learn in method README, trainer kit, and org profile |  | 2026-04-17 | 2026-Q2 |
 | ISS-0037 | Semantic color palette — readable on dark backgrounds, red reserved for errors |  | 2026-04-19 | 2026-Q2 |
 | ISS-0038 | Fix AGENTS.md casing for Codex tool — breaks on Linux/CI |  | 2026-04-20 | 2026-Q2 |
+| ISS-0039 | Add --tool adapters for Copilot, Gemini and Windsurf |  | 2026-04-21 | 2026-Q2 |
 | ISS-0041 | lyt claim/start: fetch + check origin before moving an issue |  | 2026-04-20 | 2026-Q2 |
 | ISS-0044 | [website] Add breadcrumbs to sub-pages + cross-links between siblings |  | 2026-04-20 | 2026-Q2 |
 | ISS-0045 | [website] Replace stub index pages + add Open Graph / Twitter Card meta |  | 2026-04-20 | 2026-Q2 |

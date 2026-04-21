@@ -12,7 +12,7 @@ status: 3-in-progress
 branch: "refactor/ISS-0050-cursor-rules-mdc"
 depends: []
 created: 2026-04-20
-updated: 2026-04-20
+updated: 2026-04-21
 ---
 
 # ISS-0050 — `lyt init --tool cursor` should use `.cursor/rules/*.mdc`
@@ -69,3 +69,25 @@ The discrepancy was spotted during ISS-0039 (addition of Copilot / Gemini / Wind
 - Low-risk refactor: the user-visible surface (`--tool cursor` flag) is unchanged.
 - Backwards compatibility: we can leave the old `.cursorrules` in place for users who created it before this lands — Cursor ignores it if the new `.mdc` takes precedence. The `--migrate-cursor` flag is an opt-in cleanup, not forced.
 - Reference: Cursor docs on [Project Rules](https://docs.cursor.com/context/rules). The `.cursorrules` format is still documented but marked as legacy.
+
+## Review verdict — 2026-04-21
+
+**NO_GO**
+
+Pourquoi :
+
+- Le nouveau bridge `.cursor/rules/lytos.mdc` est bien généré et testé.
+- En revanche, `lyt upgrade` ne gère toujours pas la migration promise depuis un `.cursorrules` existant.
+- Le flag `--migrate-cursor` mentionné dans l'issue n'existe pas.
+- La definition of done demande aussi la prise en charge côté upgrade, ce qui n'est pas livré.
+
+À reprendre :
+
+- Implémenter la migration d'un `.cursorrules` legacy vers `.cursor/rules/lytos.mdc`.
+- Ajouter le flag de migration explicite annoncé par l'issue, ou ajuster l'issue si le choix produit est différent.
+- Ajouter un test dédié dans `tests/commands/upgrade.test.ts` couvrant la migration.
+- Refaire une vérification manuelle du cas upgrade/migration, pas seulement `lyt init --tool cursor`.
+
+Décision :
+
+- La carte repart en `in-progress`.

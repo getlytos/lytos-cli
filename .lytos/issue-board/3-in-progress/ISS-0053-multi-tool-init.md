@@ -8,7 +8,7 @@ complexity: standard
 domain: [cli, init]
 skill: ""
 skills_aux: []
-status: 4-review
+status: 3-in-progress
 branch: "feat/ISS-0053-multi-tool-init"
 depends: []
 created: 2026-04-21
@@ -78,3 +78,24 @@ If `none` is in the list with other tools, treat it as a no-op for that slot (ge
 - **Why it matters**: surfaced by a user running `lyt init` on a team repo where devs use different AI tools. Expectation: "if I install Lytos, every bridge is there so anyone can pick up the repo with their tool of choice."
 - **Non-goal**: we don't generate a `.claude/` directory or anything inside tool-owned dotfolders. Each tool's own settings stay untouched. Lytos only writes the **instruction file** each tool expects at the documented path.
 - **Follow-up candidate**: `lyt upgrade --add-tool <name>` to add a bridge to an existing install without re-running `lyt init`.
+
+## Review verdict — 2026-04-21
+
+**NO_GO**
+
+Pourquoi :
+
+- Le support CSV et `--all-tools` est bien présent, avec tests verts.
+- En revanche, le support du flag répété `--tool claude --tool cursor` n'est pas livré : en l'état, seul le dernier `--tool` est pris en compte.
+- La documentation n'est pas à jour : le README ne montre pas d'exemple multi-outils et les pages website `/cli/init` ne mentionnent pas l'option, tout en gardant la référence legacy à `.cursorrules`.
+
+À reprendre :
+
+- Implémenter réellement le support du flag `--tool` répété, ou réduire explicitement le scope de l'issue si seul le CSV est retenu.
+- Ajouter un test d'intégration couvrant le cas `--tool claude --tool cursor`.
+- Mettre à jour la documentation CLI pour montrer les exemples multi-outils.
+- Mettre à jour les pages website `src/content/docs/{en,fr}/cli/init.md` pour documenter l'option multi-outils et retirer la référence à `.cursorrules`.
+
+Décision :
+
+- La carte repart en `in-progress`.

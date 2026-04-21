@@ -8,11 +8,11 @@ complexity: light
 skill: code-structure
 skills_aux: [testing, documentation]
 scope: lytos-cli
-status: 4-review
+status: 3-in-progress
 branch: "feat/ISS-0049-scaffold-gitignore"
 depends: []
 created: 2026-04-20
-updated: 2026-04-20
+updated: 2026-04-21
 ---
 
 # ISS-0049 — `lyt init`: scaffold a `.lytos/.gitignore` protecting `6-private-notes/`
@@ -68,3 +68,22 @@ Two tiny changes:
 
 - This protection is the kind of thing we should have shipped with the very first `lyt init`. The bug is that nothing leaked yet — not that nothing could have.
 - No migration needed for users who already ran `lyt init` before this fix lands: `lyt upgrade` will pull the new `.gitignore` (and create the folder if missing).
+
+## Review verdict — 2026-04-21
+
+**NO_GO**
+
+Pourquoi :
+
+- Le scaffold initial est correct, mais `lyt upgrade` ne recrée pas `issue-board/6-private-notes/.gitkeep` pour les installs existantes.
+- L'affirmation "and create the folder if missing" n'est donc pas vraie dans l'état actuel.
+
+À reprendre :
+
+- Étendre `lyt upgrade` pour recréer `issue-board/6-private-notes/` et son `.gitkeep` quand ils sont absents.
+- Ajouter un test de régression dans `tests/commands/upgrade.test.ts` qui couvre un ancien projet sans `.lytos/.gitignore` ni `issue-board/6-private-notes/.gitkeep`.
+- Revalider le scénario de migration, pas seulement le scaffold initial.
+
+Décision :
+
+- La carte repart en `in-progress`.
