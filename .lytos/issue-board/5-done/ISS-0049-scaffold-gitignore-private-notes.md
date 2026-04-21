@@ -8,13 +8,12 @@ complexity: light
 skill: code-structure
 skills_aux: [testing, documentation]
 scope: lytos-cli
-status: 4-review
-branch: "feat/ISS-0049-scaffold-gitignore"
+status: 5-done
+branch: feat/ISS-0049-scaffold-gitignore
 depends: []
 created: 2026-04-20
 updated: 2026-04-21
 ---
-
 # ISS-0049 — `lyt init`: scaffold a `.lytos/.gitignore` protecting `6-private-notes/`
 
 ## Context

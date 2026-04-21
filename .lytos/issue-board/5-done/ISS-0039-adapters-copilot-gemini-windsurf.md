@@ -1,19 +1,18 @@
 ---
 id: ISS-0039
-title: "Add --tool adapters for Copilot, Gemini and Windsurf"
+title: Add --tool adapters for Copilot, Gemini and Windsurf
 type: feature
 priority: P1-high
 effort: M
 complexity: standard
 skill: code-structure
 skills_aux: [testing, documentation]
-status: 4-review
-branch: "feat/ISS-0039-more-tool-adapters"
+status: 5-done
+branch: feat/ISS-0039-more-tool-adapters
 depends: [ISS-0038]
 created: 2026-04-19
 updated: 2026-04-21
 ---
-
 # ISS-0039 — Add --tool adapters for Copilot, Gemini and Windsurf
 
 ## Context

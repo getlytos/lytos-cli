@@ -41,16 +41,11 @@ _No issues._
 
 ### 4-review (review/test)
 
-| # | Title | Priority | Effort | Depends |
-|---|-------|----------|--------|---------|
-| [ISS-0039](4-review/ISS-0039-adapters-copilot-gemini-windsurf.md) | Add --tool adapters for Copilot, Gemini and Windsurf | P1-high | M | ISS-0038 |
-| [ISS-0049](4-review/ISS-0049-scaffold-gitignore-private-notes.md) | lyt init: ship a .lytos/.gitignore that protects 6-private-notes/ automatically | P2-normal | XS | — |
-| [ISS-0052](4-review/ISS-0052-readme-alignment.md) | Align lytos-cli README and npm metadata with the website's hook + audience pattern | P2-normal | S | — |
-| [ISS-0058](4-review/ISS-0058-update-lytos-md-review-first.md) | Update LYTOS.md to reflect review-first workflow and bridge preservation | P2-normal | XS | — |
+_No issues._
 
 ### Done
 
-43 issues archived → [archive/INDEX.md](archive/INDEX.md)
+_No archived issues yet._
 
 ---
 

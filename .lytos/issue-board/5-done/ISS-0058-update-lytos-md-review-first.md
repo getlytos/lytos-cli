@@ -6,7 +6,7 @@ priority: P2-normal
 effort: XS
 complexity: light
 skill: documentation
-status: 4-review
+status: 5-done
 depends: []
 created: 2026-04-21
 updated: 2026-04-21

@@ -1,20 +1,19 @@
 ---
 id: ISS-0052
-title: "Align lytos-cli README and npm metadata with the website's hook + audience pattern"
+title: Align lytos-cli README and npm metadata with the website's hook + audience pattern
 type: chore
 priority: P2-normal
 effort: S
 complexity: light
 domain: [docs, npm]
-skill: ""
+skill: 
 skills_aux: []
-status: 4-review
-branch: "chore/ISS-0052-readme-alignment"
+status: 5-done
+branch: chore/ISS-0052-readme-alignment
 depends: []
 created: 2026-04-21
 updated: 2026-04-21
 ---
-
 # ISS-0052 — Align CLI README and npm metadata with the website pattern
 
 ## Context
