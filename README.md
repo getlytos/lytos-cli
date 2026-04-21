@@ -15,6 +15,8 @@ Lytos is a method. The CLI makes it effortless to adopt.
 
 One command scaffolds the full `.lytos/` structure in any project — manifest, skills, rules, issue board, memory. From that point on, any AI agent reads the project's context at the start of each session. No re-explaining. No generic output.
 
+For trivial issues explicitly tagged `effort: XS` and `complexity: light`, the startup protocol now supports a lightweight path: keep the mandatory safety baseline (`manifest`, `MEMORY`, `default-rules`, `BOARD`, issue file), then defer deeper memory, project-specific rules, and broad code exploration until the task actually needs them.
+
 The CLI also manages the workflow: starting and closing issues, regenerating the board, validating the structure, diagnosing problems.
 
 ```bash
@@ -87,6 +89,8 @@ project/
 ```
 
 `lyt init` also detects the project's stack (language, framework, test runner, package manager) and pre-fills the manifest. It generates the appropriate adapter file for the chosen AI tool — `CLAUDE.md`, `.cursor/rules/lytos.mdc`, `AGENTS.md`, `.github/copilot-instructions.md`, `GEMINI.md`, or `.windsurfrules`.
+
+When re-running `lyt init --force`, existing AI bridge files are preserved by default so project-specific instructions are not lost. Use `--overwrite-bridges` only when you explicitly want a fresh generated bridge.
 
 A pre-commit hook is installed to enforce branch naming conventions (`type/ISS-XXXX-slug`). This prevents untracked work on `main` — regardless of which AI tool or model is used.
 
