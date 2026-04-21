@@ -8,7 +8,7 @@ complexity: standard
 domain: [cli, board]
 skill: ""
 skills_aux: []
-status: 1-backlog
+status: 3-in-progress
 branch: "feat/ISS-0051-manual-archive"
 depends: []
 created: 2026-04-21
