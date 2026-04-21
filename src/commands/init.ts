@@ -10,13 +10,47 @@ import { existsSync } from "fs";
 import { basename, resolve } from "path";
 import { createInterface } from "readline";
 import { detectStack } from "../lib/detect-stack.js";
-import { scaffold } from "../lib/scaffold.js";
+import { scaffold, ALL_BRIDGE_TOOLS, type LytosTool } from "../lib/scaffold.js";
 import { info, ok, warn, error, bold, green, blue, cyan, dim, yellow } from "../lib/output.js";
 import { checkForUpdates } from "../lib/update-check.js";
 import { createRequire } from "module";
 
 const _require = createRequire(import.meta.url);
 const { version: VERSION } = _require("../package.json");
+
+const VALID_TOOL_VALUES: readonly LytosTool[] = [
+  "claude",
+  "cursor",
+  "codex",
+  "copilot",
+  "gemini",
+  "windsurf",
+  "none",
+];
+
+/**
+ * Parse a CSV / single value into a validated, de-duplicated list of tools.
+ * Empty input returns []. `none` is preserved so callers can detect the
+ * explicit "no bridge" intent and behave accordingly.
+ */
+export function parseToolsInput(raw: string): LytosTool[] {
+  const seen = new Set<LytosTool>();
+  const out: LytosTool[] = [];
+  for (const piece of raw.split(",")) {
+    const value = piece.trim().toLowerCase();
+    if (!value) continue;
+    if (!(VALID_TOOL_VALUES as readonly string[]).includes(value)) {
+      throw new Error(
+        `Unknown --tool "${value}". Valid values: ${VALID_TOOL_VALUES.join(", ")}.`
+      );
+    }
+    const tool = value as LytosTool;
+    if (seen.has(tool)) continue;
+    seen.add(tool);
+    out.push(tool);
+  }
+  return out;
+}
 
 function prompt(question: string, defaultValue?: string): Promise<string> {
   const rl = createInterface({
@@ -212,9 +246,14 @@ export const initCommand = new Command("init")
   .description("Scaffold Lytos in your project")
   .option("--name <name>", "Project name")
   .option(
-    "--tool <tool>",
-    "AI tool to configure (claude, cursor, codex, copilot, gemini, windsurf, none)",
+    "--tool <tools>",
+    "AI tool(s) to configure. Accepts a single value or a comma-separated list (e.g. claude,cursor,copilot). Valid values: claude, cursor, codex, copilot, gemini, windsurf, none.",
     ""
+  )
+  .option(
+    "--all-tools",
+    "Scaffold bridges for every shipping adapter (claude, cursor, codex, copilot, gemini, windsurf). Useful for mixed-team repos.",
+    false
   )
   .option(
     "--profile <profile>",
@@ -292,9 +331,19 @@ export const initCommand = new Command("init")
     }
     projectName = projectName || basename(cwd);
 
-    // Get AI tool
-    let tool = opts.tool;
-    if (!tool && !opts.yes) {
+    // Resolve AI tools. `--all-tools` wins if set; otherwise honor `--tool`
+    // (which accepts a CSV); otherwise ask interactively (unless `--yes`).
+    let tools: LytosTool[] = [];
+    if (opts.allTools) {
+      tools = [...ALL_BRIDGE_TOOLS];
+    } else if (opts.tool) {
+      try {
+        tools = parseToolsInput(opts.tool);
+      } catch (e) {
+        error(e instanceof Error ? e.message : String(e));
+        process.exit(2);
+      }
+    } else if (!opts.yes) {
       const choice = await promptChoice(
         lang === "fr" ? "Quel outil IA utilises-tu ?" : "Which AI tool do you use?",
         [
@@ -304,18 +353,37 @@ export const initCommand = new Command("init")
           { key: "4", label: "GitHub Copilot" },
           { key: "5", label: "Gemini CLI" },
           { key: "6", label: "Windsurf" },
-          { key: "7", label: lang === "fr" ? "Autre / Aucun" : "Other / None" },
+          { key: "7", label: lang === "fr" ? "Plusieurs (CSV)" : "Multiple (CSV)" },
+          { key: "8", label: lang === "fr" ? "Tous les outils" : "All tools" },
+          { key: "9", label: lang === "fr" ? "Autre / Aucun" : "Other / None" },
         ]
       );
-      tool =
-        choice === "1" ? "claude" :
-        choice === "2" ? "cursor" :
-        choice === "3" ? "codex" :
-        choice === "4" ? "copilot" :
-        choice === "5" ? "gemini" :
-        choice === "6" ? "windsurf" : "none";
+      if (choice === "7") {
+        const csv = await prompt(
+          lang === "fr"
+            ? "Liste CSV (ex: claude,cursor,copilot)"
+            : "CSV list (e.g. claude,cursor,copilot)"
+        );
+        try {
+          tools = parseToolsInput(csv);
+        } catch (e) {
+          error(e instanceof Error ? e.message : String(e));
+          process.exit(2);
+        }
+      } else if (choice === "8") {
+        tools = [...ALL_BRIDGE_TOOLS];
+      } else {
+        const single =
+          choice === "1" ? "claude" :
+          choice === "2" ? "cursor" :
+          choice === "3" ? "codex" :
+          choice === "4" ? "copilot" :
+          choice === "5" ? "gemini" :
+          choice === "6" ? "windsurf" : "none";
+        tools = [single as LytosTool];
+      }
     }
-    tool = tool || "none";
+    if (tools.length === 0) tools = ["none"];
 
     // Dry run notice
     if (opts.dryRun) {
@@ -330,7 +398,7 @@ export const initCommand = new Command("init")
 
     const result = scaffold({
       projectName,
-      tool: tool as "claude" | "cursor" | "codex" | "copilot" | "gemini" | "windsurf" | "none",
+      tools,
       lang,
       profile,
       stack,
