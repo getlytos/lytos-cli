@@ -41,9 +41,9 @@ export interface CursorMigrationResult {
 export function wrapLegacyRules(legacyContent: string): string {
   const frontMatter = [
     "---",
-    "alwaysApply: true",
+    'description: "Project rules migrated from legacy .cursorrules"',
     'globs: ["**/*"]',
-    "description: Project rules migrated from legacy .cursorrules",
+    "alwaysApply: true",
     "---",
     "",
   ].join("\n");
