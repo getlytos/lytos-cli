@@ -39,12 +39,11 @@ _Aucune issue._
 | [ISS-0053](3-in-progress/ISS-0053-multi-tool-init.md) | lyt init: scaffold multiple tool bridges in one run (team-mixed case) | P2-normal | S |
 | [ISS-0054](3-in-progress/ISS-0054-preserve-custom-ai-bridges.md) | Preserve custom AI bridge files on init/upgrade instead of overwriting them | P1-high | M |
 | [ISS-0055](3-in-progress/ISS-0055-lightweight-startup-path-xs-issues.md) | Add a lightweight startup path for XS issues to reduce context overhead | P1-high | M |
+| [ISS-0059](3-in-progress/ISS-0059-lyt-review-command.md) | Add lyt review command for cross-model code audit | P1-high | M |
 
 ### 4-review (review/test)
 
-| # | Titre | Priorité | Effort |
-|---|-------|----------|--------|
-| [ISS-0059](4-review/ISS-0059-lyt-review-command.md) | Add lyt review command for cross-model code audit | P1-high | M |
+_Aucune issue._
 
 ### 5-done (terminé)
 
