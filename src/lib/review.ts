@@ -11,7 +11,7 @@
  */
 
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFileSync } from "fs";
-import { execSync } from "child_process";
+import { execFileSync } from "child_process";
 import { join, dirname } from "path";
 import { parseFrontmatter } from "./frontmatter.js";
 
@@ -81,25 +81,30 @@ function safeRead(path: string): string {
   }
 }
 
+function issueBranch(issueBody: string): string | null {
+  const fm = parseFrontmatter(issueBody);
+  if (!fm) return null;
+  const branch = fm.branch;
+  return typeof branch === "string" && branch.trim().length > 0
+    ? branch.trim()
+    : null;
+}
+
 /**
- * Run `git diff main...HEAD` to capture the branch's work. The caller
- * is expected to have checked out the PR branch first; we document that
- * contract in the command help, not enforce it here.
- *
- * We deliberately run from `cwd` and let any error surface as an empty
- * diff rather than throwing — a prompt with "no diff available" is more
- * useful than a hard failure.
+ * Capture the implementation diff for the branch declared in the issue
+ * frontmatter. Falling back to HEAD is a last resort for older issues
+ * that predate the branch field.
  */
-function tryGitDiff(cwd: string): string {
+function tryGitDiff(cwd: string, diffRef: string): string {
   try {
-    const out = execSync("git diff main...HEAD", {
+    const out = execFileSync("git", ["diff", `main...${diffRef}`], {
       cwd,
       encoding: "utf-8",
       maxBuffer: 20 * 1024 * 1024,
     });
-    return out || "(no diff — branch might be up to date with main)";
+    return out || `(no diff — ${diffRef} might already match main)`;
   } catch (err) {
-    return `(git diff failed: ${err instanceof Error ? err.message : String(err)})`;
+    return `(git diff main...${diffRef} failed: ${err instanceof Error ? err.message : String(err)})`;
   }
 }
 
@@ -121,7 +126,9 @@ export function buildPrompt(opts: BuildPromptOptions): string {
     safeRead(join(lytosDir, "skills", "code-review", "SKILL.md")) ||
     safeRead(join(lytosDir, "skills", "code-review.md"));
   const issueBody = safeRead(opts.issueFilePath);
-  const diff = tryGitDiff(opts.cwd);
+  const declaredBranch = issueBranch(issueBody);
+  const diffRef = declaredBranch || "HEAD";
+  const diff = tryGitDiff(opts.cwd, diffRef);
 
   return `# Cross-model audit prompt — ${opts.issueId}
 
@@ -171,7 +178,7 @@ ${issueBody}
 
 ## 7 — Implementation diff
 
-The branch's work compared to \`main\`:
+The issue declares branch \`${diffRef}\`. The diff below is generated from \`git diff main...${diffRef}\`:
 
 \`\`\`diff
 ${diff}

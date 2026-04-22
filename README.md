@@ -47,6 +47,17 @@ npx lytos-cli init
 
 In 2 minutes, your repo has its manifest, rules, and board. From there, the AI knows your project.
 
+### Mixed-team setup: one repo, several AI tools
+
+On a repo where some developers use Claude Code, others Cursor, others Codex, `lyt init` can scaffold every bridge file in one shot:
+
+```bash
+lyt init --tool claude,cursor,copilot       # CSV: only what the team uses
+lyt init --all-tools                        # every shipping adapter at once
+```
+
+Every bridge points at the same `.lytos/` directory, so switching tools does not require reconfiguring the project. `none` is accepted in the list as a no-op, so scripts can pass `"none,claude"` without a special case. Unknown values exit with an error before any file is written.
+
 ![Lytos demo](docs/screenshots/lytos.gif)
 
 ![lyt board](docs/screenshots/lyt-board.png)
@@ -59,6 +70,7 @@ In 2 minutes, your repo has its manifest, rules, and board. From there, the AI k
 |---------|-------------|
 | `lyt init` | Scaffold `.lytos/` in a project (interactive, detects the stack) |
 | `lyt board` | Regenerate BOARD.md from issue YAML frontmatter |
+| `lyt archive` | Move completed issues from `5-done/` to `archive/<quarter>/` (default: older than 7 days). `--all`, `--older-than <Nd>`, `--dry-run` |
 | `lyt lint` | Validate `.lytos/` structure and content |
 | `lyt doctor` | Full diagnostic — broken links, stale memory, missing skills, health score |
 | `lyt show [ISS-XXXX]` | Display issue detail with progress bar, or all in-progress issues |
@@ -66,6 +78,7 @@ In 2 minutes, your repo has its manifest, rules, and board. From there, the AI k
 | `lyt close ISS-XXXX` | Close one issue — promote to `5-done` from `4-review` (or explicitly from in-progress), warns about unchecked items |
 | `lyt close` | Batch-close every issue in 4-review/ → 5-done/ (asks to confirm; `--yes` skips the prompt; `--dry-run` previews) |
 | `lyt review [ISS-XXXX]` | Cross-model audit for issues in `4-review/` — prints a self-contained prompt or ingests a returned audit block (`--accept`). Run from a **fresh AI session**, ideally a different vendor than the implementer. |
+| `lyt upgrade` | Pull the latest method files into `.lytos/`. `--migrate-cursor` converts a legacy `.cursorrules` to `.cursor/rules/lytos.mdc`. |
 | `lyt update` | Update lytos-cli to the latest version |
 
 ![lyt show](docs/screenshots/lyt-show.png)
@@ -109,6 +122,26 @@ project/
 `lyt init` also detects the project's stack (language, framework, test runner, package manager) and pre-fills the manifest. It generates the appropriate adapter file for the chosen AI tool — `CLAUDE.md`, `.cursor/rules/lytos.mdc`, `AGENTS.md`, `.github/copilot-instructions.md`, `GEMINI.md`, or `.windsurfrules`.
 
 A pre-commit hook is installed to enforce branch naming conventions (`type/ISS-XXXX-slug`). This prevents untracked work on `main` — regardless of which AI tool or model is used.
+
+### Startup depth — lightweight vs standard
+
+The `session-start` skill reads the current issue's frontmatter to decide how much context the AI loads before starting.
+
+- **Lightweight startup** is allowed only when the issue is explicitly `effort: XS` **and** `complexity: light`. The AI still loads the mandatory safety baseline (manifest, MEMORY, default rules, BOARD, the issue itself), but defers cortex notes, project-specific rule files, and broad codebase exploration until the issue clearly needs them.
+- **Standard startup** remains mandatory for every other combination. If either field is missing, the AI defaults to standard. If the task grows mid-session, it immediately upgrades from lightweight to standard.
+
+This is how small issues stay fast without burning the context window, and why `effort` and `complexity` in issue frontmatter are load-bearing — they are not just prioritization hints.
+
+### Customized bridge files are preserved
+
+Running `lyt init --force` on an existing project re-scaffolds `.lytos/` without overwriting any local customization you added to your AI bridge file (`CLAUDE.md`, `.cursor/rules/lytos.mdc`, `AGENTS.md`, `.github/copilot-instructions.md`, `GEMINI.md`, `.windsurfrules`). If the bridge already exists, it is kept as-is and the CLI prints a warning so you know it was skipped.
+
+To explicitly replace a bridge with the bundled template — useful when upstreaming a new default or when your local copy has drifted — pass `--overwrite-bridges`:
+
+```bash
+lyt init --force                          # re-scaffold, preserve bridges (default)
+lyt init --force --overwrite-bridges      # re-scaffold, replace bridges too
+```
 
 ---
 

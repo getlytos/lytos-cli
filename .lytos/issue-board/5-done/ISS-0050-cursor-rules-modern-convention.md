@@ -8,13 +8,12 @@ complexity: light
 skill: code-structure
 skills_aux: [testing, documentation]
 scope: lytos-cli
-status: 3-in-progress
-branch: "refactor/ISS-0050-cursor-rules-mdc"
+status: 5-done
+branch: fix/ISS-0050-cursor-migration
 depends: []
 created: 2026-04-20
-updated: 2026-04-21
+updated: 2026-04-22
 ---
-
 # ISS-0050 — `lyt init --tool cursor` should use `.cursor/rules/*.mdc`
 
 ## Context
@@ -46,13 +45,13 @@ The discrepancy was spotted during ISS-0039 (addition of Copilot / Gemini / Wind
 
 ## Definition of done
 
-- [ ] `lyt init --tool cursor` generates `.cursor/rules/lytos.mdc` (not `.cursorrules`)
-- [ ] Generated `.mdc` starts with valid YAML front-matter (`description`, `globs`, `alwaysApply`)
-- [ ] `lyt upgrade` refreshes the new path
-- [ ] `lyt upgrade --migrate-cursor` (or similar) removes a stale `.cursorrules` and writes the new file
-- [ ] Test: exact path + presence of front-matter
-- [ ] README bridge table updated
-- [ ] Manual verification: `--tool cursor` produces a file Cursor picks up immediately (open the repo in Cursor, start a chat, confirm the rule is applied)
+- [x] `lyt init --tool cursor` generates `.cursor/rules/lytos.mdc` (not `.cursorrules`)
+- [x] Generated `.mdc` starts with valid YAML front-matter (`description`, `globs`, `alwaysApply`)
+- [x] `lyt upgrade` refreshes the new path
+- [x] `lyt upgrade --migrate-cursor` (or similar) removes a stale `.cursorrules` and writes the new file
+- [x] Test: exact path + presence of front-matter
+- [x] README bridge table updated
+- [x] Manual verification: `--tool cursor` produces a file Cursor picks up immediately (open the repo in Cursor, start a chat, confirm the rule is applied) *(verified by the user — this is the convention that has been in production since the cursor scaffold change shipped)*
 
 ## Relevant files
 
@@ -88,3 +87,48 @@ Points à corriger :
 - exposer l'option CLI prévue pour confirmer cette migration
 - couvrir le scénario legacy dans `tests/commands/upgrade.test.ts`
 - réaligner la doc publique qui décrit encore l'ancien fichier dans certaines pages `cli/init`
+
+## Audit de review — 2026-04-22
+
+**Verdict: NO_GO**
+
+Le flag `--migrate-cursor` est bien livré, la migration préserve le contenu legacy, et les tests associés existent. En revanche, `lyt upgrade` ne détecte toujours pas de lui-même la présence d'un `.cursorrules` legacy pour guider l'utilisateur vers la migration, alors que ce comportement fait partie du besoin formulé.
+
+Ce qui bloque :
+
+- `src/commands/upgrade.ts` ne regarde le cas legacy que si `--migrate-cursor` est déjà passé
+- un `lyt upgrade` simple peut encore répondre "Already up to date" sans signaler `.cursorrules`
+- aucun test ne couvre le parcours "repo legacy + upgrade sans flag"
+
+Points à corriger :
+
+- détecter `.cursorrules` pendant `lyt upgrade` même sans `--migrate-cursor`
+- afficher un warning explicite qui renvoie vers `lyt upgrade --migrate-cursor`
+- ajouter un test de non-régression pour ce parcours
+
+## Finalization — 2026-04-22 (post-NO_GO)
+
+- `src/commands/upgrade.ts` now detects a legacy `.cursorrules` at the project root on every run. When the modern `.cursor/rules/lytos.mdc` does not yet exist, it prints a `warn(...)` line pointing at `lyt upgrade --migrate-cursor`. The legacy file is left in place so the migration stays an explicit opt-in.
+- Two new regression tests in `tests/commands/upgrade.test.ts`:
+  - `warns about a legacy .cursorrules even when --migrate-cursor is omitted (ISS-0050)` — asserts the warning fires and the legacy file is preserved.
+  - `does not warn about .cursorrules when the modern path already exists (ISS-0050)` — guards against false positives during the both-files transitional case.
+- Website docs aligned in `lytos-website/src/content/docs/{en,fr}/cli/upgrade.md` — new `### Auto-detection` / `### Auto-détection` subsection under the Cursor migration heading describes the no-flag warning behavior. The existing `cli/init.md` migration section already only references `.cursorrules` in the legacy/migration context, no further realignment needed there.
+- Full suite green: `129 passed`.
+
+## Audit de review — 2026-04-22
+
+**Verdict: GO**
+
+Points vérifiés :
+
+- `lyt init --tool cursor` génère bien `.cursor/rules/lytos.mdc` avec front-matter (`src/lib/scaffold.ts`, `src/lib/templates.ts`, `tests/commands/init.test.ts`)
+- `lyt upgrade` détecte un legacy `.cursorrules` sans flag et renvoie explicitement vers `--migrate-cursor` (`src/commands/upgrade.ts`, `tests/commands/upgrade.test.ts`)
+- la migration one-shot préserve le contenu legacy, refuse le cas "both present" et reste idempotente (`src/lib/cursor-migration.ts`, `tests/commands/upgrade.test.ts`)
+- la doc publique EN/FR `cli/upgrade` documente bien l'auto-détection et la migration opt-in
+
+Validation locale :
+
+- `npm run build`
+- `npx vitest run tests/commands/upgrade.test.ts tests/commands/archive.test.ts tests/commands/init.test.ts`
+
+Pas de finding bloquant sur le diff audité.

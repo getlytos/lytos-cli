@@ -47,6 +47,17 @@ npx lytos-cli init
 
 En 2 minutes, votre dépôt a son manifest, ses rules, son board. À partir de là, l'IA connaît votre projet.
 
+### Setup d'équipe mixte : un repo, plusieurs outils IA
+
+Sur un repo où certains développeurs utilisent Claude Code, d'autres Cursor, d'autres Codex, `lyt init` peut générer tous les bridge files en une seule fois :
+
+```bash
+lyt init --tool claude,cursor,copilot       # CSV : seulement ce que l'équipe utilise
+lyt init --all-tools                        # tous les adaptateurs shippants d'un coup
+```
+
+Chaque bridge pointe vers le même dossier `.lytos/`, donc changer d'outil ne demande aucune reconfiguration du projet. `none` est accepté dans la liste en no-op, pour que des scripts puissent passer `"none,claude"` sans cas particulier. Les valeurs inconnues sortent en erreur avant qu'aucun fichier ne soit écrit.
+
 ![Démo Lytos](../screenshots/lytos.gif)
 
 ![lyt board](../screenshots/lyt-board.png)
@@ -59,6 +70,7 @@ En 2 minutes, votre dépôt a son manifest, ses rules, son board. À partir de l
 |----------|-----------------|
 | `lyt init` | Génère `.lytos/` dans un projet (interactif, détecte la stack) |
 | `lyt board` | Régénère BOARD.md depuis le frontmatter YAML des issues |
+| `lyt archive` | Déplace les issues terminées de `5-done/` vers `archive/<quarter>/` (défaut : plus de 7 jours). `--all`, `--older-than <Nd>`, `--dry-run` |
 | `lyt lint` | Valide la structure et le contenu de `.lytos/` |
 | `lyt doctor` | Diagnostic complet — liens cassés, mémoire obsolète, skills manquants, score de santé |
 | `lyt show [ISS-XXXX]` | Affiche le détail d'une issue avec sa progression, ou toutes les issues en cours |
@@ -66,6 +78,7 @@ En 2 minutes, votre dépôt a son manifest, ses rules, son board. À partir de l
 | `lyt close ISS-XXXX` | Ferme une issue — déplace en done, alerte sur les items non cochés |
 | `lyt close` | Ferme en lot toutes les issues de 4-review/ → 5-done/ (demande confirmation ; `--yes` saute le prompt ; `--dry-run` previewe) |
 | `lyt review [ISS-XXXX]` | Audit cross-model pour les issues en `4-review/` — imprime un prompt autonome ou ingère un bloc audit retourné (`--accept`). À lancer depuis une **session IA fraîche**, idéalement un vendor différent de l'implémenteur. |
+| `lyt upgrade` | Récupère les derniers fichiers méthode dans `.lytos/`. `--migrate-cursor` convertit un legacy `.cursorrules` vers `.cursor/rules/lytos.mdc`. |
 | `lyt update` | Met à jour lytos-cli vers la dernière version |
 
 ![lyt show](../screenshots/lyt-show.png)
@@ -109,6 +122,26 @@ project/
 `lyt init` détecte aussi la stack du projet (langage, framework, runner de tests, package manager) et pré-remplit le manifest. Il génère le fichier d'adaptateur approprié pour l'outil IA choisi — `CLAUDE.md`, `.cursor/rules/lytos.mdc`, `AGENTS.md`, `.github/copilot-instructions.md`, `GEMINI.md`, ou `.windsurfrules`.
 
 Un hook pre-commit est installé pour faire respecter les conventions de nommage de branches (`type/ISS-XXXX-slug`). Cela évite tout travail non tracé sur `main` — quel que soit l'outil IA ou le modèle utilisé.
+
+### Profondeur de startup — léger vs standard
+
+La skill `session-start` lit le frontmatter de l'issue en cours pour décider combien de contexte l'IA charge avant de démarrer.
+
+- **Startup léger** autorisé uniquement quand l'issue est explicitement `effort: XS` **et** `complexity: light`. L'IA charge quand même la baseline de sécurité obligatoire (manifest, MEMORY, default rules, BOARD, l'issue elle-même), mais diffère les notes cortex, les rules spécifiques au projet et l'exploration large du codebase tant que l'issue n'en a pas besoin.
+- **Startup standard** reste obligatoire pour toute autre combinaison. Si un des deux champs manque, l'IA retombe sur standard. Si la tâche grossit en cours de session, elle repasse immédiatement en standard.
+
+C'est ainsi que les petites issues restent rapides sans brûler la fenêtre de contexte — et c'est pour ça que `effort` et `complexity` dans le frontmatter portent vraiment quelque chose : ce ne sont pas juste des indicateurs de priorisation.
+
+### Les bridge files personnalisés sont préservés
+
+Lancer `lyt init --force` sur un projet existant régénère `.lytos/` sans écraser les personnalisations locales que vous avez apportées à votre bridge IA (`CLAUDE.md`, `.cursor/rules/lytos.mdc`, `AGENTS.md`, `.github/copilot-instructions.md`, `GEMINI.md`, `.windsurfrules`). Si le bridge existe déjà, il est conservé tel quel et le CLI affiche un warning pour signaler que le fichier a été sauté.
+
+Pour remplacer explicitement un bridge par le template fourni — utile quand vous voulez remonter un nouveau défaut, ou quand votre copie locale a dérivé — passez `--overwrite-bridges` :
+
+```bash
+lyt init --force                          # régénère, préserve les bridges (défaut)
+lyt init --force --overwrite-bridges      # régénère, remplace aussi les bridges
+```
 
 ---
 

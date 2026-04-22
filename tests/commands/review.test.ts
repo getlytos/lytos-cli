@@ -30,6 +30,13 @@ function run(
   };
 }
 
+function git(args: string[], cwd: string): void {
+  const result = spawnSync("git", args, { cwd, encoding: "utf-8" });
+  if ((result.status ?? 0) !== 0) {
+    throw new Error(result.stderr || result.stdout || `git ${args.join(" ")} failed`);
+  }
+}
+
 /**
  * Write a minimal issue file directly into 4-review/. Avoids going
  * through `lyt start/close` just to set up a test fixture.
@@ -117,6 +124,58 @@ describe("lyt review", () => {
     expect(result.stdout).toContain("## 9 — Exit instructions");
     // The role header must tell the auditor they are not the implementer
     expect(result.stdout).toContain("You did NOT implement this issue");
+  });
+
+  it("builds the prompt diff from the branch declared in the issue, not from HEAD (ISS-0059)", () => {
+    fixture = createEmptyBoardFixture();
+
+    git(["init", "-b", "main"], fixture.cwd);
+    git(["config", "user.name", "Lytos Test"], fixture.cwd);
+    git(["config", "user.email", "test@example.com"], fixture.cwd);
+
+    mkdirSync(join(fixture.cwd, "src"), { recursive: true });
+    writeFileSync(join(fixture.cwd, "src", "sample.ts"), "export const value = 1;\n", "utf-8");
+    git(["add", "."], fixture.cwd);
+    git(["commit", "-m", "chore: seed repo"], fixture.cwd);
+
+    git(["checkout", "-b", "feat/ISS-9201-sample"], fixture.cwd);
+    writeFileSync(join(fixture.cwd, "src", "sample.ts"), "export const value = 2;\n", "utf-8");
+    git(["add", "."], fixture.cwd);
+    git(["commit", "-m", "feat: update sample"], fixture.cwd);
+    git(["checkout", "main"], fixture.cwd);
+
+    const issueFile = join(
+      fixture.cwd,
+      ".lytos",
+      "issue-board",
+      "4-review",
+      "ISS-9201-sample.md"
+    );
+    writeFileSync(
+      issueFile,
+      `---
+id: ISS-9201
+title: "Sample issue ISS-9201"
+type: feat
+priority: P2-normal
+effort: S
+status: 4-review
+branch: "feat/ISS-9201-sample"
+depends: []
+created: 2026-04-22
+updated: 2026-04-22
+---
+
+# ISS-9201 — Sample issue
+`,
+      "utf-8"
+    );
+
+    const result = run("review ISS-9201", fixture.cwd);
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("git diff main...feat/ISS-9201-sample");
+    expect(result.stdout).toContain("-export const value = 1;");
+    expect(result.stdout).toContain("+export const value = 2;");
   });
 
   it("exits 2 when the issue ID is not in 4-review/", () => {
