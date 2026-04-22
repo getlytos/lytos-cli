@@ -241,4 +241,83 @@ I read the diff and it looks fine.
     const content = readFileSync(issueFile, "utf-8");
     expect(content).toContain("**Verdict:** GO");
   });
+
+  it("--all --export writes one prompt file per pending issue (ISS-0059)", () => {
+    fixture = createEmptyBoardFixture();
+    writeReviewIssue(fixture.cwd, "ISS-9700", "alpha");
+    writeReviewIssue(fixture.cwd, "ISS-9701", "beta");
+
+    const result = run("review --all --export", fixture.cwd);
+    expect(result.exitCode).toBe(0);
+
+    const outDir = join(fixture.cwd, ".lytos", "review");
+    expect(existsSync(join(outDir, "ISS-9700.prompt.md"))).toBe(true);
+    expect(existsSync(join(outDir, "ISS-9701.prompt.md"))).toBe(true);
+
+    // Each file is a full prompt — spot-check one marker
+    const p1 = readFileSync(join(outDir, "ISS-9700.prompt.md"), "utf-8");
+    expect(p1).toContain("## 1 — Your role");
+    expect(p1).toContain("(ISS-9700)");
+  });
+
+  it("--all --export reports 'nothing to export' when 4-review/ is empty (ISS-0059)", () => {
+    fixture = createEmptyBoardFixture();
+
+    const result = run("review --all --export", fixture.cwd);
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).toContain("nothing to export");
+  });
+
+  it("--accept refuses to overwrite an existing audit without --overwrite (ISS-0059)", () => {
+    fixture = createEmptyBoardFixture();
+    const issueFile = writeReviewIssue(fixture.cwd, "ISS-9800");
+
+    // Plant a prior audit block in the issue file
+    writeFileSync(
+      issueFile,
+      readFileSync(issueFile, "utf-8") +
+        `\n## Audit — 2026-04-21\n\n**Verdict:** GO\n\n### Checks\n- [x] ok\n`,
+      "utf-8"
+    );
+
+    const block = `## Audit — 2026-04-22\n\n**Verdict:** NO_GO\n\n### Checks\n- [ ] broken\n\n### To fix before next review\n- [ ] do this\n`;
+    const result = run(`review ISS-9800 --accept -`, fixture.cwd, block);
+    expect(result.exitCode).toBe(2);
+    expect(result.stderr).toContain("already has");
+    expect(result.stderr).toContain("--overwrite");
+
+    // Old audit still there, new one not appended. Check the audit
+    // heading specifically — the frontmatter carries today's date too.
+    const content = readFileSync(issueFile, "utf-8");
+    expect(content).toContain("## Audit — 2026-04-21");
+    expect(content).not.toContain("## Audit — 2026-04-22");
+    expect(content).not.toContain("NO_GO");
+  });
+
+  it("--accept --overwrite replaces the existing audit block (ISS-0059)", () => {
+    fixture = createEmptyBoardFixture();
+    const issueFile = writeReviewIssue(fixture.cwd, "ISS-9900");
+
+    writeFileSync(
+      issueFile,
+      readFileSync(issueFile, "utf-8") +
+        `\n## Audit — 2026-04-21\n\n**Verdict:** GO\n\n### Checks\n- [x] ok\n`,
+      "utf-8"
+    );
+
+    const block = `## Audit — 2026-04-22\n\n**Verdict:** GO\n\n### Checks\n- [x] Re-audit confirms fix\n`;
+    const result = run(
+      `review ISS-9900 --accept - --overwrite`,
+      fixture.cwd,
+      block
+    );
+    expect(result.exitCode).toBe(0);
+
+    const content = readFileSync(issueFile, "utf-8");
+    // New audit present — check the heading and distinctive text
+    expect(content).toContain("## Audit — 2026-04-22");
+    expect(content).toContain("Re-audit confirms fix");
+    // Old audit heading replaced, not kept
+    expect(content).not.toContain("## Audit — 2026-04-21");
+  });
 });

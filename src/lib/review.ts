@@ -10,7 +10,7 @@
  * Companion command at src/commands/review.ts drives the UX.
  */
 
-import { existsSync, readFileSync, readdirSync, renameSync, writeFileSync } from "fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFileSync } from "fs";
 import { execSync } from "child_process";
 import { join, dirname } from "path";
 import { parseFrontmatter } from "./frontmatter.js";
@@ -230,29 +230,63 @@ export function parseAuditResponse(raw: string): ParsedAudit {
   return { verdict, block };
 }
 
+/**
+ * Detect whether an issue file already carries an audit block. Used by
+ * --accept to protect against silent overwrites (callers must pass
+ * `--overwrite` to re-audit an already-audited issue).
+ */
+export function hasExistingAudit(issueFilePath: string): boolean {
+  if (!existsSync(issueFilePath)) return false;
+  const content = readFileSync(issueFilePath, "utf-8");
+  return /^##\s+Audit\s+—\s+\d{4}-\d{2}-\d{2}/m.test(content);
+}
+
 export interface ApplyAuditOptions {
   boardDir: string;
   issueFilePath: string;
   parsed: ParsedAudit;
+  /**
+   * When true, replace any existing `## Audit — <date>` block (and
+   * everything after it up to the next top-level heading or EOF) with
+   * the new block. When false, append the new block after the existing
+   * content — two audits will end up stacked.
+   */
+  overwrite?: boolean;
 }
 
 export interface ApplyAuditResult {
   newPath: string;
   moved: boolean;
+  replacedExisting: boolean;
 }
 
 /**
- * Append the audit block to the issue file. If the verdict is NO_GO,
+ * Append or replace the audit block inside the issue file. On NO_GO,
  * also move the file from 4-review/ to 3-in-progress/ and rewrite the
  * frontmatter `status` to match.
  */
 export function applyAudit(options: ApplyAuditOptions): ApplyAuditResult {
-  const { boardDir, issueFilePath, parsed } = options;
+  const { boardDir, issueFilePath, parsed, overwrite } = options;
   const original = readFileSync(issueFilePath, "utf-8");
-  // Normalize: always two blank lines before the new block to separate
-  // it from existing content, and a trailing newline.
-  const separator = original.endsWith("\n\n") ? "" : original.endsWith("\n") ? "\n" : "\n\n";
-  const withAudit = original + separator + parsed.block + "\n";
+
+  let rewritten: string;
+  let replacedExisting = false;
+
+  if (overwrite && hasExistingAudit(issueFilePath)) {
+    // Replace the existing audit block and everything after it. The
+    // regex stops at the next `## <heading>` that isn't an Audit block,
+    // or at EOF — whichever comes first. Subsequent top-level sections
+    // of the issue body are preserved.
+    rewritten = original.replace(
+      /\n*##\s+Audit\s+—\s+\d{4}-\d{2}-\d{2}[\s\S]*?(?=\n##\s+(?!Audit\s+—)|$)/m,
+      "\n\n" + parsed.block + "\n"
+    );
+    replacedExisting = true;
+  } else {
+    // Append: normalize spacing so the new block sits on its own.
+    const separator = original.endsWith("\n\n") ? "" : original.endsWith("\n") ? "\n" : "\n\n";
+    rewritten = original + separator + parsed.block + "\n";
+  }
 
   let targetPath = issueFilePath;
   let moved = false;
@@ -261,7 +295,7 @@ export function applyAudit(options: ApplyAuditOptions): ApplyAuditResult {
     const fileName = issueFilePath.split("/").pop() as string;
     const inProgressDir = join(boardDir, "3-in-progress");
     targetPath = join(inProgressDir, fileName);
-    const retagged = withAudit.replace(
+    const retagged = rewritten.replace(
       /^status:\s*4-review\s*$/m,
       "status: 3-in-progress"
     );
@@ -269,11 +303,43 @@ export function applyAudit(options: ApplyAuditOptions): ApplyAuditResult {
     renameSync(issueFilePath, targetPath);
     moved = true;
   } else {
-    writeFileSync(issueFilePath, withAudit, "utf-8");
+    writeFileSync(issueFilePath, rewritten, "utf-8");
   }
 
   // Touch dirname imports to keep TS happy if the helper is tree-shaken
   void dirname;
 
-  return { newPath: targetPath, moved };
+  return { newPath: targetPath, moved, replacedExisting };
+}
+
+/**
+ * Batch export: write one prompt file per pending issue in 4-review/,
+ * under `.lytos/review/<id>.prompt.md`. Returns the list of paths
+ * written so callers can print a summary.
+ */
+export function exportAllPrompts(
+  cwd: string,
+  boardDir: string
+): Array<{ id: string; promptPath: string }> {
+  const pending = listPendingReviews(boardDir);
+  if (pending.length === 0) return [];
+
+  const outDir = join(cwd, ".lytos", "review");
+  if (!existsSync(outDir)) {
+    // `.lytos/review/` is a transient work area — create it lazily.
+    mkdirSync(outDir, { recursive: true });
+  }
+
+  const written: Array<{ id: string; promptPath: string }> = [];
+  for (const p of pending) {
+    const prompt = buildPrompt({
+      cwd,
+      issueFilePath: p.filePath,
+      issueId: p.id,
+    });
+    const promptPath = join(outDir, `${p.id}.prompt.md`);
+    writeFileSync(promptPath, prompt, "utf-8");
+    written.push({ id: p.id, promptPath });
+  }
+  return written;
 }
