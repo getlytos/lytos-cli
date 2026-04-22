@@ -179,3 +179,15 @@ Cross-repo deliverables verified present — the previous audit only inspected `
 - `src/lib/board-generator.ts:161` confirms `quarter` is derived from `fm.updated`, not from `Date.now()`
 
 **Side note — auto-archive bug observed during this session**: running `npx lyt board` on `main` still archived 6 freshly-closed issues. Root cause is a stale globally-installed `lytos-cli` binary that predates this fix; the fix in `src/commands/board.ts` is correct on this branch. Once this branch lands and the binary is republished, the bug disappears.
+
+## Regression fix bundled — 2026-04-22
+
+While verifying the BOARD output on this branch, found a second-order bug introduced by the auto-archive removal: `STATUS_FOLDERS` in `src/lib/board-generator.ts` never included `5-done`, so `collectIssues()` skipped that folder entirely. The result was that recently-closed issues vanished from `BOARD.md` immediately on close — exactly defeating the 7-day retention window this issue exists to provide.
+
+Fix in this branch:
+
+- Added `"5-done"` to `STATUS_FOLDERS` and a matching `STATUS_LABELS` entry (`"recently completed"`).
+- Renamed the trailing summary section from `### Done` to `### Archive` so the new `### 5-done` table and the archive counter coexist cleanly.
+- New regression test in `tests/commands/archive.test.ts` (`BOARD.md lists issues still in 5-done/`) — closes a freshly-completed issue and asserts both `5-done` and the issue id appear in BOARD.md.
+- Updated `tests/commands/board.test.ts` JSON-columns assertion from 5 → 6 to match the new pipeline length.
+- Full suite green: `124 passed`.
