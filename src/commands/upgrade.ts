@@ -153,6 +153,19 @@ export const upgradeCommand = new Command("upgrade")
       added++;
     }
 
+    // Surface the legacy .cursorrules even when --migrate-cursor wasn't
+    // passed. Otherwise `lyt upgrade` happily reports "Already up to date"
+    // while the project is still on the deprecated Cursor convention.
+    if (!opts.migrateCursor && existsSync(join(cwd, ".cursorrules"))) {
+      const newPath = join(cwd, ".cursor", "rules", "lytos.mdc");
+      if (!existsSync(newPath)) {
+        warn(
+          "Legacy .cursorrules detected — Cursor now uses .cursor/rules/*.mdc. " +
+            "Run `lyt upgrade --migrate-cursor` to convert it (the original content is preserved)."
+        );
+      }
+    }
+
     // Optional one-shot migration: legacy .cursorrules → .cursor/rules/lytos.mdc
     let cursorResult: CursorMigrationResult | null = null;
     if (opts.migrateCursor) {

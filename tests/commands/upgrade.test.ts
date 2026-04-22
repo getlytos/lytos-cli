@@ -7,7 +7,7 @@
 
 import { describe, it, expect, afterEach } from "vitest";
 import { spawnSync } from "child_process";
-import { existsSync, readFileSync, writeFileSync, unlinkSync, rmSync } from "fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync, unlinkSync, rmSync } from "fs";
 import { resolve, join } from "path";
 import { createEmptyFixture, type Fixture } from "../helpers/fixtures.js";
 
@@ -248,5 +248,37 @@ describe("lyt upgrade", () => {
     expect(second.exitCode).toBe(0);
     expect(second.stderr).toContain("No legacy .cursorrules");
     expect(readFileSync(modern, "utf-8")).toBe(afterFirst);
+  });
+
+  it("warns about a legacy .cursorrules even when --migrate-cursor is omitted (ISS-0050)", () => {
+    fixture = createEmptyFixture();
+    run("init --yes --tool none", fixture.cwd);
+
+    // Seed a legacy file without the modern path — the project is on the
+    // deprecated Cursor convention but the user ran a plain `lyt upgrade`.
+    writeFileSync(join(fixture.cwd, ".cursorrules"), "legacy body\n", "utf-8");
+
+    const result = run("upgrade --force", fixture.cwd);
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).toContain("Legacy .cursorrules detected");
+    expect(result.stderr).toContain("--migrate-cursor");
+    // Legacy file is left in place — the warning is informational only.
+    expect(existsSync(join(fixture.cwd, ".cursorrules"))).toBe(true);
+  });
+
+  it("does not warn about .cursorrules when the modern path already exists (ISS-0050)", () => {
+    fixture = createEmptyFixture();
+    run("init --yes --tool none", fixture.cwd);
+
+    // Both files present is the migrated-but-stale case — handled
+    // separately by --migrate-cursor's "both-present" branch.
+    writeFileSync(join(fixture.cwd, ".cursorrules"), "legacy body\n", "utf-8");
+    const modernDir = join(fixture.cwd, ".cursor", "rules");
+    mkdirSync(modernDir, { recursive: true });
+    writeFileSync(join(modernDir, "lytos.mdc"), "modern body\n", "utf-8");
+
+    const result = run("upgrade --force", fixture.cwd);
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).not.toContain("Legacy .cursorrules detected");
   });
 });
