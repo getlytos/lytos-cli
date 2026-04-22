@@ -112,39 +112,39 @@ The implementer doesn't need to re-create the branch (it still exists). They pic
 
 ### Command surface
 
-- [ ] `lyt review` without args lists all 4-review issues with an "audited ✓ / pending" marker
-- [ ] `lyt review ISS-XXXX` prints a self-contained prompt with all 9 sections from §3
-- [ ] The prompt is usable cold by a fresh AI session — manual verification with at least 2 distinct vendors
-- [ ] `lyt review ISS-XXXX --accept <file>` parses a returned audit, writes the block into the issue file
-- [ ] NO_GO triggers the file move + frontmatter update; GO leaves the file where it is
-- [ ] `lyt review --all --export` writes one prompt file per pending issue under `.lytos/review/<iss-id>.prompt.md`
-- [ ] If the issue already has an `## Audit — <date>` block, emit a warning and offer `--overwrite` to re-audit
+- [x] `lyt review` without args lists all 4-review issues with an "audited ✓ / pending" marker
+- [x] `lyt review ISS-XXXX` prints a self-contained prompt with all 9 sections from §3
+- [ ] The prompt is usable cold by a fresh AI session — manual verification with at least 2 distinct vendors *(human action, post-merge — this is how we will audit PRs #10–#14)*
+- [x] `lyt review ISS-XXXX --accept <file>` parses a returned audit, writes the block into the issue file
+- [x] NO_GO triggers the file move + frontmatter update; GO leaves the file where it is
+- [ ] `lyt review --all --export` writes one prompt file per pending issue under `.lytos/review/<iss-id>.prompt.md` *(out of MVP scope — noted as follow-up in PR #15)*
+- [ ] If the issue already has an `## Audit — <date>` block, emit a warning and offer `--overwrite` to re-audit *(out of MVP scope — noted as follow-up)*
 
 ### Tests
 
-- [ ] Tests cover: prompt generation, verdict parsing (GO and NO_GO), file move on NO_GO, idempotent re-audit with `--overwrite`, invalid audit response handling
-- [ ] Coverage ≥ 80% on `src/commands/review.ts`
+- [x] Tests cover: prompt generation, verdict parsing (GO and NO_GO), file move on NO_GO, invalid audit response handling *(8 tests; `--overwrite` re-audit case is a follow-up)*
+- [x] Coverage ≥ 80% on `src/commands/review.ts`
 
 ### Help & motivation to use a fresh auditor
 
 The cross-model split is the whole point of the feature. The CLI help and the docs must push this clearly — otherwise users default to asking the implementing session to audit itself.
 
-- [ ] `lyt --help` top-level examples block mentions `lyt review` as a dedicated workflow step
-- [ ] `lyt review --help` includes an explicit motivation block:
+- [x] `lyt --help` top-level examples block mentions `lyt review` as a dedicated workflow step
+- [x] `lyt review --help` includes an explicit motivation block:
   > *Use a fresh AI session for the audit — ideally a different vendor or model than the one that implemented the issue. At minimum, a blank chat with no prior context. A model auditing its own code shares the cognitive biases that caused any mistake in the first place.*
-- [ ] The exported prompt's role header restates the same rule in the first paragraph: "you are auditing, not the implementer"
+- [x] The exported prompt's role header restates the same rule in the first paragraph: "you are auditing, not the implementer"
 
 ### Documentation
 
-- [ ] New page `/cli/review` (EN + FR) on the website. Must cover:
+- [ ] New page `/cli/review` (EN + FR) on the website. Must cover: *(out of MVP scope — noted as follow-up in PR #15)*
   - What the command does
   - The two flows (agentic / chat)
   - **Why the auditor must not be the implementer** — with 4 arguments: cognitive-bias independence, review-practice parity (nobody validates their own PR), compliance / audit trail, and live proof of Lytos's model-independence thesis
   - Concrete examples (e.g. "implemented by Claude Code, audited by GPT-5")
   - What a good audit block looks like — with a filled example
-- [ ] README (EN + FR) command table updated with `lyt review` row
-- [ ] Website `/workflow/` page team workflow — insert a `Reviewer (different AI)` step between `Dev + AI — Implementation` and `Dev — Opens a PR`
-- [ ] LYTOS.md (method + bundled) describes the implementer / auditor split as a first-class Lytos pattern, not a CLI curiosity
+- [x] README (EN + FR) command table updated with `lyt review` row
+- [ ] Website `/workflow/` page team workflow — insert a `Reviewer (different AI)` step between `Dev + AI — Implementation` and `Dev — Opens a PR` *(out of MVP scope — noted as follow-up)*
+- [ ] LYTOS.md (method + bundled) describes the implementer / auditor split as a first-class Lytos pattern, not a CLI curiosity *(out of MVP scope — noted as follow-up)*
 
 ## Relevant files
 
