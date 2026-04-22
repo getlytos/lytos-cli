@@ -8,11 +8,11 @@ complexity: standard
 domain: [cli, init]
 skill: ""
 skills_aux: []
-status: 4-review
+status: 3-in-progress
 branch: "feat/ISS-0053-multi-tool-init"
 depends: []
 created: 2026-04-21
-updated: 2026-04-21
+updated: 2026-04-22
 ---
 
 # ISS-0053 — `lyt init`: scaffold multiple tool bridges in one run
@@ -54,16 +54,16 @@ If `none` is in the list with other tools, treat it as a no-op for that slot (ge
 
 ## Definition of done
 
-- [x] `lyt init --tool claude,cursor,copilot` generates all three bridges
-- [ ] `lyt init --tool claude --tool cursor` generates both (if we go repeated-flag) *(not needed — CSV covers the multi-tool case; repeated-flag is a nicety that can land later if requested)*
-- [x] `lyt init --all-tools` generates the six shipping adapters
-- [x] Interactive mode offers a "multiple" choice that accepts CSV *(also offers 'All tools')*
-- [x] Unknown tool names error out with a clear message (exit 2)
-- [x] `--force` re-runs still regenerate all requested bridges *(preserve-bridges policy added in ISS-0054 — use `--force --overwrite-bridges` to also replace existing bridges)*
-- [x] Tests cover: single-tool (backwards compat), CSV, `--all-tools`, invalid tool, `none` mixed with others *(5 new tests in init.test.ts)*
-- [x] Coverage ≥ 80% on the updated paths
-- [x] README (en + fr) shows the multi-tool example *(PR #10 — "Mixed-team setup" block)*
-- [x] Website `/cli/init` page mentions the multi-tool option *(PR #10 — Usage + Options table rewritten)*
+- [ ] `lyt init --tool claude,cursor,copilot` generates all three bridges
+- [ ] `lyt init --tool claude --tool cursor` generates both (if we go repeated-flag)
+- [ ] `lyt init --all-tools` generates the six shipping adapters
+- [ ] Interactive mode offers a "multiple" choice that accepts CSV
+- [ ] Unknown tool names error out with a clear message (exit 2)
+- [ ] `--force` re-runs still regenerate all requested bridges
+- [ ] Tests cover: single-tool (backwards compat), CSV, repeated flag, `--all-tools`, invalid tool, `none` mixed with others
+- [ ] Coverage ≥ 80% on the updated paths
+- [ ] README (en + fr) shows the multi-tool example
+- [ ] Website `/cli/init` page mentions the multi-tool option
 
 ## Relevant files
 
@@ -93,7 +93,24 @@ Ce qui ne va pas :
 
 Points à corriger :
 
-- [x] ajouter des exemples `--tool claude,cursor,copilot` et `--all-tools` dans les README EN/FR *("Mixed-team setup" block)*
-- [x] mettre à jour `../lytos-website/src/content/docs/en/cli/init.md` *(Usage block rewritten, Options table extended, legacy Cursor path corrected)*
-- [x] mettre à jour `../lytos-website/src/content/docs/fr/cli/init.md` *(mirror EN)*
-- [x] vérifier que la doc explique bien le comportement de `none` dans une liste mixte *(couvert dans les deux README et les deux /cli/init)*
+- ajouter des exemples `--tool claude,cursor,copilot` et `--all-tools` dans les README EN/FR
+- mettre à jour `../lytos-website/src/content/docs/en/cli/init.md`
+- mettre à jour `../lytos-website/src/content/docs/fr/cli/init.md`
+- vérifier que la doc explique bien le comportement de `none` dans une liste mixte
+
+## Audit de review — 2026-04-22
+
+**Verdict: NO_GO**
+
+Les README EN/FR sont maintenant correctement réalignés : exemples multi-tool, `--all-tools`, comportement de `none` et erreur sur valeur inconnue y sont bien expliqués. En revanche, le DoD demande aussi une mise à jour de la doc website `/cli/init`, et cette partie n'est pas présente dans la branche auditée.
+
+Ce qui bloque :
+
+- la page website `cli/init` EN n'est pas mise à jour
+- la page website `cli/init` FR n'est pas mise à jour
+
+Points à corriger :
+
+- mettre à jour la doc website `cli/init` en EN
+- mettre à jour la doc website `cli/init` en FR
+- vérifier que le comportement `none` y est documenté comme dans les README
