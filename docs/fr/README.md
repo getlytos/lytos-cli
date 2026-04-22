@@ -118,6 +118,17 @@ La skill `session-start` lit le frontmatter de l'issue en cours pour décider co
 
 C'est ainsi que les petites issues restent rapides sans brûler la fenêtre de contexte — et c'est pour ça que `effort` et `complexity` dans le frontmatter portent vraiment quelque chose : ce ne sont pas juste des indicateurs de priorisation.
 
+### Les bridge files personnalisés sont préservés
+
+Lancer `lyt init --force` sur un projet existant régénère `.lytos/` sans écraser les personnalisations locales que vous avez apportées à votre bridge IA (`CLAUDE.md`, `.cursor/rules/lytos.mdc`, `AGENTS.md`, `.github/copilot-instructions.md`, `GEMINI.md`, `.windsurfrules`). Si le bridge existe déjà, il est conservé tel quel et le CLI affiche un warning pour signaler que le fichier a été sauté.
+
+Pour remplacer explicitement un bridge par le template fourni — utile quand vous voulez remonter un nouveau défaut, ou quand votre copie locale a dérivé — passez `--overwrite-bridges` :
+
+```bash
+lyt init --force                          # régénère, préserve les bridges (défaut)
+lyt init --force --overwrite-bridges      # régénère, remplace aussi les bridges
+```
+
 ---
 
 ## Fonctionne avec n'importe quel outil IA

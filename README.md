@@ -118,6 +118,17 @@ The `session-start` skill reads the current issue's frontmatter to decide how mu
 
 This is how small issues stay fast without burning the context window, and why `effort` and `complexity` in issue frontmatter are load-bearing — they are not just prioritization hints.
 
+### Customized bridge files are preserved
+
+Running `lyt init --force` on an existing project re-scaffolds `.lytos/` without overwriting any local customization you added to your AI bridge file (`CLAUDE.md`, `.cursor/rules/lytos.mdc`, `AGENTS.md`, `.github/copilot-instructions.md`, `GEMINI.md`, `.windsurfrules`). If the bridge already exists, it is kept as-is and the CLI prints a warning so you know it was skipped.
+
+To explicitly replace a bridge with the bundled template — useful when upstreaming a new default or when your local copy has drifted — pass `--overwrite-bridges`:
+
+```bash
+lyt init --force                          # re-scaffold, preserve bridges (default)
+lyt init --force --overwrite-bridges      # re-scaffold, replace bridges too
+```
+
 ---
 
 ## Works with any AI tool
