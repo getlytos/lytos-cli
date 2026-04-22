@@ -1,6 +1,6 @@
 ---
 id: ISS-0066
-title: "Release 1.0.1 after premature 1.0.0 publish"
+title: Release 1.0.1 after premature 1.0.0 publish
 type: chore
 priority: P0-critical
 effort: XS
@@ -8,13 +8,12 @@ complexity: light
 domain: [release, npm]
 skill: documentation
 skills_aux: [testing]
-status: 4-review
-branch: "chore/ISS-0066-release-1-0-1"
+status: 5-done
+branch: chore/ISS-0066-release-1-0-1
 depends: []
 created: 2026-04-22
 updated: 2026-04-22
 ---
-
 # ISS-0066 — Release `1.0.1` after premature `1.0.0` publish
 
 ## Context

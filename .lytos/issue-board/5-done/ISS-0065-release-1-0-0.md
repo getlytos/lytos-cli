@@ -1,6 +1,6 @@
 ---
 id: ISS-0065
-title: "Release 1.0.0"
+title: Release 1.0.0
 type: chore
 priority: P0-critical
 effort: XS
@@ -8,13 +8,12 @@ complexity: light
 domain: [release, npm]
 skill: documentation
 skills_aux: [testing]
-status: 4-review
-branch: "chore/ISS-0065-release-1-0-0"
+status: 5-done
+branch: chore/ISS-0065-release-1-0-0
 depends: []
 created: 2026-04-22
 updated: 2026-04-22
 ---
-
 # ISS-0065 — Release `1.0.0`
 
 ## Context

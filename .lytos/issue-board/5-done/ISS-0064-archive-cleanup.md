@@ -1,6 +1,6 @@
 ---
 id: ISS-0064
-title: "Archive completed housekeeping issues and restore a clean main worktree"
+title: Archive completed housekeeping issues and restore a clean main worktree
 type: chore
 priority: P1-high
 effort: XS
@@ -8,13 +8,12 @@ complexity: light
 domain: [workflow, board, archive, git]
 skill: documentation
 skills_aux: [git-workflow]
-status: 4-review
-branch: "chore/ISS-0064-archive-cleanup"
+status: 5-done
+branch: chore/ISS-0064-archive-cleanup
 depends: []
 created: 2026-04-22
 updated: 2026-04-22
 ---
-
 # ISS-0064 — Archive completed housekeeping issues and restore a clean main worktree
 
 ## Context
