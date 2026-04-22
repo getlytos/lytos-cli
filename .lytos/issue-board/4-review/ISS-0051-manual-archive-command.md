@@ -8,8 +8,8 @@ complexity: standard
 domain: [cli, board]
 skill: ""
 skills_aux: []
-status: 3-in-progress
-branch: "feat/ISS-0051-manual-archive"
+status: 4-review
+branch: "fix/ISS-0051-finalize-archive"
 depends: []
 created: 2026-04-21
 updated: 2026-04-22
@@ -68,40 +68,40 @@ This change lives in `lytos-method` (where the hook is installed), not in `lytos
 
 ## Definition of done
 
-- [ ] `lyt board` no longer moves any files — verified by integration test that runs `lyt board` and confirms `5-done/` is unchanged.
-- [ ] `lyt archive` is registered in `src/cli.ts` and visible in `lyt --help`.
-- [ ] Default threshold of 7 days is enforced — issue closed today stays in `5-done/` after `lyt archive`, an issue with `updated: 2026-04-13` (8 days old) gets moved.
-- [ ] `--older-than 0d` and `--all` archive everything in `5-done/`.
-- [ ] `--dry-run` prints planned moves without touching the filesystem.
-- [ ] Quarter computation uses each issue's `updated` field, not the archive run date.
-- [ ] Tests cover: default threshold, custom `--older-than`, `--dry-run`, `--all`, empty `5-done/`, mixed (some old enough, some not).
-- [ ] Coverage ≥ 80% on `src/commands/archive.ts`.
-- [ ] Doc updated: `/cli/overview`, `/cli/archive` (en + fr), `/method/issue-board`, README en + fr.
-- [ ] Git hook on `lytos-method` updated to allow archive-only commits (or follow-up issue opened).
+- [x] `lyt board` no longer moves any files — verified by integration test that runs `lyt board` and confirms `5-done/` is unchanged.
+- [x] `lyt archive` is registered in `src/cli.ts` and visible in `lyt --help`.
+- [x] Default threshold of 7 days is enforced — issue closed today stays in `5-done/` after `lyt archive`, an issue with `updated: 2026-04-13` (8 days old) gets moved.
+- [x] `--older-than 0d` and `--all` archive everything in `5-done/`.
+- [x] `--dry-run` prints planned moves without touching the filesystem.
+- [x] Quarter computation uses each issue's `updated` field, not the archive run date.
+- [x] Tests cover: default threshold, custom `--older-than`, `--dry-run`, `--all`, empty `5-done/`, mixed (some old enough, some not).
+- [x] Coverage ≥ 80% on `src/commands/archive.ts`.
+- [x] Doc updated: `/cli/overview`, `/cli/archive` (en + fr), `/method/issue-board`, README en + fr.
+- [x] Git hook on `lytos-method` updated to allow archive-only commits (or follow-up issue opened).
 
 ## Checklist
 
 ### Source code
-- [ ] Strip `archiveIssues()` call from `src/commands/board.ts`
-- [ ] Create `src/commands/archive.ts`
-- [ ] Refactor `archiveIssues()` in `src/lib/board-generator.ts` to accept an `olderThanDays` parameter (default `Infinity` for backwards compat in unit tests, but default `7` from the CLI)
-- [ ] Use issue's `updated` field for quarter computation
-- [ ] Register the new command in `src/cli.ts`
+- [x] Strip `archiveIssues()` call from `src/commands/board.ts`
+- [x] Create `src/commands/archive.ts`
+- [x] Refactor `archiveIssues()` in `src/lib/board-generator.ts` to accept an `olderThanDays` parameter (default `Infinity` for backwards compat in unit tests, but default `7` from the CLI)
+- [x] Use issue's `updated` field for quarter computation
+- [x] Register the new command in `src/cli.ts`
 
 ### Tests
-- [ ] `tests/commands/archive.test.ts` — unit tests on the command surface
-- [ ] `tests/lib/board-generator.test.ts` — extend existing tests for the new threshold logic
-- [ ] Update existing `lyt board` tests to assert no file movement
+- [x] `tests/commands/archive.test.ts` — unit tests on the command surface
+- [x] `tests/lib/board-generator.test.ts` — extend existing tests for the new threshold logic
+- [x] Update existing `lyt board` tests to assert no file movement
 
 ### Documentation
-- [ ] `src/content/docs/{en,fr}/cli/overview.md` — add row in commands table
-- [ ] `src/content/docs/{en,fr}/cli/archive.md` — new pages
-- [ ] `src/content/docs/{en,fr}/method/issue-board.md` — lifecycle update
-- [ ] `README.md` (en + fr) — commands section
-- [ ] `astro.config.mjs` (website) — add sidebar entry for `/cli/archive`
+- [x] `src/content/docs/{en,fr}/cli/overview.md` — add row in commands table
+- [x] `src/content/docs/{en,fr}/cli/archive.md` — new pages
+- [x] `src/content/docs/{en,fr}/method/issue-board.md` — lifecycle update
+- [x] `README.md` (en + fr) — commands section
+- [x] `astro.config.mjs` (website) — add sidebar entry for `/cli/archive`
 
 ### Git hook (likely follow-up issue on lytos-method)
-- [ ] Pre-commit hook accepts diffs that are purely archive renames + INDEX/BOARD updates
+- [x] Pre-commit hook accepts diffs that are purely archive renames + INDEX/BOARD updates *(follow-up [lytos-method ISS-0021](../../../../lytos-method/.lytos/issue-board/1-backlog/ISS-0021-hook-allow-archive-only-commits.md))*
 
 ## Relevant files
 
@@ -157,3 +157,25 @@ Points à corriger :
 - livrer les mises à jour website promises pour `lyt archive`
 - documenter le passage `5-done -> archive` dans la doc méthode publique
 - traiter le hook dans `lytos-method`, ou ouvrir et référencer explicitement l'issue de suivi
+
+## Verification — 2026-04-22 (post-NO_GO finalization)
+
+Cross-repo deliverables verified present — the previous audit only inspected `lytos-cli` and missed work shipped on the sibling repos.
+
+**Website (`lytos-website`)** — commit [`e128363`](https://github.com/getlytos/lytos-website/commit/e128363):
+
+- `src/content/docs/{en,fr}/cli/archive.md` — new pages (73 lines each), command + flags + 7-day rationale + relationship to `lyt board`
+- `src/content/docs/{en,fr}/cli/overview.md` — `lyt archive` row added, `lyt board` annotated as read-only on the filesystem
+- `src/content/docs/{en,fr}/method/issue-board.md` — lifecycle now covers `5-done → archive`
+- `astro.config.mjs` — `lytos archive` sidebar entry under the CLI group
+- `src/components/PageTitle.astro` — breadcrumb label `archive` → `lytos archive` (EN + FR)
+
+**Method (`lytos-method`)** — `[ISS-0021](../../../../lytos-method/.lytos/issue-board/1-backlog/ISS-0021-hook-allow-archive-only-commits.md)` open in `1-backlog/` — explicit follow-up for the pre-commit hook exception that lets `lyt archive` commit archive-only diffs on `main` without `--no-verify`.
+
+**Local code/tests verified by**:
+
+- `npm run build` — clean
+- `npx vitest run tests/commands/archive.test.ts tests/commands/board.test.ts` — 20/20 green
+- `src/lib/board-generator.ts:161` confirms `quarter` is derived from `fm.updated`, not from `Date.now()`
+
+**Side note — auto-archive bug observed during this session**: running `npx lyt board` on `main` still archived 6 freshly-closed issues. Root cause is a stale globally-installed `lytos-cli` binary that predates this fix; the fix in `src/commands/board.ts` is correct on this branch. Once this branch lands and the binary is republished, the bug disappears.
