@@ -78,3 +78,19 @@ No CLI code change. No test change. Pure method codification.
 - **Out of scope:** automating checkbox validation in `lyt doctor` (would require parsing intent — defer).
 - **Out of scope:** website documentation of this rule — skills aren't exposed as individual pages today; the /workflow page already covers the high-level flow.
 - **Why P1-high:** the failure mode it prevents is silent drift between "what the issue says is done" and "what's actually done". On a cross-model audit workflow this is load-bearing.
+
+## Audit de review — 2026-04-22
+
+**Verdict: GO**
+
+La règle est bien codifiée aux endroits attendus dans ce repo : section "During execution — tick as you go" dans `session-start.md`, et nouveau bullet "Tick the DoD as you go" dans `LYTOS.md`, à la fois dans `.lytos/` et dans `method/`. Le miroir `../lytos-method` est également aligné localement.
+
+Points vérifiés :
+
+- ajout dans `.lytos/skills/session-start.md`
+- ajout dans `method/skills/session-start.md`
+- ajout dans `.lytos/LYTOS.md`
+- ajout dans `method/LYTOS.md`
+- alignement constaté aussi dans `../lytos-method`
+
+Pas de finding bloquant sur ce diff.
