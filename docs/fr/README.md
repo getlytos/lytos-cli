@@ -47,6 +47,17 @@ npx lytos-cli init
 
 En 2 minutes, votre dépôt a son manifest, ses rules, son board. À partir de là, l'IA connaît votre projet.
 
+### Setup d'équipe mixte : un repo, plusieurs outils IA
+
+Sur un repo où certains développeurs utilisent Claude Code, d'autres Cursor, d'autres Codex, `lyt init` peut générer tous les bridge files en une seule fois :
+
+```bash
+lyt init --tool claude,cursor,copilot       # CSV : seulement ce que l'équipe utilise
+lyt init --all-tools                        # tous les adaptateurs shippants d'un coup
+```
+
+Chaque bridge pointe vers le même dossier `.lytos/`, donc changer d'outil ne demande aucune reconfiguration du projet. `none` est accepté dans la liste en no-op, pour que des scripts puissent passer `"none,claude"` sans cas particulier. Les valeurs inconnues sortent en erreur avant qu'aucun fichier ne soit écrit.
+
 ![Démo Lytos](../screenshots/lytos.gif)
 
 ![lyt board](../screenshots/lyt-board.png)
@@ -59,12 +70,14 @@ En 2 minutes, votre dépôt a son manifest, ses rules, son board. À partir de l
 |----------|-----------------|
 | `lyt init` | Génère `.lytos/` dans un projet (interactif, détecte la stack) |
 | `lyt board` | Régénère BOARD.md depuis le frontmatter YAML des issues |
+| `lyt archive` | Déplace les issues terminées de `5-done/` vers `archive/<quarter>/` (défaut : plus de 7 jours). `--all`, `--older-than <Nd>`, `--dry-run` |
 | `lyt lint` | Valide la structure et le contenu de `.lytos/` |
 | `lyt doctor` | Diagnostic complet — liens cassés, mémoire obsolète, skills manquants, score de santé |
 | `lyt show [ISS-XXXX]` | Affiche le détail d'une issue avec sa progression, ou toutes les issues en cours |
 | `lyt start ISS-XXXX` | Démarre une issue — déplace en in-progress, crée la branche, met à jour le board |
 | `lyt close ISS-XXXX` | Ferme une issue — déplace en done, alerte sur les items non cochés |
 | `lyt close` | Ferme en lot toutes les issues de 4-review/ → 5-done/ (demande confirmation ; `--yes` saute le prompt ; `--dry-run` previewe) |
+| `lyt upgrade` | Récupère les derniers fichiers méthode dans `.lytos/`. `--migrate-cursor` convertit un legacy `.cursorrules` vers `.cursor/rules/lytos.mdc`. |
 | `lyt update` | Met à jour lytos-cli vers la dernière version |
 
 ![lyt show](../screenshots/lyt-show.png)
