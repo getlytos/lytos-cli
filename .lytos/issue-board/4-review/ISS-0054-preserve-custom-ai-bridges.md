@@ -95,6 +95,6 @@ Ce qui ne va pas :
 
 Points à corriger :
 
-- ajouter une section explicite dans `README.md` sur "preserve by default / overwrite explicitly"
-- répliquer l'information dans `docs/fr/README.md`
-- ajouter au moins un exemple concret de ré-init avec `--force --overwrite-bridges`
+- [x] ajouter une section explicite dans `README.md` sur "preserve by default / overwrite explicitly" *(PR #11 — "Customized bridge files are preserved" subsection)*
+- [x] répliquer l'information dans `docs/fr/README.md` *(mirror EN)*
+- [x] ajouter au moins un exemple concret de ré-init avec `--force --overwrite-bridges` *(deux blocs code côte à côte avec et sans `--overwrite-bridges`)*
