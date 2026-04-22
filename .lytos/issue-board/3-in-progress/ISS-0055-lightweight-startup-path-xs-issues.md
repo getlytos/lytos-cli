@@ -8,11 +8,11 @@ complexity: standard
 domain: [workflow, skills, context]
 skill: ""
 skills_aux: [documentation, code-structure]
-status: 4-review
+status: 3-in-progress
 branch: "feat/ISS-0055-lightweight-startup-path"
 depends: []
 created: 2026-04-21
-updated: 2026-04-21
+updated: 2026-04-22
 ---
 
 # ISS-0055 — Add a lightweight startup path for XS issues to reduce context overhead
@@ -89,7 +89,23 @@ Ce qui ne va pas :
 
 Points à corriger :
 
-- [x] documenter clairement le mode XS/light dans `README.md` *(PR #12 — "Startup depth — lightweight vs standard" subsection)*
-- [x] répliquer l'information dans `docs/fr/README.md` si le README reste la doc d'entrée *(mirror EN)*
-- [x] mettre à jour une page website qui décrit le startup flow ou le workflow global *(`/method/skills` EN + FR updated with the same subsection)*
-- [x] préciser quand le chemin léger est permis et ce qui reste obligatoire *(condition explicite `effort: XS` AND `complexity: light`, baseline de sécurité énumérée, règle d'auto-upgrade mentionnée)*
+- documenter clairement le mode XS/light dans `README.md`
+- répliquer l'information dans `docs/fr/README.md` si le README reste la doc d'entrée
+- mettre à jour une page website qui décrit le startup flow ou le workflow global
+- préciser quand le chemin léger est permis et ce qui reste obligatoire
+
+## Audit de review — 2026-04-22
+
+**Verdict: NO_GO**
+
+La branche ajoute bien dans les README EN/FR une explication claire du mode `XS/light`, de ses garde-fous, et de la bascule obligatoire vers le mode standard dans les autres cas. En revanche, le ticket demandait aussi une mise à jour d'une doc publique décrivant le startup flow, et cette partie n'est pas livrée ici.
+
+Ce qui bloque :
+
+- aucune page website décrivant le startup flow ou le workflow global n'est mise à jour
+
+Points à corriger :
+
+- répliquer la règle dans une doc website publique sur le startup flow
+- vérifier que cette doc reprend bien la frontière `effort: XS` + `complexity: light`
+- rappeler explicitement ce qui reste obligatoire même en chemin léger
