@@ -8,7 +8,7 @@ complexity: heavy
 domain: [schema, parser, template, audit]
 skill: code-structure
 skills_aux: [testing, documentation]
-status: 3-in-progress
+status: 4-review
 branch: "feat/ISS-0074-frontmatter-schema-v2"
 depends: []
 created: 2026-05-23
@@ -48,8 +48,8 @@ L'implémentation se déroule en **5 phases indépendantes** (chacune shippable)
 - [x] `lyt doctor` signale les issues v1 en warning soft, pas en erreur.
 - [x] `lyt start` / `lyt review` / `lyt close` écrivent les champs lifecycle automatiquement.
 - [x] `lyt review --verdict go|no-go|pending` écrit `review`.
-- [ ] Documentation à jour dans `method/` et `docs/`. *(template ✓ in phase 1 ; command docs phase 2/3)*
-- [ ] Tests : parsing, validation, write paths, migration. *(parsing + validation ✓ phase 1 ; write paths phase 3 ; migration phase 5)*
+- [x] Documentation à jour dans `method/` et `docs/`. *(template + ADR-0001 référencé dans manifest ; CLI help mis à jour pour `--verdict`)*
+- [x] Tests : parsing, validation, write paths, migration. *(parsing + validation + write paths livrés ; migration tests vivent dans [[ISS-0077]] qui porte la commande)*
 
 ## Checklist
 
@@ -70,14 +70,11 @@ L'implémentation se déroule en **5 phases indépendantes** (chacune shippable)
 - [x] `lyt close` écrit `completed_at` + `commits` (via git log).
 - [x] Tests : chaque commande modifie correctement le frontmatter et garde le YAML propre.
 
-### Phase 4 — AI wrapper integration
-- [ ] Créer une issue dédiée par cible (Claude Code, Cursor, Codex CLI).
-- [ ] Documenter le contrat d'écriture (`ai_implementer`, tokens, cost).
+### Phase 4 — AI wrapper integration *(split-out → [[ISS-0076]])*
+Cette phase est portée par une issue dédiée parce qu'elle dépend d'un ADR de contrat (journal IA → frontmatter) et de N implémentations par cible (Claude Code, Cursor, Codex CLI). Cf. [`ISS-0076`](../1-backlog/ISS-0076-ai-wrapper-integration.md).
 
-### Phase 5 — Migration
-- [ ] `lyt migrate-frontmatter` ajoute `schema_version: 2` sur tout repo.
-- [ ] Backfill `started_at`/`completed_at` quand devinables depuis git log.
-- [ ] Dry-run par défaut, `--apply` explicite.
+### Phase 5 — Migration *(split-out → [[ISS-0077]])*
+Cette phase est portée par `lyt migrate-frontmatter` dans une issue dédiée. Pas bloquante : l'auto-migration via `lyt start/close/review` couvre déjà tout issue activement touchée. Cf. [`ISS-0077`](../1-backlog/ISS-0077-migrate-frontmatter.md).
 
 ## Relevant files
 
