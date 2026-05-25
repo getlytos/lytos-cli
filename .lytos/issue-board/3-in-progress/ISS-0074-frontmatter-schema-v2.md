@@ -13,6 +13,7 @@ branch: "feat/ISS-0074-frontmatter-schema-v2"
 depends: []
 created: 2026-05-23
 updated: 2026-05-25
+schema_version: 2
 ---
 
 # ISS-0074 — Frontmatter schema v2 (auditabilité durable)
@@ -44,7 +45,7 @@ L'implémentation se déroule en **5 phases indépendantes** (chacune shippable)
 - [x] Le validateur accepte tous les nouveaux champs avec leur domaine de valeur.
 - [x] Le parser ignore poliment les champs inconnus (forward-compat).
 - [x] Aucune issue v1 existante ne casse — tests de régression sur tout le board actuel.
-- [ ] `lyt doctor` signale les issues v1 en warning soft, pas en erreur. *(phase 2)*
+- [x] `lyt doctor` signale les issues v1 en warning soft, pas en erreur.
 - [ ] `lyt start` / `lyt review` / `lyt close` écrivent les champs lifecycle automatiquement. *(phase 3)*
 - [ ] `lyt review --verdict go|no-go|pending` écrit `review`. *(phase 3)*
 - [ ] Documentation à jour dans `method/` et `docs/`. *(template ✓ in phase 1 ; command docs phase 2/3)*
@@ -59,9 +60,9 @@ L'implémentation se déroule en **5 phases indépendantes** (chacune shippable)
 - [x] Tests parser : v1 valide, v2 valide, champs inconnus ignorés, valeurs hors domaine rejetées.
 
 ### Phase 2 — Read support
-- [ ] `lyt board` affiche `review` / `assignee` quand présents.
-- [ ] `lyt doctor` détecte les issues v1 et propose la migration.
-- [ ] Tests E2E sur un repo mixte v1/v2.
+- [x] `lyt board` affiche `review` / `assignee` quand présents.
+- [x] `lyt doctor` détecte les issues v1 et propose la migration.
+- [x] Tests E2E sur un repo mixte v1/v2.
 
 ### Phase 3 — Write support automatique
 - [ ] `lyt start` écrit `started_at` + `assignee` (depuis git config).

@@ -16,7 +16,7 @@ _No issues._
 ### 1-backlog (prioritized)
 
 | # | Title | Priority | Effort | Depends |
-|---|-------|----------|--------|---------|
+|---|---|---|---|---|
 | [ISS-0040](1-backlog/ISS-0040-cloud-app-compatibility.md) | Verify Lytos compatibility with Claude Code Desktop and Codex web app | P2-normal | S | — |
 | [ISS-0042](1-backlog/ISS-0042-claim-as-draft-pr.md) | lyt claim: atomic claim via branch + push + draft PR (full race-proof design) | P1-high | L | ISS-0041 |
 | [ISS-0043](1-backlog/ISS-0043-board-all-remote.md) | lyt board --all --remote: lead-view from origin, not local | P2-normal | S | — |
@@ -35,7 +35,7 @@ _No issues._
 ### 3-in-progress (in dev)
 
 | # | Title | Priority | Effort |
-|---|-------|----------|--------|
+|---|---|---|---|
 | [ISS-0074](3-in-progress/ISS-0074-frontmatter-schema-v2.md) | Frontmatter schema v2 (auditabilité durable) | P1-high | L |
 
 ### 4-review (review/test)

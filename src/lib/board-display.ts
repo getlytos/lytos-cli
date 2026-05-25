@@ -128,8 +128,18 @@ function buildTree(issues: Issue[]): DisplayIssue[] {
   return result;
 }
 
+/** Color a v2 review verdict marker (shown in 4-review section only). */
+function reviewMarker(verdict: string): string {
+  switch (verdict) {
+    case "go":      return green("✓");
+    case "no-go":   return c("31", "✗");
+    case "pending": return yellow("⌛");
+    default:        return "";
+  }
+}
+
 /** Format a single issue line */
-function formatIssue(di: DisplayIssue): string {
+function formatIssue(di: DisplayIssue, section: string): string {
   const { issue, depth, isLast } = di;
   const id = String(issue.frontmatter.id || "?");
   const title = String(issue.frontmatter.title || "?");
@@ -154,7 +164,13 @@ function formatIssue(di: DisplayIssue): string {
     ? `  ${dim("@" + issue.frontmatter.assignee)}`
     : "";
 
-  return `${prefix}${dim(id)}  ${colorPriority(priority)}  ${colorEffort(effort)}  ${displayTitle}${assignee}`;
+  // Review verdict marker (schema v2, ADR-0001). Only meaningful in 4-review.
+  const review = section === "4-review" && typeof issue.frontmatter.review === "string"
+    ? reviewMarker(issue.frontmatter.review)
+    : "";
+  const reviewSlot = review ? `  ${review}` : "";
+
+  return `${prefix}${dim(id)}  ${colorPriority(priority)}  ${colorEffort(effort)}  ${displayTitle}${reviewSlot}${assignee}`;
 }
 
 /**
@@ -222,7 +238,7 @@ export function displayBoard(data: BoardData): void {
     console.log(`  ${dim("│")}`);
     const tree = buildTree(issues);
     for (const di of tree) {
-      console.log(`  ${dim("│")} ${formatIssue(di)}`);
+      console.log(`  ${dim("│")} ${formatIssue(di, status)}`);
     }
     console.log("");
   }

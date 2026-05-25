@@ -305,19 +305,24 @@ export function generateBoardMarkdown(data: BoardData, archivedCount = 0): strin
         lines.push(`| [${id}](${relPath}) | ${title} | ${updated} |`);
       }
     } else {
-      // Check if any issue has depends
+      // Detect which optional columns apply for this section (schema v2 fields).
       const hasDeps = folderIssues.some((i) => {
         const deps = i.frontmatter.depends;
         return Array.isArray(deps) ? deps.length > 0 : !!deps;
       });
+      const showAssignee =
+        (folder === "2-sprint" || folder === "3-in-progress" || folder === "4-review") &&
+        folderIssues.some((i) => typeof i.frontmatter.assignee === "string" && i.frontmatter.assignee);
+      const showReview =
+        folder === "4-review" &&
+        folderIssues.some((i) => typeof i.frontmatter.review === "string" && i.frontmatter.review);
 
-      if (hasDeps) {
-        lines.push("| # | Title | Priority | Effort | Depends |");
-        lines.push("|---|-------|----------|--------|---------|");
-      } else {
-        lines.push("| # | Title | Priority | Effort |");
-        lines.push("|---|-------|----------|--------|");
-      }
+      const header = ["#", "Title", "Priority", "Effort"];
+      if (showAssignee) header.push("Assignee");
+      if (showReview) header.push("Review");
+      if (hasDeps) header.push("Depends");
+      lines.push(`| ${header.join(" | ")} |`);
+      lines.push(`|${header.map(() => "---").join("|")}|`);
 
       for (const issue of folderIssues) {
         const id = issue.frontmatter.id || "?";
@@ -325,20 +330,21 @@ export function generateBoardMarkdown(data: BoardData, archivedCount = 0): strin
         const priority = issue.frontmatter.priority || "?";
         const effort = issue.frontmatter.effort || "?";
         const relPath = `${issue.folder}/${issue.filename}`;
+        const row: string[] = [`[${id}](${relPath})`, String(title), String(priority), String(effort)];
 
+        if (showAssignee) {
+          const assignee = issue.frontmatter.assignee;
+          row.push(typeof assignee === "string" && assignee ? assignee : "—");
+        }
+        if (showReview) {
+          const review = issue.frontmatter.review;
+          row.push(typeof review === "string" && review ? review : "—");
+        }
         if (hasDeps) {
           const deps = issue.frontmatter.depends;
-          const depsStr = Array.isArray(deps) && deps.length > 0
-            ? deps.join(", ")
-            : "—";
-          lines.push(
-            `| [${id}](${relPath}) | ${title} | ${priority} | ${effort} | ${depsStr} |`
-          );
-        } else {
-          lines.push(
-            `| [${id}](${relPath}) | ${title} | ${priority} | ${effort} |`
-          );
+          row.push(Array.isArray(deps) && deps.length > 0 ? deps.join(", ") : "—");
         }
+        lines.push(`| ${row.join(" | ")} |`);
       }
     }
 
