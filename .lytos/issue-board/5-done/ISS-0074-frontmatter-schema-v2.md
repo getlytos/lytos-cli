@@ -8,7 +8,7 @@ complexity: heavy
 domain: [schema, parser, template, audit]
 skill: code-structure
 skills_aux: [testing, documentation]
-status: 4-review
+status: 5-done
 branch: feat/ISS-0074-frontmatter-schema-v2
 depends: []
 created: 2026-05-23
