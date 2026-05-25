@@ -8,7 +8,7 @@ complexity: heavy
 domain: [schema, parser, template, audit]
 skill: code-structure
 skills_aux: [testing, documentation]
-status: 4-review
+status: 5-done
 branch: feat/ISS-0074-frontmatter-schema-v2
 depends: []
 created: 2026-05-23
@@ -16,6 +16,9 @@ updated: 2026-05-25
 schema_version: 2
 completed_at: 2026-05-25
 commits: [17efe29, 3aca299, 2e34141, 546d59c, 74194e1, dee6a83]
+review: go
+review_at: 2026-05-25
+reviewer: fredericgalline
 ---
 # ISS-0074 — Frontmatter schema v2 (auditabilité durable)
 
