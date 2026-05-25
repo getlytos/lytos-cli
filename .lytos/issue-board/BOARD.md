@@ -41,9 +41,7 @@ _No issues._
 
 ### 4-review (review/test)
 
-| # | Title | Priority | Effort |
-|---|-------|----------|--------|
-| [ISS-0074](4-review/ISS-0074-frontmatter-schema-v2.md) | Frontmatter schema v2 (auditabilité durable) | P1-high | L |
+_No issues._
 
 ### 5-done (recently completed)
 
@@ -53,6 +51,7 @@ _No issues._
 | [ISS-0064](5-done/ISS-0064-archive-cleanup.md) | Archive completed housekeeping issues and restore a clean main worktree | 2026-04-22 |
 | [ISS-0065](5-done/ISS-0065-release-1-0-0.md) | Release 1.0.0 | 2026-04-22 |
 | [ISS-0066](5-done/ISS-0066-release-1-0-1.md) | Release 1.0.1 after premature 1.0.0 publish | 2026-04-22 |
+| [ISS-0074](5-done/ISS-0074-frontmatter-schema-v2.md) | Frontmatter schema v2 (auditabilité durable) | 2026-05-25 |
 | [ISS-0078](5-done/ISS-0078-release-1-1-0.md) | Release 1.1.0 — frontmatter schema v2 | 2026-05-25 |
 
 ### Archive
