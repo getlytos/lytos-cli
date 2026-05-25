@@ -383,4 +383,40 @@ describe("lyt close (batch, no argument)", () => {
     expect(data.skipped).toHaveLength(1);
     expect(data.skipped[0].id).toBe("ISS-0012");
   });
+
+  it("writes v2 completion fields (completed_at, schema_version) on close", () => {
+    fixture = createEmptyFixture();
+    createCloseFixture(fixture.cwd);
+
+    const result = run("close ISS-0001", fixture.cwd);
+    expect(result.exitCode).toBe(0);
+
+    const content = readFileSync(
+      join(fixture.cwd, ".lytos/issue-board/5-done/ISS-0001-complete.md"),
+      "utf-8"
+    );
+
+    expect(content).toMatch(/^schema_version:\s*2$/m);
+    expect(content).toMatch(/^completed_at:\s*\d{4}-\d{2}-\d{2}$/m);
+    // YAML still parseable (no corruption)
+    expect(content).toMatch(/^---\n[\s\S]*?\n---\n/);
+  });
+
+  it("preserves existing completed_at on re-close (no overwrite)", () => {
+    fixture = createEmptyFixture();
+    createCloseFixture(fixture.cwd);
+
+    const filePath = join(fixture.cwd, ".lytos/issue-board/3-in-progress/ISS-0001-complete.md");
+    const original = readFileSync(filePath, "utf-8");
+    writeFileSync(filePath, original.replace("created: 2026-04-16", "created: 2026-04-16\ncompleted_at: 2025-12-31\nschema_version: 2"));
+
+    const result = run("close ISS-0001", fixture.cwd);
+    expect(result.exitCode).toBe(0);
+
+    const content = readFileSync(
+      join(fixture.cwd, ".lytos/issue-board/5-done/ISS-0001-complete.md"),
+      "utf-8"
+    );
+    expect(content).toMatch(/^completed_at:\s*2025-12-31$/m);
+  });
 });

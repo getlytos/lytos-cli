@@ -379,4 +379,73 @@ I read the diff and it looks fine.
     // Old audit heading replaced, not kept
     expect(content).not.toContain("## Audit — 2026-04-21");
   });
+
+  // --- Phase 3 v2 verdict flow (ADR-0001) -------------------------------
+
+  it("--verdict go writes review/review_at/reviewer/schema_version and keeps the issue in 4-review", () => {
+    fixture = createEmptyBoardFixture();
+    git(["init", "-b", "main"], fixture.cwd);
+    git(["config", "user.name", "alice"], fixture.cwd);
+    git(["config", "user.email", "alice@test"], fixture.cwd);
+    const issueFile = writeReviewIssue(fixture.cwd, "ISS-0080", "verdict-go");
+
+    const result = run("review ISS-0080 --verdict go", fixture.cwd);
+    expect(result.exitCode).toBe(0);
+
+    const content = readFileSync(issueFile, "utf-8");
+    expect(content).toMatch(/^review:\s*go$/m);
+    expect(content).toMatch(/^review_at:\s*\d{4}-\d{2}-\d{2}$/m);
+    expect(content).toMatch(/^reviewer:\s*alice$/m);
+    expect(content).toMatch(/^schema_version:\s*2$/m);
+    // Status unchanged
+    expect(content).toMatch(/^status:\s*4-review$/m);
+  });
+
+  it("--verdict no-go writes the verdict and moves the issue back to 3-in-progress", () => {
+    fixture = createEmptyBoardFixture();
+    git(["init", "-b", "main"], fixture.cwd);
+    git(["config", "user.name", "bob"], fixture.cwd);
+    git(["config", "user.email", "bob@test"], fixture.cwd);
+    const issueFile = writeReviewIssue(fixture.cwd, "ISS-0081", "verdict-nogo");
+
+    const result = run("review ISS-0081 --verdict no-go", fixture.cwd);
+    expect(result.exitCode).toBe(0);
+
+    // File moved from 4-review to 3-in-progress
+    expect(existsSync(issueFile)).toBe(false);
+    const newPath = join(fixture.cwd, ".lytos/issue-board/3-in-progress/ISS-0081-verdict-nogo.md");
+    expect(existsSync(newPath)).toBe(true);
+
+    const content = readFileSync(newPath, "utf-8");
+    expect(content).toMatch(/^review:\s*no-go$/m);
+    expect(content).toMatch(/^reviewer:\s*bob$/m);
+    expect(content).toMatch(/^status:\s*3-in-progress$/m);
+  });
+
+  it("--verdict pending writes the verdict and keeps the issue in 4-review", () => {
+    fixture = createEmptyBoardFixture();
+    git(["init", "-b", "main"], fixture.cwd);
+    git(["config", "user.name", "carol"], fixture.cwd);
+    git(["config", "user.email", "carol@test"], fixture.cwd);
+    const issueFile = writeReviewIssue(fixture.cwd, "ISS-0082", "verdict-pending");
+
+    const result = run("review ISS-0082 --verdict pending", fixture.cwd);
+    expect(result.exitCode).toBe(0);
+
+    const content = readFileSync(issueFile, "utf-8");
+    expect(content).toMatch(/^review:\s*pending$/m);
+    expect(content).toMatch(/^status:\s*4-review$/m);
+  });
+
+  it("--verdict rejects invalid values", () => {
+    fixture = createEmptyBoardFixture();
+    git(["init", "-b", "main"], fixture.cwd);
+    git(["config", "user.name", "carol"], fixture.cwd);
+    git(["config", "user.email", "carol@test"], fixture.cwd);
+    writeReviewIssue(fixture.cwd, "ISS-0083", "bad-verdict");
+
+    const result = run("review ISS-0083 --verdict maybe", fixture.cwd);
+    expect(result.exitCode).toBe(2);
+    expect(result.stderr).toContain("Invalid verdict");
+  });
 });

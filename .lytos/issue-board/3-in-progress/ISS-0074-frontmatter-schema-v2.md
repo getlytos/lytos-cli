@@ -46,8 +46,8 @@ L'implémentation se déroule en **5 phases indépendantes** (chacune shippable)
 - [x] Le parser ignore poliment les champs inconnus (forward-compat).
 - [x] Aucune issue v1 existante ne casse — tests de régression sur tout le board actuel.
 - [x] `lyt doctor` signale les issues v1 en warning soft, pas en erreur.
-- [ ] `lyt start` / `lyt review` / `lyt close` écrivent les champs lifecycle automatiquement. *(phase 3)*
-- [ ] `lyt review --verdict go|no-go|pending` écrit `review`. *(phase 3)*
+- [x] `lyt start` / `lyt review` / `lyt close` écrivent les champs lifecycle automatiquement.
+- [x] `lyt review --verdict go|no-go|pending` écrit `review`.
 - [ ] Documentation à jour dans `method/` et `docs/`. *(template ✓ in phase 1 ; command docs phase 2/3)*
 - [ ] Tests : parsing, validation, write paths, migration. *(parsing + validation ✓ phase 1 ; write paths phase 3 ; migration phase 5)*
 
@@ -65,10 +65,10 @@ L'implémentation se déroule en **5 phases indépendantes** (chacune shippable)
 - [x] Tests E2E sur un repo mixte v1/v2.
 
 ### Phase 3 — Write support automatique
-- [ ] `lyt start` écrit `started_at` + `assignee` (depuis git config).
-- [ ] `lyt review` écrit `review_at`, `reviewer`, et `review` selon `--verdict`.
-- [ ] `lyt close` écrit `completed_at` + `commits` (via git log).
-- [ ] Tests : chaque commande modifie correctement le frontmatter et garde le YAML propre.
+- [x] `lyt start` écrit `started_at` + `assignee` (depuis git config).
+- [x] `lyt review` écrit `review_at`, `reviewer`, et `review` selon `--verdict`.
+- [x] `lyt close` écrit `completed_at` + `commits` (via git log).
+- [x] Tests : chaque commande modifie correctement le frontmatter et garde le YAML propre.
 
 ### Phase 4 — AI wrapper integration
 - [ ] Créer une issue dédiée par cible (Claude Code, Cursor, Codex CLI).

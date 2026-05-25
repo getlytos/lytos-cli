@@ -16,12 +16,14 @@ import { existsSync, readFileSync } from "fs";
 import { join } from "path";
 import {
   applyAudit,
+  applyVerdict,
   buildPrompt,
   exportAllPrompts,
   findReviewIssue,
   hasExistingAudit,
   listPendingReviews,
   parseAuditResponse,
+  type ReviewVerdict,
 } from "../lib/review.js";
 import { ok, info, warn, error, cyan, bold, green, dim } from "../lib/output.js";
 
@@ -54,6 +56,7 @@ export const reviewCommand = new Command("review")
   .option("--all", "With --export, write one prompt file per pending issue under .lytos/review/<id>.prompt.md", false)
   .option("--accept <file>", "Ingest a returned audit from a file path, or '-' for stdin")
   .option("--overwrite", "Replace an existing audit block instead of refusing (use when re-auditing)", false)
+  .option("--verdict <value>", "Write the v2 review verdict directly (go|no-go|pending) without ingesting a full audit block")
   .on("--help", () => {
     console.log("");
     console.log("Examples:");
@@ -64,6 +67,8 @@ export const reviewCommand = new Command("review")
     console.log("  lyt review ISS-0050 --accept audit.md       # ingest a returned audit");
     console.log("  pbpaste | lyt review ISS-0050 --accept -    # ingest from clipboard");
     console.log("  lyt review ISS-0050 --accept - --overwrite  # replace a previous audit block");
+    console.log("  lyt review ISS-0050 --verdict go            # write verdict directly (no audit block)");
+    console.log("  lyt review ISS-0050 --verdict no-go         # write verdict + move back to 3-in-progress");
     console.log("");
     console.log("Use a fresh AI session for the audit — ideally a different");
     console.log("vendor or model than the one that implemented the issue.");
@@ -73,7 +78,7 @@ export const reviewCommand = new Command("review")
   .action(
     (
       issueId: string | undefined,
-      opts: { export?: boolean; all?: boolean; accept?: string; overwrite?: boolean }
+      opts: { export?: boolean; all?: boolean; accept?: string; overwrite?: boolean; verdict?: string }
     ) => {
     const cwd = process.cwd();
     const boardDir = findBoardDir(cwd);
@@ -128,6 +133,28 @@ export const reviewCommand = new Command("review")
         `Issue ${issueId} not found in 4-review/. Move it there first with an explicit frontmatter update, or pick another ID.`
       );
       process.exit(2);
+    }
+
+    // Mode 4: --verdict → write the v2 review field without a full audit block.
+    if (opts.verdict) {
+      const allowed: ReviewVerdict[] = ["go", "no-go", "pending"];
+      if (!allowed.includes(opts.verdict as ReviewVerdict)) {
+        error(`Invalid verdict "${opts.verdict}". Use one of: ${allowed.join(", ")}.`);
+        process.exit(2);
+      }
+      const verdict = opts.verdict as ReviewVerdict;
+      const result = applyVerdict({ boardDir, issueFilePath: issueFile, verdict });
+
+      console.error("");
+      if (verdict === "go") {
+        ok(`${cyan(bold(issueId))} verdict recorded: ${green("GO")} — stays in 4-review/ awaiting \`lyt close\`.`);
+      } else if (verdict === "no-go") {
+        warn(`${cyan(bold(issueId))} verdict recorded: NO_GO — moved back to 3-in-progress/.`);
+        if (result.moved) info(`New location: ${result.newPath}`);
+      } else {
+        info(`${cyan(bold(issueId))} verdict recorded: pending — stays in 4-review/.`);
+      }
+      return;
     }
 
     // Mode 3: --accept → ingest a returned audit block.

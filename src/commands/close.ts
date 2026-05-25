@@ -21,9 +21,10 @@ import {
   regenerateBoard,
   today,
   countChecklist,
+  getBranchCommits,
   type IssueLocation,
 } from "../lib/issue-ops.js";
-import { parseFrontmatter } from "../lib/frontmatter.js";
+import { parseFrontmatter, type Frontmatter } from "../lib/frontmatter.js";
 import { ok, info, warn, error, bold, cyan, green, yellow, dim } from "../lib/output.js";
 
 interface CloseOptions {
@@ -31,6 +32,28 @@ interface CloseOptions {
   yes?: boolean;
   dryRun?: boolean;
   json?: boolean;
+}
+
+/**
+ * Build the frontmatter delta written at close time (ADR-0001 v2 fields).
+ * `completed_at` preserves an existing value (re-close scenarios stay stable).
+ * `commits` is only written when git can resolve the issue's branch.
+ */
+function buildCloseExtras(issue: IssueLocation): Frontmatter {
+  const extras: Frontmatter = {
+    updated: today(),
+    schema_version: "2",
+  };
+  const existingCompleted = typeof issue.frontmatter.completed_at === "string" ? issue.frontmatter.completed_at : "";
+  if (!existingCompleted) {
+    extras.completed_at = today();
+  }
+  const branch = typeof issue.frontmatter.branch === "string" ? issue.frontmatter.branch : "";
+  const commits = getBranchCommits(branch);
+  if (commits.length > 0) {
+    extras.commits = commits;
+  }
+  return extras;
 }
 
 async function askConfirm(question: string): Promise<boolean> {
@@ -136,7 +159,7 @@ async function closeSingle(lytosDir: string, issueId: string, opts: CloseOptions
     return;
   }
 
-  moveIssue(lytosDir, issue, "5-done", { updated: today() });
+  moveIssue(lytosDir, issue, "5-done", buildCloseExtras(issue));
   regenerateBoard(lytosDir);
 
   if (opts.json) {
@@ -260,7 +283,7 @@ async function closeBatch(lytosDir: string, opts: CloseOptions): Promise<void> {
       continue;
     }
 
-    moveIssue(lytosDir, c.issue, "5-done", { updated: today() });
+    moveIssue(lytosDir, c.issue, "5-done", buildCloseExtras(c.issue));
     closed.push(id);
     if (!opts.json) {
       ok(`${cyan(bold(id))} closed`);

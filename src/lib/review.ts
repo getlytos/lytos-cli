@@ -13,7 +13,8 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFileSync } from "fs";
 import { execFileSync } from "child_process";
 import { join, dirname } from "path";
-import { parseFrontmatter } from "./frontmatter.js";
+import { parseFrontmatter, serializeFrontmatter, type Frontmatter } from "./frontmatter.js";
+import { currentGitUser, today } from "./issue-ops.js";
 
 export interface PendingReview {
   id: string;
@@ -317,6 +318,68 @@ export function applyAudit(options: ApplyAuditOptions): ApplyAuditResult {
   void dirname;
 
   return { newPath: targetPath, moved, replacedExisting };
+}
+
+export type ReviewVerdict = "go" | "no-go" | "pending";
+
+export interface ApplyVerdictOptions {
+  boardDir: string;
+  issueFilePath: string;
+  verdict: ReviewVerdict;
+  /** Override the git-config user — used in tests. */
+  reviewer?: string;
+}
+
+export interface ApplyVerdictResult {
+  newPath: string;
+  moved: boolean;
+}
+
+/**
+ * Write the v2 review fields (ADR-0001) and, on `no-go`, move the issue
+ * back to 3-in-progress so the visual board state matches the verdict.
+ * Idempotent on existing values: re-running with `go` after `pending`
+ * just overwrites the field.
+ */
+export function applyVerdict(opts: ApplyVerdictOptions): ApplyVerdictResult {
+  const { boardDir, issueFilePath, verdict } = opts;
+  const original = readFileSync(issueFilePath, "utf-8");
+  const fm = parseFrontmatter(original);
+  if (!fm) {
+    throw new Error(`No frontmatter in ${issueFilePath}`);
+  }
+
+  const reviewer = opts.reviewer ?? currentGitUser();
+  const updated: Frontmatter = {
+    ...fm,
+    review: verdict,
+    review_at: today(),
+    reviewer,
+    schema_version: "2",
+    updated: today(),
+  };
+  if (verdict === "no-go") {
+    updated.status = "3-in-progress";
+  }
+
+  const fmStr = serializeFrontmatter(updated);
+  const bodyMatch = original.match(/^---[\s\S]*?---\s*\n([\s\S]*)$/);
+  const body = bodyMatch ? bodyMatch[1] : "";
+  const rewritten = fmStr + "\n" + body;
+
+  let targetPath = issueFilePath;
+  let moved = false;
+  if (verdict === "no-go") {
+    const fileName = issueFilePath.split("/").pop() as string;
+    targetPath = join(boardDir, "3-in-progress", fileName);
+    writeFileSync(issueFilePath, rewritten, "utf-8");
+    renameSync(issueFilePath, targetPath);
+    moved = true;
+  } else {
+    writeFileSync(issueFilePath, rewritten, "utf-8");
+  }
+
+  return { newPath: targetPath, moved };
 }
 
 /**
