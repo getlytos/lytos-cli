@@ -1,6 +1,6 @@
 ---
 id: ISS-0078
-title: "Release 1.1.0 — frontmatter schema v2"
+title: Release 1.1.0 — frontmatter schema v2
 type: chore
 priority: P1-high
 effort: XS
@@ -8,8 +8,8 @@ complexity: light
 domain: [release, npm]
 skill: documentation
 skills_aux: [testing]
-status: 4-review
-branch: "chore/ISS-0078-release-1-1-0"
+status: 5-done
+branch: chore/ISS-0078-release-1-1-0
 depends: [ISS-0074]
 created: 2026-05-25
 updated: 2026-05-25
@@ -17,8 +17,9 @@ schema_version: 2
 started_at: 2026-05-25
 assignee: fredericgalline
 review_at: 2026-05-25
+completed_at: 2026-05-25
+commits: [8a03c4b]
 ---
-
 # ISS-0078 — Release `1.1.0` — frontmatter schema v2
 
 ## Context

@@ -41,9 +41,7 @@ _No issues._
 
 ### 4-review (review/test)
 
-| # | Title | Priority | Effort | Assignee | Depends |
-|---|---|---|---|---|---|
-| [ISS-0078](4-review/ISS-0078-release-1-1-0.md) | Release 1.1.0 — frontmatter schema v2 | P1-high | XS | fredericgalline | ISS-0074 |
+_No issues._
 
 ### 5-done (recently completed)
 
@@ -54,10 +52,11 @@ _No issues._
 | [ISS-0065](5-done/ISS-0065-release-1-0-0.md) | Release 1.0.0 | 2026-04-22 |
 | [ISS-0066](5-done/ISS-0066-release-1-0-1.md) | Release 1.0.1 after premature 1.0.0 publish | 2026-04-22 |
 | [ISS-0074](5-done/ISS-0074-frontmatter-schema-v2.md) | Frontmatter schema v2 (auditabilité durable) | 2026-05-25 |
+| [ISS-0078](5-done/ISS-0078-release-1-1-0.md) | Release 1.1.0 — frontmatter schema v2 | 2026-05-25 |
 
 ### Archive
 
-54 issues archived → [archive/INDEX.md](archive/INDEX.md)
+_No archived issues yet._
 
 ---
 
