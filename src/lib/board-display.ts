@@ -100,7 +100,7 @@ function buildTree(issues: Issue[]): DisplayIssue[] {
 
   for (const issue of issues) {
     const deps = issue.frontmatter.depends;
-    const depList = Array.isArray(deps) ? deps : deps ? [deps] : [];
+    const depList: string[] = Array.isArray(deps) ? deps : typeof deps === "string" && deps ? [deps] : [];
     const parentInGroup = depList.find((d) => issueIds.has(d));
 
     if (parentInGroup) {

@@ -17,6 +17,7 @@ import {
   checkOriginFresh,
 } from "../lib/issue-ops.js";
 import { parseIssueDetail } from "../lib/show.js";
+import { type Frontmatter } from "../lib/frontmatter.js";
 import { ok, info, warn, error, bold, cyan, green } from "../lib/output.js";
 
 function getGitUser(): string {
@@ -133,7 +134,7 @@ export const startCommand = new Command("start")
     console.error("");
   });
 
-function buildBranchName(fm: Record<string, string | string[]>): string {
+function buildBranchName(fm: Frontmatter): string {
   const type = typeof fm.type === "string" ? fm.type : "feat";
   const id = typeof fm.id === "string" ? fm.id : "ISS-0000";
   const title = typeof fm.title === "string" ? fm.title : "untitled";

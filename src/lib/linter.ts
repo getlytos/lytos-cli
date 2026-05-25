@@ -56,6 +56,13 @@ const PLACEHOLDER_PATTERNS = [
 
 const REQUIRED_FRONTMATTER_FIELDS = ["id", "title", "status", "priority"];
 
+// Schema v2 enum domains (ADR-0001). All v2 fields are optional;
+// validation runs only when the field is present.
+const V2_REVIEW_VALUES = ["go", "no-go", "pending", "none"];
+const V2_RISK_VALUES = ["low", "medium", "high"];
+const V2_VALIDATION_VALUES = ["pass", "fail", "skip"];
+const V2_VALIDATION_KEYS = ["tests", "build", "lint"] as const;
+
 /**
  * Run all lint checks on a .lytos/ directory.
  */
@@ -209,8 +216,71 @@ function lintIssues(lytosDir: string): { findings: LintFinding[]; filesChecked: 
           fix: `Move the file to ${fmStatus}/ or update the frontmatter status`,
         });
       }
+
+      // Schema v2 enum validation (ADR-0001). Only when the field is present.
+      validateV2Fields(fm, relPath, findings);
     }
   }
 
   return { findings, filesChecked };
+}
+
+/**
+ * Validate schema v2 enum fields when present.
+ * v1 issues without these fields are unaffected.
+ */
+function validateV2Fields(
+  fm: ReturnType<typeof parseFrontmatter>,
+  relPath: string,
+  findings: LintFinding[]
+): void {
+  if (!fm) return;
+
+  const review = fm.review;
+  if (typeof review === "string" && review !== "" && !V2_REVIEW_VALUES.includes(review)) {
+    findings.push({
+      severity: "error",
+      file: relPath,
+      message: `Invalid 'review' value: ${review}`,
+      fix: `Use one of: ${V2_REVIEW_VALUES.join(", ")}`,
+    });
+  }
+
+  const risk = fm.risk;
+  if (typeof risk === "string" && risk !== "" && !V2_RISK_VALUES.includes(risk)) {
+    findings.push({
+      severity: "error",
+      file: relPath,
+      message: `Invalid 'risk' value: ${risk}`,
+      fix: `Use one of: ${V2_RISK_VALUES.join(", ")}`,
+    });
+  }
+
+  const confidence = fm.confidence;
+  if (typeof confidence === "string" && confidence !== "") {
+    const n = Number(confidence);
+    if (!Number.isInteger(n) || n < 0 || n > 100) {
+      findings.push({
+        severity: "error",
+        file: relPath,
+        message: `Invalid 'confidence' value: ${confidence} (must be integer 0-100)`,
+        fix: "Set 'confidence' to an integer between 0 and 100",
+      });
+    }
+  }
+
+  const validation = fm.validation;
+  if (validation && typeof validation === "object" && !Array.isArray(validation)) {
+    for (const subKey of V2_VALIDATION_KEYS) {
+      const v = validation[subKey];
+      if (v !== undefined && v !== "" && !V2_VALIDATION_VALUES.includes(v)) {
+        findings.push({
+          severity: "error",
+          file: relPath,
+          message: `Invalid 'validation.${subKey}' value: ${v}`,
+          fix: `Use one of: ${V2_VALIDATION_VALUES.join(", ")}`,
+        });
+      }
+    }
+  }
 }

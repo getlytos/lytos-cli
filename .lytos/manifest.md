@@ -88,6 +88,15 @@ It is also the bridge between the free open-source method and the future team da
 - **Output for humans AND machines** — every command has a human-readable default output and a `--json` flag for machine consumption.
 - **Fail with context** — when something is wrong, say what's wrong, where, and how to fix it. Never just "Error."
 - **Single responsibility per command** — `lytos lint` validates. `lytos doctor` diagnoses. They don't overlap.
+- **Durable auditability over short-term ergonomics** — the issue frontmatter is the project's audit journal. Schema evolutions go through an ADR, never silent renames. See [`ADR-0001-frontmatter-schema-v2`](adr/ADR-0001-frontmatter-schema-v2.md).
+
+---
+
+## Architecture decisions
+
+| ADR | Title | Status |
+|-----|-------|--------|
+| [ADR-0001](adr/ADR-0001-frontmatter-schema-v2.md) | Frontmatter schema v2 (audit & cost trace) | Accepted |
 
 ---
 
@@ -111,4 +120,4 @@ It is also the bridge between the free open-source method and the future team da
 
 ---
 
-*Last updated: 2026-04-13*
+*Last updated: 2026-05-25*

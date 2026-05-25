@@ -8,11 +8,11 @@ complexity: heavy
 domain: [schema, parser, template, audit]
 skill: code-structure
 skills_aux: [testing, documentation]
-status: 1-backlog
+status: 3-in-progress
 branch: "feat/ISS-0074-frontmatter-schema-v2"
 depends: []
 created: 2026-05-23
-updated: 2026-05-23
+updated: 2026-05-25
 ---
 
 # ISS-0074 — Frontmatter schema v2 (auditabilité durable)
@@ -39,24 +39,24 @@ L'implémentation se déroule en **5 phases indépendantes** (chacune shippable)
 
 ## Definition of done
 
-- [ ] L'ADR-0001 est mergée et référencée dans `manifest.md`.
-- [ ] Le template `issue-feature.md` est mis à jour (champs v2 commentés "auto" vs "manuel").
-- [ ] Le validateur accepte tous les nouveaux champs avec leur domaine de valeur.
-- [ ] Le parser ignore poliment les champs inconnus (forward-compat).
-- [ ] Aucune issue v1 existante ne casse — tests de régression sur tout le board actuel.
-- [ ] `lyt doctor` signale les issues v1 en warning soft, pas en erreur.
-- [ ] `lyt start` / `lyt review` / `lyt close` écrivent les champs lifecycle automatiquement.
-- [ ] `lyt review --verdict go|no-go|pending` écrit `review`.
-- [ ] Documentation à jour dans `method/` et `docs/`.
-- [ ] Tests : parsing, validation, write paths, migration.
+- [x] L'ADR-0001 est mergée et référencée dans `manifest.md`.
+- [x] Le template `issue-feature.md` est mis à jour (champs v2 commentés "auto" vs "manuel").
+- [x] Le validateur accepte tous les nouveaux champs avec leur domaine de valeur.
+- [x] Le parser ignore poliment les champs inconnus (forward-compat).
+- [x] Aucune issue v1 existante ne casse — tests de régression sur tout le board actuel.
+- [ ] `lyt doctor` signale les issues v1 en warning soft, pas en erreur. *(phase 2)*
+- [ ] `lyt start` / `lyt review` / `lyt close` écrivent les champs lifecycle automatiquement. *(phase 3)*
+- [ ] `lyt review --verdict go|no-go|pending` écrit `review`. *(phase 3)*
+- [ ] Documentation à jour dans `method/` et `docs/`. *(template ✓ in phase 1 ; command docs phase 2/3)*
+- [ ] Tests : parsing, validation, write paths, migration. *(parsing + validation ✓ phase 1 ; write paths phase 3 ; migration phase 5)*
 
 ## Checklist
 
 ### Phase 1 — Spec + parser
-- [ ] Mettre à jour `issue-feature.md` (template) avec les champs v2 commentés.
-- [ ] Étendre le parser pour accepter tous les champs optionnels v2.
-- [ ] Étendre le validateur avec les domaines de valeurs (review, risk, validation.*).
-- [ ] Tests parser : v1 valide, v2 valide, champs inconnus ignorés, valeurs hors domaine rejetées.
+- [x] Mettre à jour `issue-feature.md` (template) avec les champs v2 commentés.
+- [x] Étendre le parser pour accepter tous les champs optionnels v2.
+- [x] Étendre le validateur avec les domaines de valeurs (review, risk, validation.*).
+- [x] Tests parser : v1 valide, v2 valide, champs inconnus ignorés, valeurs hors domaine rejetées.
 
 ### Phase 2 — Read support
 - [ ] `lyt board` affiche `review` / `assignee` quand présents.
@@ -81,11 +81,13 @@ L'implémentation se déroule en **5 phases indépendantes** (chacune shippable)
 ## Relevant files
 
 - `.lytos/adr/ADR-0001-frontmatter-schema-v2.md` (décision)
-- `.lytos/issue-board/templates/issue-feature.md`
-- `src/lib/parser.ts` (ou équivalent — le parser frontmatter)
-- `src/lib/validator.ts`
-- `src/commands/start.ts` / `review.ts` / `close.ts`
-- `method/` (documentation utilisateur)
+- `.lytos/issue-board/templates/issue-feature.md` (template projet) + `method/issue-board/templates/issue-feature.md` (template distribué par `lyt init`)
+- `src/lib/frontmatter.ts` (parser/serializer — phase 1)
+- `src/lib/linter.ts` (validator — phase 1)
+- `src/commands/start.ts` / `src/commands/close.ts` / `src/lib/review.ts` (write paths — phase 3)
+- `tests/lib/frontmatter.test.ts` (unit tests parser — phase 1)
+- `tests/commands/lint.test.ts` (integration tests validator — phase 1)
+- `method/` (documentation utilisateur — phase 2/3)
 
 ## Notes
 
