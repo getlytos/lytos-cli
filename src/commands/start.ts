@@ -8,24 +8,20 @@
 import { Command } from "commander";
 import { existsSync } from "fs";
 import { resolve } from "path";
-import { execFileSync } from "child_process";
 import {
   locateIssue,
   moveIssue,
   regenerateBoard,
   ensureBranch,
   checkOriginFresh,
+  currentGitUser,
+  today,
 } from "../lib/issue-ops.js";
 import { parseIssueDetail } from "../lib/show.js";
+import { type Frontmatter } from "../lib/frontmatter.js";
 import { ok, info, warn, error, bold, cyan, green } from "../lib/output.js";
 
-function getGitUser(): string {
-  try {
-    return execFileSync("git", ["config", "user.name"], { encoding: "utf-8" }).trim();
-  } catch {
-    return "unknown";
-  }
-}
+const getGitUser = currentGitUser;
 
 export const startCommand = new Command("start")
   .description("Start working on an issue — move to in-progress, create branch, update board")
@@ -90,8 +86,18 @@ export const startCommand = new Command("start")
       }
     }
 
-    // 1. Move to in-progress
-    moveIssue(lytosDir, issue, "3-in-progress");
+    // 1. Move to in-progress — write v2 lifecycle fields (ADR-0001).
+    // `started_at` is preserved if it already exists (re-start scenario).
+    const extras: Frontmatter = {
+      assignee: getGitUser(),
+      schema_version: "2",
+      updated: today(),
+    };
+    const existingStartedAt = typeof issue.frontmatter.started_at === "string" ? issue.frontmatter.started_at : "";
+    if (!existingStartedAt) {
+      extras.started_at = today();
+    }
+    moveIssue(lytosDir, issue, "3-in-progress", extras);
 
     // 2. Regenerate board
     regenerateBoard(lytosDir);
@@ -133,7 +139,7 @@ export const startCommand = new Command("start")
     console.error("");
   });
 
-function buildBranchName(fm: Record<string, string | string[]>): string {
+function buildBranchName(fm: Frontmatter): string {
   const type = typeof fm.type === "string" ? fm.type : "feat";
   const id = typeof fm.id === "string" ? fm.id : "ISS-0000";
   const title = typeof fm.title === "string" ? fm.title : "untitled";

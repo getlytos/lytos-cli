@@ -8,7 +8,7 @@
 
 import { existsSync, readFileSync, readdirSync } from "fs";
 import { join } from "path";
-import { parseFrontmatter, type Frontmatter } from "./frontmatter.js";
+import { parseFrontmatter, type Frontmatter, type FrontmatterValue } from "./frontmatter.js";
 
 export interface ChecklistItem {
   text: string;
@@ -241,7 +241,9 @@ function computeDaysOpen(fm: Frontmatter): number {
   return Math.max(0, Math.floor(diffMs / (24 * 60 * 60 * 1000)));
 }
 
-function str(val: string | string[] | undefined): string {
+function str(val: FrontmatterValue | undefined): string {
+  if (val === undefined) return "";
   if (Array.isArray(val)) return val.join(", ");
-  return val || "";
+  if (typeof val === "object") return "";
+  return val;
 }

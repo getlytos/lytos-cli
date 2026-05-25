@@ -67,6 +67,10 @@ export function diagnose(lytosDir: string): DiagnosticResult {
   findings.push(...depResults.findings);
   filesChecked += depResults.filesChecked;
 
+  // 6. Frontmatter schema v1 detection (info-level, doesn't reduce score)
+  const schemaResults = checkSchemaVersion(lytosDir);
+  findings.push(...schemaResults.findings);
+
   const errors = findings.filter((f) => f.severity === "error").length;
   const warnings = findings.filter((f) => f.severity === "warning").length;
   const infos = findings.filter((f) => f.severity === "info").length;
@@ -367,6 +371,52 @@ function checkOrphanDependencies(
   }
 
   return { findings, filesChecked };
+}
+
+/**
+ * Detect issues still on frontmatter schema v1 (ADR-0001).
+ * Emits an `info` finding per issue — informational only, no score penalty.
+ * Active boards (icebox → review) are checked; done/archive are not.
+ */
+function checkSchemaVersion(
+  lytosDir: string
+): { findings: DiagnosticFinding[] } {
+  const findings: DiagnosticFinding[] = [];
+  const boardDir = join(lytosDir, "issue-board");
+  if (!existsSync(boardDir)) return { findings };
+
+  const activeStatusDirs = [
+    "0-icebox", "1-backlog", "2-sprint",
+    "3-in-progress", "4-review",
+  ];
+
+  for (const dir of activeStatusDirs) {
+    const dirPath = join(boardDir, dir);
+    if (!existsSync(dirPath)) continue;
+
+    const files = readdirSync(dirPath).filter(
+      (f) => f.startsWith("ISS-") && f.endsWith(".md")
+    );
+
+    for (const file of files) {
+      const content = readFileSync(join(dirPath, file), "utf-8");
+      const fm = parseFrontmatter(content);
+      const relPath = `issue-board/${dir}/${file}`;
+
+      if (!fm) continue;
+      if (fm.schema_version === "2") continue;
+
+      findings.push({
+        severity: "info",
+        category: "schema-v1",
+        file: relPath,
+        message: "Issue uses frontmatter schema v1 (no schema_version field)",
+        fix: "Add `schema_version: 2` to adopt the v2 schema (ADR-0001). Backward-compatible — existing fields keep working.",
+      });
+    }
+  }
+
+  return { findings };
 }
 
 /**

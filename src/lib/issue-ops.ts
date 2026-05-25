@@ -8,7 +8,7 @@
 import { existsSync, readFileSync, writeFileSync, renameSync, readdirSync } from "fs";
 import { join } from "path";
 import { execFileSync } from "child_process";
-import { parseFrontmatter, serializeFrontmatter } from "./frontmatter.js";
+import { parseFrontmatter, serializeFrontmatter, type Frontmatter } from "./frontmatter.js";
 import { collectIssues, generateBoardMarkdown } from "./board-generator.js";
 
 const STATUS_DIRS = [
@@ -21,7 +21,7 @@ export interface IssueLocation {
   fileName: string;
   dir: string;
   content: string;
-  frontmatter: Record<string, string | string[]>;
+  frontmatter: Frontmatter;
 }
 
 /**
@@ -62,35 +62,65 @@ export function locateIssue(lytosDir: string, issueId: string): IssueLocation | 
 
 /**
  * Move an issue file to a new status directory and update its frontmatter.
+ * `extraFields` accepts any v2 frontmatter shape (scalars, lists, nested
+ * objects) so commands can write lifecycle / verdict / commits in one call.
  */
 export function moveIssue(
   lytosDir: string,
   issue: IssueLocation,
   targetDir: string,
-  extraFields?: Record<string, string>
+  extraFields?: Frontmatter
 ): string {
   const boardDir = join(lytosDir, "issue-board");
   const targetPath = join(boardDir, targetDir, issue.fileName);
 
-  // Update frontmatter
-  const updatedFm: Record<string, string | string[]> = { ...issue.frontmatter, status: targetDir };
+  const updatedFm: Frontmatter = { ...issue.frontmatter, status: targetDir };
   if (extraFields) {
     for (const [key, value] of Object.entries(extraFields)) {
       updatedFm[key] = value;
     }
   }
 
-  // Rebuild file content with updated frontmatter
   const fmStr = serializeFrontmatter(updatedFm);
   const bodyMatch = issue.content.match(/^---[\s\S]*?---\s*\n([\s\S]*)$/);
   const body = bodyMatch ? bodyMatch[1] : "";
   const newContent = fmStr + "\n" + body;
 
-  // Write updated content then move
   writeFileSync(issue.filePath, newContent);
   renameSync(issue.filePath, targetPath);
 
   return targetPath;
+}
+
+/**
+ * Read the `user.name` from local git config. Returns "unknown" if git
+ * isn't configured — keeps the audit field present (better than absent).
+ */
+export function currentGitUser(): string {
+  try {
+    return execFileSync("git", ["config", "user.name"], { encoding: "utf-8", stdio: "pipe" }).trim() || "unknown";
+  } catch {
+    return "unknown";
+  }
+}
+
+/**
+ * Short SHAs of every commit on `branch` that isn't on `mainBranch`.
+ * Returns an empty array on git failure (not a repo, branch missing,
+ * etc.) — caller decides whether to skip writing the field.
+ */
+export function getBranchCommits(branch: string, mainBranch = "main"): string[] {
+  if (!branch) return [];
+  try {
+    const out = execFileSync(
+      "git",
+      ["log", `${mainBranch}..${branch}`, "--format=%h"],
+      { encoding: "utf-8", stdio: "pipe" }
+    );
+    return out.split("\n").map((s) => s.trim()).filter(Boolean);
+  } catch {
+    return [];
+  }
 }
 
 /**

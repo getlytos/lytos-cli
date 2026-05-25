@@ -9,7 +9,7 @@ import { writeFileSync, renameSync } from "fs";
 import { join } from "path";
 import { existsSync } from "fs";
 import { locateIssue, ensureBranch, regenerateBoard, today, checkOriginFresh } from "../lib/issue-ops.js";
-import { serializeFrontmatter } from "../lib/frontmatter.js";
+import { serializeFrontmatter, type Frontmatter } from "../lib/frontmatter.js";
 import { ok, error, info, warn, cyan, bold } from "../lib/output.js";
 
 function findLytosDir(cwd: string): string | null {
@@ -30,7 +30,7 @@ function updateAndMove(
   filePath: string,
   fileName: string,
   content: string,
-  fm: Record<string, string | string[]>,
+  fm: Frontmatter,
   targetDir: string
 ): void {
   const boardDir = join(lytosDir, "issue-board");

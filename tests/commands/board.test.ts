@@ -195,6 +195,75 @@ describe("lytos board", () => {
     expect(result.stdout).toContain("No Lytos projects found.");
   });
 
+  it("renders Review and Assignee columns when v2 fields are present in 4-review", () => {
+    fixture = createEmptyBoardFixture();
+    const reviewDir = join(fixture.cwd, ".lytos", "issue-board", "4-review");
+    const { writeFileSync: wfs } = require("fs");
+
+    wfs(
+      join(reviewDir, "ISS-0001-v2-go.md"),
+      `---
+id: ISS-0001
+title: "Ready for prod"
+status: 4-review
+priority: P2-normal
+effort: S
+schema_version: 2
+assignee: alice
+review: go
+---
+
+# Test
+`
+    );
+
+    const result = run("board", fixture.cwd);
+    expect(result.exitCode).toBe(0);
+
+    const board = readFileSync(
+      join(fixture.cwd, ".lytos", "issue-board", "BOARD.md"),
+      "utf-8"
+    );
+
+    // The 4-review section should now include Assignee and Review columns
+    expect(board).toContain("Assignee");
+    expect(board).toContain("Review");
+    expect(board).toContain("alice");
+    expect(board).toContain("go");
+  });
+
+  it("does not render Review/Assignee columns for sections without v2 fields", () => {
+    fixture = createEmptyBoardFixture();
+    const backlogDir = join(fixture.cwd, ".lytos", "issue-board", "1-backlog");
+    const { writeFileSync: wfs } = require("fs");
+
+    wfs(
+      join(backlogDir, "ISS-0001-pure-v1.md"),
+      `---
+id: ISS-0001
+title: "Pure v1"
+status: 1-backlog
+priority: P2-normal
+effort: S
+---
+
+# Test
+`
+    );
+
+    const result = run("board", fixture.cwd);
+    expect(result.exitCode).toBe(0);
+
+    const board = readFileSync(
+      join(fixture.cwd, ".lytos", "issue-board", "BOARD.md"),
+      "utf-8"
+    );
+
+    // v1 backlog: no Review/Assignee columns
+    expect(board).not.toContain("Assignee");
+    expect(board).not.toContain("Review |");
+  });
+
   it("--check returns 1 when BOARD.md is outdated", () => {
     fixture = createBoardFixture();
     // Generate, then manually modify BOARD.md

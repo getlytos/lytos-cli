@@ -224,6 +224,54 @@ depends: [ISS-9999]
     expect(data.filesChecked).toBeGreaterThan(0);
   });
 
+  it("emits an info finding (not error) on schema v1 issues", () => {
+    fixture = createEmptyFixture();
+    createValidLytos(fixture.cwd);
+
+    // v1 issue: no schema_version
+    writeFileSync(
+      resolve(fixture.cwd, ".lytos", "issue-board", "1-backlog", "ISS-0001-v1.md"),
+      `---
+id: ISS-0001
+title: "Legacy v1 issue"
+status: 1-backlog
+priority: P2-normal
+---
+
+# Test
+`
+    );
+    // v2 issue: schema_version present
+    writeFileSync(
+      resolve(fixture.cwd, ".lytos", "issue-board", "1-backlog", "ISS-0002-v2.md"),
+      `---
+id: ISS-0002
+title: "Migrated v2 issue"
+status: 1-backlog
+priority: P2-normal
+schema_version: 2
+---
+
+# Test
+`
+    );
+
+    const result = run("doctor --json", fixture.cwd);
+    const data = JSON.parse(result.stdout);
+
+    expect(result.exitCode).toBe(0);
+    expect(data.errors).toBe(0);
+    expect(data.infos).toBeGreaterThanOrEqual(1);
+    // Health score stays at 100 — schema v1 is informational, not penalized
+    expect(data.score).toBe(100);
+
+    const schemaFindings = data.findings.filter(
+      (f: { category: string }) => f.category === "schema-v1"
+    );
+    expect(schemaFindings).toHaveLength(1);
+    expect(schemaFindings[0].file).toContain("ISS-0001-v1.md");
+  });
+
   it("computes a reduced score with findings", () => {
     fixture = createEmptyFixture();
     createValidLytos(fixture.cwd);

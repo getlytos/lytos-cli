@@ -197,6 +197,117 @@ priority: P1-high
     expect(data.filesChecked).toBeGreaterThan(0);
   });
 
+  it("accepts v2 frontmatter fields with valid values", () => {
+    fixture = createEmptyFixture();
+    createValidLytos(fixture.cwd);
+
+    writeFileSync(
+      resolve(fixture.cwd, ".lytos", "issue-board", "4-review", "ISS-0001-v2-ok.md"),
+      `---
+id: ISS-0001
+title: "v2 issue"
+status: 4-review
+priority: P2-normal
+schema_version: 2
+review: go
+risk: medium
+confidence: 80
+validation:
+  tests: pass
+  build: pass
+  lint: skip
+---
+
+# Test
+`
+    );
+
+    const result = run("lint", fixture.cwd);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).not.toContain("Invalid");
+  });
+
+  it("rejects invalid v2 review verdict", () => {
+    fixture = createEmptyFixture();
+    createValidLytos(fixture.cwd);
+
+    writeFileSync(
+      resolve(fixture.cwd, ".lytos", "issue-board", "4-review", "ISS-0001-bad-review.md"),
+      `---
+id: ISS-0001
+title: "Bad review"
+status: 4-review
+priority: P2-normal
+review: maybe
+---
+
+# Test
+`
+    );
+
+    const result = run("lint", fixture.cwd);
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("Invalid 'review' value: maybe");
+  });
+
+  it("rejects invalid v2 risk, confidence, and validation values", () => {
+    fixture = createEmptyFixture();
+    createValidLytos(fixture.cwd);
+
+    writeFileSync(
+      resolve(fixture.cwd, ".lytos", "issue-board", "1-backlog", "ISS-0001-bad-v2.md"),
+      `---
+id: ISS-0001
+title: "Bad v2"
+status: 1-backlog
+priority: P2-normal
+risk: catastrophic
+confidence: 200
+validation:
+  tests: ok
+  build: pass
+  lint: skip
+---
+
+# Test
+`
+    );
+
+    const result = run("lint", fixture.cwd);
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("Invalid 'risk' value");
+    expect(result.stderr).toContain("Invalid 'confidence' value");
+    expect(result.stderr).toContain("Invalid 'validation.tests' value");
+  });
+
+  it("accepts v1 issues without any v2 fields (no v2 false positives)", () => {
+    fixture = createEmptyFixture();
+    createValidLytos(fixture.cwd);
+
+    writeFileSync(
+      resolve(fixture.cwd, ".lytos", "issue-board", "1-backlog", "ISS-0001-pure-v1.md"),
+      `---
+id: ISS-0001
+title: "Pure v1"
+status: 1-backlog
+priority: P2-normal
+type: feat
+effort: S
+---
+
+# Test
+`
+    );
+
+    const result = run("lint", fixture.cwd);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).not.toContain("Invalid");
+  });
+
   it("returns exit code 1 on errors, 0 on warnings only", () => {
     fixture = createEmptyFixture();
     createValidLytos(fixture.cwd);

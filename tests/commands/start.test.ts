@@ -242,4 +242,44 @@ created: 2026-04-16
     expect(result.stderr).not.toContain("Branch created");
     expect(result.stderr).not.toContain("Switched to");
   });
+
+  it("writes v2 lifecycle fields (started_at, assignee, schema_version)", () => {
+    fixture = createEmptyFixture();
+    createStartFixture(fixture.cwd);
+
+    const result = run("start ISS-0001", fixture.cwd);
+    expect(result.exitCode).toBe(0);
+
+    const content = readFileSync(
+      join(fixture.cwd, ".lytos/issue-board/3-in-progress/ISS-0001-test-feature.md"),
+      "utf-8"
+    );
+
+    // Schema version flips to 2 on first start (auto-migration trigger)
+    expect(content).toMatch(/^schema_version:\s*2$/m);
+    // Lifecycle fields written by tooling
+    expect(content).toMatch(/^started_at:\s*\d{4}-\d{2}-\d{2}$/m);
+    expect(content).toMatch(/^assignee:\s*Test$/m);
+    // The frontmatter still parses cleanly (no YAML corruption)
+    expect(content).toMatch(/^---\n[\s\S]*?\n---\n/);
+  });
+
+  it("preserves existing started_at on re-start (no overwrite)", () => {
+    fixture = createEmptyFixture();
+    createStartFixture(fixture.cwd);
+
+    // Pre-existing started_at to simulate a previous start
+    const filePath = join(fixture.cwd, ".lytos/issue-board/1-backlog/ISS-0001-test-feature.md");
+    const original = readFileSync(filePath, "utf-8");
+    writeFileSync(filePath, original.replace("created: 2026-04-16", "created: 2026-04-16\nstarted_at: 2026-01-01\nschema_version: 2"));
+
+    const result = run("start ISS-0001", fixture.cwd);
+    expect(result.exitCode).toBe(0);
+
+    const content = readFileSync(
+      join(fixture.cwd, ".lytos/issue-board/3-in-progress/ISS-0001-test-feature.md"),
+      "utf-8"
+    );
+    expect(content).toMatch(/^started_at:\s*2026-01-01$/m);
+  });
 });

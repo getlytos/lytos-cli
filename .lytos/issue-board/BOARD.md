@@ -41,7 +41,9 @@ _No issues._
 
 ### 4-review (review/test)
 
-_No issues._
+| # | Title | Priority | Effort |
+|---|---|---|---|
+| [ISS-0074](4-review/ISS-0074-frontmatter-schema-v2.md) | Frontmatter schema v2 (auditabilité durable) | P1-high | L |
 
 ### 5-done (recently completed)
 
