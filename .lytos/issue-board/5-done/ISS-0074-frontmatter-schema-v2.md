@@ -1,6 +1,6 @@
 ---
 id: ISS-0074
-title: "Frontmatter schema v2 (auditabilité durable)"
+title: Frontmatter schema v2 (auditabilité durable)
 type: feat
 priority: P1-high
 effort: L
@@ -8,14 +8,15 @@ complexity: heavy
 domain: [schema, parser, template, audit]
 skill: code-structure
 skills_aux: [testing, documentation]
-status: 4-review
-branch: "feat/ISS-0074-frontmatter-schema-v2"
+status: 5-done
+branch: feat/ISS-0074-frontmatter-schema-v2
 depends: []
 created: 2026-05-23
 updated: 2026-05-25
 schema_version: 2
+completed_at: 2026-05-25
+commits: [17efe29, 3aca299, 2e34141, 546d59c, 74194e1, dee6a83]
 ---
-
 # ISS-0074 — Frontmatter schema v2 (auditabilité durable)
 
 ## Context
