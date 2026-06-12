@@ -57,6 +57,9 @@ export const reviewCommand = new Command("review")
   .option("--accept <file>", "Ingest a returned audit from a file path, or '-' for stdin")
   .option("--overwrite", "Replace an existing audit block instead of refusing (use when re-auditing)", false)
   .option("--verdict <value>", "Write the v2 review verdict directly (go|no-go|pending) without ingesting a full audit block")
+  .option("--ai-model <id>", "AI model that performed the review — writes ai_reviewer.model (ADR-0001)")
+  .option("--ai-session <id>", "Session/conversation id of the AI review — writes ai_reviewer.session")
+  .option("--ai-prompt <ref>", "Prompt/skill ref used for the review (default: skills/code-review/SKILL.md)")
   .on("--help", () => {
     console.log("");
     console.log("Examples:");
@@ -69,6 +72,8 @@ export const reviewCommand = new Command("review")
     console.log("  lyt review ISS-0050 --accept - --overwrite  # replace a previous audit block");
     console.log("  lyt review ISS-0050 --verdict go            # write verdict directly (no audit block)");
     console.log("  lyt review ISS-0050 --verdict no-go         # write verdict + move back to 3-in-progress");
+    console.log("  lyt review ISS-0050 --verdict go \\");
+    console.log("      --ai-model 'gpt-5' --ai-session codex-api   # record which AI did the review (ai_reviewer)");
     console.log("");
     console.log("Use a fresh AI session for the audit — ideally a different");
     console.log("vendor or model than the one that implemented the issue.");
@@ -78,7 +83,16 @@ export const reviewCommand = new Command("review")
   .action(
     (
       issueId: string | undefined,
-      opts: { export?: boolean; all?: boolean; accept?: string; overwrite?: boolean; verdict?: string }
+      opts: {
+        export?: boolean;
+        all?: boolean;
+        accept?: string;
+        overwrite?: boolean;
+        verdict?: string;
+        aiModel?: string;
+        aiSession?: string;
+        aiPrompt?: string;
+      }
     ) => {
     const cwd = process.cwd();
     const boardDir = findBoardDir(cwd);
@@ -143,7 +157,11 @@ export const reviewCommand = new Command("review")
         process.exit(2);
       }
       const verdict = opts.verdict as ReviewVerdict;
-      const result = applyVerdict({ boardDir, issueFilePath: issueFile, verdict });
+      const aiReviewer =
+        opts.aiModel || opts.aiSession || opts.aiPrompt
+          ? { model: opts.aiModel, session: opts.aiSession, prompt_ref: opts.aiPrompt }
+          : undefined;
+      const result = applyVerdict({ boardDir, issueFilePath: issueFile, verdict, aiReviewer });
 
       console.error("");
       if (verdict === "go") {
