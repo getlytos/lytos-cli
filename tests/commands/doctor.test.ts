@@ -210,6 +210,131 @@ depends: [ISS-9999]
     expect(result.stderr).toContain("does not exist");
   });
 
+  it("resolves repo-root-relative links via fallback (ISS-0060)", () => {
+    fixture = createEmptyFixture();
+    createValidLytos(fixture.cwd);
+
+    // A real source file at the repo root — the link target.
+    mkdirSync(resolve(fixture.cwd, "src", "commands"), { recursive: true });
+    writeFileSync(resolve(fixture.cwd, "src", "commands", "board.ts"), "// source");
+
+    // An issue that references it the way GitHub renders from the repo root.
+    writeFileSync(
+      resolve(fixture.cwd, ".lytos", "issue-board", "1-backlog", "ISS-0001-spec.md"),
+      `---
+id: ISS-0001
+title: "References repo source"
+status: 1-backlog
+priority: P2-normal
+---
+
+See [the board command](src/commands/board.ts) for details.
+`
+    );
+
+    const result = run("doctor --json", fixture.cwd);
+    const data = JSON.parse(result.stdout);
+    const brokenLinks = data.findings.filter(
+      (f: { category: string }) => f.category === "broken-link"
+    );
+    expect(brokenLinks).toHaveLength(0);
+  });
+
+  it("still flags genuinely broken links not found from either base (ISS-0060)", () => {
+    fixture = createEmptyFixture();
+    createValidLytos(fixture.cwd);
+
+    writeFileSync(
+      resolve(fixture.cwd, ".lytos", "issue-board", "1-backlog", "ISS-0001-typo.md"),
+      `---
+id: ISS-0001
+title: "Has a typo link"
+status: 1-backlog
+priority: P2-normal
+---
+
+See [the missing file](src/commands/does-not-exist.ts).
+`
+    );
+
+    const result = run("doctor", fixture.cwd);
+    expect(result.stderr).toContain("Broken link");
+    expect(result.stderr).toContain("does-not-exist.ts");
+  });
+
+  it("accepts dependencies that exist only in the archive (ISS-0060)", () => {
+    fixture = createEmptyFixture();
+    createValidLytos(fixture.cwd);
+
+    const archiveDir = resolve(fixture.cwd, ".lytos", "issue-board", "archive");
+    mkdirSync(archiveDir, { recursive: true });
+    writeFileSync(
+      join(archiveDir, "INDEX.md"),
+      `# Archive Index
+
+| # | Title | Tags | Completed | Quarter |
+|---|-------|------|-----------|---------|
+| ISS-0041 | Some archived work |  | 2026-04-19 | 2026-Q2 |
+`
+    );
+
+    writeFileSync(
+      resolve(fixture.cwd, ".lytos", "issue-board", "1-backlog", "ISS-0042-depends-archived.md"),
+      `---
+id: ISS-0042
+title: "Depends on archived issue"
+status: 1-backlog
+priority: P2-normal
+depends: [ISS-0041]
+---
+
+# Test
+`
+    );
+
+    const result = run("doctor --json", fixture.cwd);
+    const data = JSON.parse(result.stdout);
+    const orphans = data.findings.filter(
+      (f: { category: string }) => f.category === "orphan-dependency"
+    );
+    expect(orphans).toHaveLength(0);
+  });
+
+  it("still flags deps that are neither on the board nor in the archive (ISS-0060)", () => {
+    fixture = createEmptyFixture();
+    createValidLytos(fixture.cwd);
+
+    const archiveDir = resolve(fixture.cwd, ".lytos", "issue-board", "archive");
+    mkdirSync(archiveDir, { recursive: true });
+    writeFileSync(
+      join(archiveDir, "INDEX.md"),
+      `# Archive Index
+
+| # | Title | Tags | Completed | Quarter |
+|---|-------|------|-----------|---------|
+| ISS-0041 | Some archived work |  | 2026-04-19 | 2026-Q2 |
+`
+    );
+
+    writeFileSync(
+      resolve(fixture.cwd, ".lytos", "issue-board", "1-backlog", "ISS-0042-bad-dep.md"),
+      `---
+id: ISS-0042
+title: "Depends on truly missing issue"
+status: 1-backlog
+priority: P2-normal
+depends: [ISS-9999]
+---
+
+# Test
+`
+    );
+
+    const result = run("doctor", fixture.cwd);
+    expect(result.stderr).toContain("ISS-9999");
+    expect(result.stderr).toContain("does not exist");
+  });
+
   it("outputs valid JSON with --json", () => {
     fixture = createEmptyFixture();
     createValidLytos(fixture.cwd);

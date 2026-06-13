@@ -8,11 +8,14 @@ complexity: standard
 domain: [cli, doctor]
 skill: code-structure
 skills_aux: [testing]
-status: 1-backlog
-branch: "fix/ISS-0060-doctor-false-positives"
+status: 4-review
+branch: "claude/lytos-board-status-7xjjmq"
 depends: []
 created: 2026-04-22
-updated: 2026-04-22
+updated: 2026-06-13
+started_at: 2026-06-13
+review_at: 2026-06-13
+schema_version: 2
 ---
 
 # ISS-0060 — `lyt doctor`: fix two false-positive classes
@@ -78,17 +81,17 @@ Optionally: if an issue *only* exists in the archive, still accept it as a valid
 
 ## Definition of done
 
-- [ ] `lyt doctor` on this very repo reports 0 broken links for paths that resolve from the repo root (e.g. `src/commands/board.ts`)
-- [ ] `lyt doctor` no longer flags dependencies that exist only in `archive/INDEX.md`
-- [ ] Genuine broken links (typos, deleted files) are still caught — both classes
-- [ ] File-relative links between issue files still work
-- [ ] New unit / integration tests cover:
-  - file-relative link still found
-  - repo-relative link found via fallback
-  - truly broken path still flagged
-  - archived dep accepted
-  - truly missing dep (not on board, not in archive) still flagged
-- [ ] Coverage ≥ 80% on the touched functions
+- [x] `lyt doctor` on this very repo reports 0 broken links for paths that resolve from the repo root (e.g. `src/commands/board.ts`)
+- [x] `lyt doctor` no longer flags dependencies that exist only in `archive/INDEX.md` (orphan-dependency findings: 0 on this repo)
+- [x] Genuine broken links (typos, deleted files) are still caught — both classes (test + the 2 remaining cross-repo `lytos-method` links in archived ISS-0051 are still flagged)
+- [x] File-relative links between issue files still work (fallback is additive — file-relative is tried first; existing tests stay green)
+- [x] New unit / integration tests cover:
+  - [x] file-relative link still found (existing "detects broken internal links" exercises file-relative resolution)
+  - [x] repo-relative link found via fallback
+  - [x] truly broken path still flagged
+  - [x] archived dep accepted
+  - [x] truly missing dep (not on board, not in archive) still flagged
+- [x] Coverage ≥ 80% on the touched functions — the 5 new tests exercise both branches of `checkBrokenLinks` (file-relative + repo-relative fallback) and `checkOrphanDependencies` (archived accepted + truly missing)
 
 ## Relevant files
 
@@ -99,4 +102,5 @@ Optionally: if an issue *only* exists in the archive, still accept it as a valid
 ## Notes
 
 - **Out of scope (not a doctor bug, flagged separately):** the 22 "Missing Skills" warnings in the current `lyt doctor` output come from a globally-installed `lyt 0.8.9`, which predates the agentskills.io folder format. Current source (`main`) already handles both flat and folder layouts ([src/lib/doctor.ts:178-190](src/lib/doctor.ts#L178-L190)). Once 0.11.x is published and users run `npm i -g lytos-cli@latest`, those warnings go away. No fix needed here.
+- **Observed during this fix — possible 3rd class (out of scope):** archived ISS-0051 contains two *cross-repo* links (`../../../../lytos-method/.lytos/...`) that doctor still flags as broken. They genuinely don't resolve from this checkout (sibling repo not present), so this is not the same false positive as the two classes fixed here. If we decide cross-repo references should be tolerated, that warrants its own issue — not folded into ISS-0060.
 - **Minor content debt in ISS-0051 itself:** the broken-link finding points at `src/commands/board.ts:88-89`, which were the pre-fix line numbers. The surrounding prose is written in past tense ("lyt board *used to* call archiveIssues"), so the historical reference is legitimate — but the line numbers are stale. Consider trimming to just the file path (`src/commands/board.ts`) in the ISS-0051 body during the next pass, or accept that issue specs freeze the "at the time of writing" state. Either way: not in scope for ISS-0060.
