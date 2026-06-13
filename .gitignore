@@ -30,3 +30,7 @@ coverage/
 # issue frontmatter (the source of truth). Tracking it causes recurring merge
 # conflicts on multi-change PRs. See .lytos/adr/ADR-0002-board-md-derived-artifact.md
 .lytos/issue-board/BOARD.md
+
+# Lytos: local, transient AI-wrapper session journal (ADR-0003). Absorbed into
+# issue frontmatter via `lyt absorb`; never committed.
+.lytos/.runtime/

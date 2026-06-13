@@ -298,6 +298,30 @@ If significant learning happened during the task, add an entry in the correspond
 
 ---
 
+## AI session journal (schema v2 audit)
+
+Schema v2 (ADR-0001) records *which AI produced the work, at what cost, on what
+prompts* via `ai_implementer` / `ai_reviewer` / `tokens_in` / `tokens_out` /
+`cost_usd` / `skills_used`. The CLI cannot fill these — only the AI wrapper
+driving the session knows them. The contract (ADR-0003) is deliberately thin:
+
+**Producer side (the AI wrapper / agent):** append one JSON object per turn to
+`.lytos/.runtime/session.jsonl` (append-only, gitignored, never read back):
+
+```jsonl
+{"issue":"ISS-0042","role":"implementer","model":"<exact-model-id>","session":"<id>","prompt_ref":"skills/code-structure/SKILL.md","tokens_in":1200,"tokens_out":340,"cost_usd":0.018,"skills":["code-structure"]}
+```
+
+Every field is optional. `issue` may be omitted — `lyt absorb` resolves the
+active issue from the branch name or the single in-progress issue. Use
+`role: "reviewer"` for audit sessions so they land in `ai_reviewer`.
+
+**Consumer side (end of session):** run `lyt absorb --apply`. It aggregates the
+journal into the active issue's frontmatter (sums counters, unions `skills_used`,
+takes the last model/session per role). It is idempotent — safe to run repeatedly.
+
+---
+
 ## Source of truth
 
 The issue's YAML frontmatter is the source of truth for status, dependencies, and assigned skill.

@@ -5,3 +5,7 @@ issue-board/6-private-notes/*
 # frontmatter (the source of truth). Tracking it causes recurring merge
 # conflicts on multi-change PRs. See issue-board/README.md.
 issue-board/BOARD.md
+
+# Local, transient AI-wrapper session journal — absorbed into issue frontmatter
+# via `lyt absorb`, never committed.
+.runtime/
