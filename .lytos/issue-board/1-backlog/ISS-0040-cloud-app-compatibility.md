@@ -11,6 +11,7 @@ status: 1-backlog
 branch: "docs/ISS-0040-cloud-app-compatibility"
 depends: []
 created: 2026-04-19
+schema_version: 2
 ---
 
 # ISS-0040 — Verify Lytos compatibility with Claude Code Desktop and Codex web app

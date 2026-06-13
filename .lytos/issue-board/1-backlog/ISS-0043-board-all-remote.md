@@ -11,6 +11,7 @@ status: 1-backlog
 branch: "feat/ISS-0043-board-remote"
 depends: []
 created: 2026-04-19
+schema_version: 2
 ---
 
 # ISS-0043 — lyt board --all --remote: lead-view from origin, not local

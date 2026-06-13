@@ -13,6 +13,7 @@ branch: "chore/ISS-0057-validate-lytos-real-feature"
 depends: []
 created: 2026-04-21
 updated: 2026-04-21
+schema_version: 2
 ---
 
 # ISS-0057 — Validate Lytos on a real feature workflow with human controls

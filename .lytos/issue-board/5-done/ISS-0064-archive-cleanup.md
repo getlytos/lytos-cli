@@ -13,6 +13,9 @@ branch: chore/ISS-0064-archive-cleanup
 depends: []
 created: 2026-04-22
 updated: 2026-04-22
+schema_version: 2
+started_at: 2026-04-22
+completed_at: 2026-04-22
 ---
 # ISS-0064 — Archive completed housekeeping issues and restore a clean main worktree
 

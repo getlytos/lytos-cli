@@ -8,11 +8,13 @@ complexity: standard
 domain: [migration, schema, audit]
 skill: ""
 skills_aux: []
-status: 2-sprint
-branch: "feat/ISS-0077-migrate-frontmatter"
+status: 4-review
+branch: "claude/lytos-board-status-7xjjmq"
 depends: [ISS-0074]
 created: 2026-05-25
 updated: 2026-06-13
+started_at: 2026-06-13
+review_at: 2026-06-13
 schema_version: 2
 ---
 
@@ -40,34 +42,34 @@ Add `lyt migrate-frontmatter` :
 
 ## Definition of done
 
-- [ ] `lyt migrate-frontmatter` exists with `--apply` and `--json` flags.
-- [ ] Dry-run is the default (no surprise file writes).
-- [ ] Re-running after a successful migration is a no-op (idempotent).
-- [ ] Backfilled dates are best-effort from `git log` ; missing data is recorded explicitly, not faked.
-- [ ] `lyt doctor` info count on a migrated repo drops to zero schema-v1 findings.
-- [ ] Tests : fixture repo with mixed v1/v2 issues + a faked git history.
+- [x] `lyt migrate-frontmatter` exists with `--apply` and `--json` flags.
+- [x] Dry-run is the default (no surprise file writes).
+- [x] Re-running after a successful migration is a no-op (idempotent).
+- [x] Backfilled dates are best-effort from `git log` ; missing data is recorded explicitly, not faked.
+- [x] `lyt doctor` info count on a migrated repo drops to zero schema-v1 findings (verified on this repo: 9 → 0, score 100%).
+- [x] Tests : fixture repo with mixed v1/v2 issues + a faked git history (injected `GitDateResolver` in `tests/lib/migrate.test.ts`).
 
 ## Checklist
 
 ### CLI surface
-- [ ] `src/commands/migrate-frontmatter.ts` registered in `src/cli.ts`.
-- [ ] `--apply`, `--json`, `--include-archive` flags.
-- [ ] Output format aligned with `lyt doctor` (info-style per issue).
+- [x] `src/commands/migrate-frontmatter.ts` registered in `src/cli.ts`.
+- [x] `--apply`, `--json`, `--include-archive` flags.
+- [x] Output format aligned with `lyt doctor` (info-style per issue).
 
 ### Migration logic
-- [ ] Scan all active status dirs (+ archive when `--include-archive`).
-- [ ] Per file: parse, compute delta, preserve existing values.
-- [ ] Date heuristics:
-  - `started_at` : `git log --follow --diff-filter=A --format=%ad --date=short -- <file>` (first time file existed).
-  - `completed_at` : last commit touching the file when status is `5-done`.
-  - When git fails or returns nothing → leave the field absent and surface "(skipped: no git history)" in the report.
+- [x] Scan all active status dirs (+ archive when `--include-archive`).
+- [x] Per file: parse, compute delta, preserve existing values (textual insert — no reserialize, smallest possible diff).
+- [x] Date heuristics:
+  - [x] `started_at` : `git log --follow --diff-filter=A --format=%ad --date=short -- <file>` (oldest add). **Refinement:** only attempted for issues at/past `3-in-progress` — backfilling it for a never-started backlog/icebox issue would fake a lifecycle event that never happened.
+  - [x] `completed_at` : last commit touching the file, only when status is `5-done` (or archived).
+  - [x] When git fails or returns nothing → field left absent + "(skipped: no git history)" surfaced in the report.
 
 ### Tests
-- [ ] `tests/commands/migrate-frontmatter.test.ts` :
-  - dry-run shows diff, no file changes.
-  - `--apply` writes the expected fields.
-  - already-v2 issues are untouched.
-  - missing git history produces a graceful skip.
+- [x] `tests/commands/migrate-frontmatter.test.ts` + `tests/lib/migrate.test.ts` :
+  - [x] dry-run shows diff, no file changes.
+  - [x] `--apply` writes the expected fields.
+  - [x] already-v2 issues are untouched.
+  - [x] missing git history produces a graceful skip.
 
 ## Relevant files
 
@@ -81,3 +83,6 @@ Add `lyt migrate-frontmatter` :
 - **Priority P3** : nice-to-have, not blocking. The auto-migration via `lyt start/close/review` already brings every actively-touched issue to v2. This is for the long-tail of closed/archived issues.
 - **Risk** : git history can be partial (squash merges, force-pushed history). The "skipped" reporting is non-negotiable so users know which dates are real vs guessed.
 - **Hors scope** : migrating fields beyond `schema_version` + lifecycle dates. `assignee` from git blame is tempting but unreliable for multi-author issues — skip.
+- **Design — injectable git resolver.** All git access goes through a `GitDateResolver` interface; the command wires the real `git log` resolver, tests inject a fake one. Keeps the planning logic pure/unit-testable and avoids tests that create real commits (which also fail under this environment's commit-signing setup).
+- **Applied on this repo.** Ran `lyt migrate-frontmatter --apply` to bring the long-tail of v1 issues to v2 — that's the bulk of the frontmatter diff in this PR (one `+ schema_version: 2` line each, plus `started_at`/`completed_at` on done issues). Not hand edits.
+- **Collateral fix.** Moving ISS-0076/0077 into the sprint broke two relative links in ISS-0074 (`../1-backlog/...`). Converted them to `[[ISS-XXXX]]` wiki-style (already used elsewhere in the file, immune to folder moves) to keep `lyt doctor` at 100%.

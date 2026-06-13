@@ -13,6 +13,9 @@ branch: feat/ISS-0059-lyt-review
 depends: []
 created: 2026-04-21
 updated: 2026-04-22
+schema_version: 2
+started_at: 2026-04-21
+completed_at: 2026-04-22
 ---
 # ISS-0059 — Add `lyt review` command for cross-model code audit
 

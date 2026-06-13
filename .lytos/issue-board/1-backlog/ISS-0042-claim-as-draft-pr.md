@@ -11,6 +11,7 @@ status: 1-backlog
 branch: "feat/ISS-0042-claim-atomic-pr"
 depends: [ISS-0041]
 created: 2026-04-19
+schema_version: 2
 ---
 
 # ISS-0042 — Atomic claim via branch + push + draft PR
