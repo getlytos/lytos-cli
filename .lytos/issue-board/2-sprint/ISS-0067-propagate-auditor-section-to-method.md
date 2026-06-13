@@ -8,11 +8,12 @@ complexity: light
 domain: [docs, method]
 skill: documentation
 skills_aux: []
-status: 1-backlog
+status: 2-sprint
 branch: "chore/ISS-0067-propagate-auditor-section"
 depends: []
 created: 2026-04-22
-updated: 2026-04-22
+updated: 2026-06-13
+schema_version: 2
 ---
 
 # ISS-0067 — Propagate implementer/auditor section to `lytos-method`

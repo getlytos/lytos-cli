@@ -8,11 +8,11 @@ complexity: standard
 domain: [migration, schema, audit]
 skill: ""
 skills_aux: []
-status: 1-backlog
+status: 2-sprint
 branch: "feat/ISS-0077-migrate-frontmatter"
 depends: [ISS-0074]
 created: 2026-05-25
-updated: 2026-05-25
+updated: 2026-06-13
 schema_version: 2
 ---
 

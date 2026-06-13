@@ -8,11 +8,11 @@ complexity: standard
 domain: [integration, audit, ai]
 skill: ""
 skills_aux: []
-status: 1-backlog
+status: 2-sprint
 branch: "feat/ISS-0076-ai-wrapper-integration"
 depends: [ISS-0074]
 created: 2026-05-25
-updated: 2026-05-25
+updated: 2026-06-13
 schema_version: 2
 ---
 
