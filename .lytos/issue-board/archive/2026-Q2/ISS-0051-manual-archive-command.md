@@ -100,7 +100,7 @@ This change lives in `lytos-method` (where the hook is installed), not in `lytos
 - [x] `astro.config.mjs` (website) — add sidebar entry for `/cli/archive`
 
 ### Git hook (likely follow-up issue on lytos-method)
-- [x] Pre-commit hook accepts diffs that are purely archive renames + INDEX/BOARD updates *(follow-up [lytos-method ISS-0021](../../../../lytos-method/.lytos/issue-board/1-backlog/ISS-0021-hook-allow-archive-only-commits.md))*
+- [x] Pre-commit hook accepts diffs that are purely archive renames + INDEX/BOARD updates *(follow-up [lytos-method ISS-0021](https://github.com/getlytos/lytos-method/blob/main/.lytos/issue-board/1-backlog/ISS-0021-hook-allow-archive-only-commits.md))*
 
 ## Relevant files
 
@@ -169,7 +169,7 @@ Cross-repo deliverables verified present — the previous audit only inspected `
 - `astro.config.mjs` — `lytos archive` sidebar entry under the CLI group
 - `src/components/PageTitle.astro` — breadcrumb label `archive` → `lytos archive` (EN + FR)
 
-**Method (`lytos-method`)** — `[ISS-0021](../../../../lytos-method/.lytos/issue-board/1-backlog/ISS-0021-hook-allow-archive-only-commits.md)` open in `1-backlog/` — explicit follow-up for the pre-commit hook exception that lets `lyt archive` commit archive-only diffs on `main` without `--no-verify`.
+**Method (`lytos-method`)** — `[ISS-0021](https://github.com/getlytos/lytos-method/blob/main/.lytos/issue-board/1-backlog/ISS-0021-hook-allow-archive-only-commits.md)` open in `1-backlog/` — explicit follow-up for the pre-commit hook exception that lets `lyt archive` commit archive-only diffs on `main` without `--no-verify`.
 
 **Local code/tests verified by**:
 
