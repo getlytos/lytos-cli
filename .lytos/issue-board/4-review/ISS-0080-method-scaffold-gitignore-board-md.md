@@ -8,11 +8,13 @@ complexity: light
 domain: [scaffold, method, board]
 skill: ""
 skills_aux: []
-status: 1-backlog
-branch: "chore/ISS-0080-method-scaffold-gitignore-board-md"
+status: 4-review
+branch: "claude/lytos-board-status-7xjjmq"
 depends: [ISS-0079]
 created: 2026-05-25
-updated: 2026-05-25
+updated: 2026-06-13
+started_at: 2026-06-13
+review_at: 2026-06-13
 schema_version: 2
 ---
 
@@ -35,10 +37,10 @@ Test : `lyt init` dans un dossier vide → vérifier que BOARD.md est gitignoré
 
 ## Definition of done
 
-- [ ] `method/.gitignore` créé / mis à jour avec `.lytos/issue-board/BOARD.md`.
-- [ ] `method/.lytos/issue-board/README.md` ajouté (copie du fichier lytos-app).
-- [ ] Tests `init.test.ts` vérifient : `lyt init` produit un repo où `.gitignore` contient l'entry + le README est présent.
-- [ ] Test empirique : un nouveau repo créé via `lyt init` ne tracke pas BOARD.md.
+- [x] `method/.gitignore` mis à jour avec `issue-board/BOARD.md` (chemin relatif à `.lytos/`, là où ce gitignore atterrit une fois scaffoldé — pas `.lytos/issue-board/BOARD.md`).
+- [x] `method/issue-board/README.md` ajouté (version générique) + entrée `REMOTE_FILES` dans `src/lib/scaffold.ts` pour qu'il soit copié au `lyt init`.
+- [x] Tests `init.test.ts` vérifient : `lyt init` produit un `.lytos/.gitignore` contenant `issue-board/BOARD.md` + un README présent et orienté.
+- [x] Test empirique : couvert par le test ci-dessus — le `.gitignore` généré contient l'entry, donc un repo créé via `lyt init` ne tracke pas BOARD.md dès le départ.
 
 ## Relevant files
 

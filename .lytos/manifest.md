@@ -97,6 +97,7 @@ It is also the bridge between the free open-source method and the future team da
 | ADR | Title | Status |
 |-----|-------|--------|
 | [ADR-0001](adr/ADR-0001-frontmatter-schema-v2.md) | Frontmatter schema v2 (audit & cost trace) | Accepted |
+| [ADR-0002](adr/ADR-0002-board-md-derived-artifact.md) | BOARD.md is a derived artifact, not tracked in git | Accepted |
 
 ---
 
