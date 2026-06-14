@@ -328,6 +328,13 @@ export interface ApplyVerdictOptions {
   verdict: ReviewVerdict;
   /** Override the git-config user — used in tests. */
   reviewer?: string;
+  /**
+   * The AI that performed the review (ADR-0001 schema v2 `ai_reviewer`).
+   * Written as a nested object when at least `model` is given.
+   * `reviewer` stays the accountable HUMAN (git user) ; `ai_reviewer`
+   * records which model/session/prompt actually did the audit.
+   */
+  aiReviewer?: { model?: string; session?: string; prompt_ref?: string };
 }
 
 export interface ApplyVerdictResult {
@@ -358,6 +365,16 @@ export function applyVerdict(opts: ApplyVerdictOptions): ApplyVerdictResult {
     schema_version: "2",
     updated: today(),
   };
+  // ADR-0001 `ai_reviewer`: which AI actually performed the audit. Only
+  // written when the caller supplies it (the CLI can't know which model
+  // the human ran the prompt through). `prompt_ref` defaults to the
+  // code-review skill the prompt is built from.
+  if (opts.aiReviewer && opts.aiReviewer.model) {
+    const ai: { [k: string]: string } = { model: opts.aiReviewer.model };
+    if (opts.aiReviewer.session) ai.session = opts.aiReviewer.session;
+    ai.prompt_ref = opts.aiReviewer.prompt_ref ?? "skills/code-review/SKILL.md";
+    updated.ai_reviewer = ai;
+  }
   if (verdict === "no-go") {
     updated.status = "3-in-progress";
   }

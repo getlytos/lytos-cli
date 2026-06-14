@@ -401,6 +401,43 @@ I read the diff and it looks fine.
     expect(content).toMatch(/^status:\s*4-review$/m);
   });
 
+  it("--verdict go --ai-model/--ai-session writes the ai_reviewer block (ADR-0001)", () => {
+    fixture = createEmptyBoardFixture();
+    git(["init", "-b", "main"], fixture.cwd);
+    git(["config", "user.name", "alice"], fixture.cwd);
+    git(["config", "user.email", "alice@test"], fixture.cwd);
+    const issueFile = writeReviewIssue(fixture.cwd, "ISS-0082", "verdict-ai");
+
+    const result = run(
+      "review ISS-0082 --verdict go --ai-model gpt-5 --ai-session codex-api",
+      fixture.cwd
+    );
+    expect(result.exitCode).toBe(0);
+
+    const content = readFileSync(issueFile, "utf-8");
+    // `reviewer` stays the accountable human (git user)…
+    expect(content).toMatch(/^reviewer:\s*alice$/m);
+    // …and `ai_reviewer` records which AI actually performed the audit.
+    expect(content).toMatch(/^ai_reviewer:\s*$/m);
+    expect(content).toMatch(/^\s+model:\s*gpt-5$/m);
+    expect(content).toMatch(/^\s+session:\s*codex-api$/m);
+    // prompt_ref defaults to the code-review skill the prompt is built from.
+    expect(content).toMatch(/^\s+prompt_ref:\s*skills\/code-review\/SKILL\.md$/m);
+  });
+
+  it("--verdict go without AI flags omits ai_reviewer", () => {
+    fixture = createEmptyBoardFixture();
+    git(["init", "-b", "main"], fixture.cwd);
+    git(["config", "user.name", "alice"], fixture.cwd);
+    git(["config", "user.email", "alice@test"], fixture.cwd);
+    const issueFile = writeReviewIssue(fixture.cwd, "ISS-0083", "verdict-noai");
+
+    const result = run("review ISS-0083 --verdict go", fixture.cwd);
+    expect(result.exitCode).toBe(0);
+    const content = readFileSync(issueFile, "utf-8");
+    expect(content).not.toMatch(/^ai_reviewer:/m);
+  });
+
   it("--verdict no-go writes the verdict and moves the issue back to 3-in-progress", () => {
     fixture = createEmptyBoardFixture();
     git(["init", "-b", "main"], fixture.cwd);
