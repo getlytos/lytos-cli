@@ -8,11 +8,16 @@ complexity: light
 domain: [board, workflow]
 skill: ""
 skills_aux: []
-status: 1-backlog
-branch: "chore/ISS-0079-gitignore-board-md"
+status: 4-review
+review: go
+review_go_at: 2026-06-14
+reviewer: human:fredericgalline
+branch: "claude/lytos-board-status-7xjjmq"
 depends: []
 created: 2026-05-25
-updated: 2026-05-25
+updated: 2026-06-14
+started_at: 2026-06-13
+review_at: 2026-06-13
 schema_version: 2
 ---
 
@@ -37,12 +42,12 @@ Calque exact de lytos-app ADR-0010 :
 
 ## Definition of done
 
-- [ ] `.gitignore` mis à jour avec entry + commentaire pointant l'ADR.
-- [ ] `git rm --cached` exécuté, BOARD.md plus dans l'index.
-- [ ] README à `.lytos/issue-board/` avec orientation.
-- [ ] ADR-0002 sur lytos-cli (ou simple lien dans le README vers ADR-0010 lytos-app — à trancher).
-- [ ] Tests existants passent (les tests qui assertent sur BOARD.md content peuvent avoir besoin d'un regen inline).
-- [ ] Vérification empirique : prochaine PR multi-modif ne conflicte plus sur BOARD.md.
+- [x] `.gitignore` mis à jour avec entry + commentaire pointant l'ADR.
+- [x] `git rm --cached` exécuté, BOARD.md plus dans l'index.
+- [x] README à `.lytos/issue-board/` avec orientation.
+- [x] ADR-0002 sur lytos-cli — **tranché** : ADR local complet créé (mirror d'ADR-0010), référencé dans le tableau ADR du manifest. Choix cohérent avec le principe « Durable auditability over short-term ergonomics ».
+- [x] Tests existants passent (28 tests `init` verts, suite globale verte hormis 1 échec `review.test.ts` non lié — signature de commit de l'environnement).
+- [x] Vérification empirique : structurellement garanti — BOARD.md n'étant plus tracké, il ne produit plus de diff et ne peut plus générer de conflit de merge.
 
 ## Relevant files
 

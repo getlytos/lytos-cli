@@ -13,6 +13,7 @@ branch: "refactor/ISS-0056-reduce-board-regeneration-friction"
 depends: []
 created: 2026-04-21
 updated: 2026-04-21
+schema_version: 2
 ---
 
 # ISS-0056 — Reduce friction from mandatory `lyt board` regeneration on every issue move

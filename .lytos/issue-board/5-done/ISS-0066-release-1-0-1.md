@@ -13,6 +13,9 @@ branch: chore/ISS-0066-release-1-0-1
 depends: []
 created: 2026-04-22
 updated: 2026-04-22
+schema_version: 2
+started_at: 2026-04-22
+completed_at: 2026-04-22
 ---
 # ISS-0066 — Release `1.0.1` after premature `1.0.0` publish
 

@@ -13,6 +13,7 @@ branch: "fix/ISS-0069-countchecklist-skip-fences"
 depends: []
 created: 2026-04-22
 updated: 2026-04-22
+schema_version: 2
 ---
 
 # ISS-0069 — `countChecklist`: skip checkboxes inside fenced code blocks

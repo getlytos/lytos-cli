@@ -13,6 +13,7 @@ branch: "refactor/ISS-0068-extract-prompt-template"
 depends: []
 created: 2026-04-22
 updated: 2026-04-22
+schema_version: 2
 ---
 
 # ISS-0068 — Extract review prompt template out of `src/lib/review.ts`

@@ -19,6 +19,7 @@ commits: [17efe29, 3aca299, 2e34141, 546d59c, 74194e1, dee6a83]
 review: go
 review_at: 2026-05-25
 reviewer: fredericgalline
+started_at: 2026-05-25
 ---
 # ISS-0074 — Frontmatter schema v2 (auditabilité durable)
 
@@ -75,10 +76,10 @@ L'implémentation se déroule en **5 phases indépendantes** (chacune shippable)
 - [x] Tests : chaque commande modifie correctement le frontmatter et garde le YAML propre.
 
 ### Phase 4 — AI wrapper integration *(split-out → [[ISS-0076]])*
-Cette phase est portée par une issue dédiée parce qu'elle dépend d'un ADR de contrat (journal IA → frontmatter) et de N implémentations par cible (Claude Code, Cursor, Codex CLI). Cf. [`ISS-0076`](../1-backlog/ISS-0076-ai-wrapper-integration.md).
+Cette phase est portée par une issue dédiée parce qu'elle dépend d'un ADR de contrat (journal IA → frontmatter) et de N implémentations par cible (Claude Code, Cursor, Codex CLI). Cf. [[ISS-0076]].
 
 ### Phase 5 — Migration *(split-out → [[ISS-0077]])*
-Cette phase est portée par `lyt migrate-frontmatter` dans une issue dédiée. Pas bloquante : l'auto-migration via `lyt start/close/review` couvre déjà tout issue activement touchée. Cf. [`ISS-0077`](../1-backlog/ISS-0077-migrate-frontmatter.md).
+Cette phase est portée par `lyt migrate-frontmatter` dans une issue dédiée. Pas bloquante : l'auto-migration via `lyt start/close/review` couvre déjà tout issue activement touchée. Cf. [[ISS-0077]].
 
 ## Relevant files
 

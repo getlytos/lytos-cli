@@ -73,6 +73,8 @@ const REMOTE_FILES = [
   // Gitignore that protects 6-private-notes/ from accidental commits
   { remote: ".gitignore", local: ".gitignore" },
   { remote: "templates/sprint.md", local: "templates/sprint.md" },
+  // README orienting GitHub visitors now that BOARD.md is gitignored (ADR-0002)
+  { remote: "issue-board/README.md", local: "issue-board/README.md" },
   {
     remote: "issue-board/templates/issue-feature.md",
     local: "issue-board/templates/issue-feature.md",

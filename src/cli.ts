@@ -11,6 +11,8 @@ import { showCommand } from "./commands/show.js";
 import { startCommand } from "./commands/start.js";
 import { closeCommand } from "./commands/close.js";
 import { claimCommand, unclaimCommand } from "./commands/claim.js";
+import { migrateFrontmatterCommand } from "./commands/migrate-frontmatter.js";
+import { absorbCommand } from "./commands/absorb.js";
 import { upgradeCommand } from "./commands/upgrade.js";
 import { ok, error, bold, cyan, green } from "./lib/output.js";
 
@@ -40,6 +42,8 @@ program.on("--help", () => {
   console.log("  lyt upgrade --dry-run");
   console.log("  lyt review                 # list pending reviews");
   console.log("  lyt review ISS-0053        # print the audit prompt (use a FRESH AI session, ideally a different vendor)");
+  console.log("  lyt migrate-frontmatter    # dry-run: backfill schema v2 fields on existing issues");
+  console.log("  lyt absorb                 # dry-run: merge the AI session journal into the active issue");
   console.log("");
   console.log('Use "lyt <command> --help" for command-specific options and arguments.');
 });
@@ -55,6 +59,8 @@ program.addCommand(startCommand);
 program.addCommand(closeCommand);
 program.addCommand(claimCommand);
 program.addCommand(unclaimCommand);
+program.addCommand(migrateFrontmatterCommand);
+program.addCommand(absorbCommand);
 program.addCommand(upgradeCommand);
 
 program

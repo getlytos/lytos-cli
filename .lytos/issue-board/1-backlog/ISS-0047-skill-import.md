@@ -12,6 +12,7 @@ status: 1-backlog
 branch: "feat/ISS-0047-skill-import"
 depends: [ISS-0046]
 created: 2026-04-20
+schema_version: 2
 ---
 
 # ISS-0047 — `lyt skill`: import agentskills.io skills into a Lytos project

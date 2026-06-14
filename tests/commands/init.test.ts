@@ -145,6 +145,26 @@ describe("lytos init", () => {
     expect(existsSync(join(fixture.cwd, ".lytos/issue-board/6-private-notes/.gitkeep"))).toBe(true);
   });
 
+  it("scaffolds .lytos/.gitignore that excludes the derived BOARD.md (ISS-0080)", () => {
+    fixture = createEmptyFixture();
+    run('init --name "Test" --tool none --yes', fixture.cwd);
+
+    const content = readFileSync(join(fixture.cwd, ".lytos/.gitignore"), "utf-8");
+    // Relative to .lytos/ where this gitignore lives — not the repo-root path.
+    expect(content).toContain("issue-board/BOARD.md");
+  });
+
+  it("scaffolds an issue-board README orienting GitHub visitors (ISS-0080)", () => {
+    fixture = createEmptyFixture();
+    run('init --name "Test" --tool none --yes', fixture.cwd);
+
+    const readmePath = join(fixture.cwd, ".lytos/issue-board/README.md");
+    expect(existsSync(readmePath)).toBe(true);
+    const content = readFileSync(readmePath, "utf-8");
+    expect(content).toContain("derived artifact");
+    expect(content).toContain("lyt board");
+  });
+
   it("creates .github/copilot-instructions.md when --tool copilot", () => {
     fixture = createEmptyFixture();
     run('init --name "Test" --tool copilot --yes', fixture.cwd);

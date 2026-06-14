@@ -104,11 +104,16 @@ function checkBrokenLinks(
       const linkTarget = match[2].split("#")[0]; // strip anchors
       if (!linkTarget) continue;
 
-      // Resolve relative to the file's directory
+      // Resolve file-relative first, then fall back to repo-root-relative
+      // (the parent of .lytos/). Issue specs naturally reference project
+      // source like `src/commands/board.ts` from the repo root — that is also
+      // how GitHub renders the link. Only report broken if both attempts fail.
       const fileDir = filePath.replace(/\/[^/]+$/, "");
-      const resolvedPath = join(fileDir, linkTarget);
+      const projectRoot = join(lytosDir, "..");
+      const fileRelative = join(fileDir, linkTarget);
+      const repoRelative = join(projectRoot, linkTarget);
 
-      if (!existsSync(resolvedPath)) {
+      if (!existsSync(fileRelative) && !existsSync(repoRelative)) {
         findings.push({
           severity: "error",
           category: "broken-link",
@@ -335,6 +340,13 @@ function checkOrphanDependencies(
     }
   }
 
+  // Archived issues are legitimate dependency targets — historically closed
+  // work still satisfies a `depends:`. Without this, every live issue that
+  // depends on an archived one is falsely flagged as orphaned.
+  for (const id of collectArchivedIssueIds(boardDir)) {
+    allIssueIds.add(id);
+  }
+
   // Check depends fields
   for (const dir of statusDirs) {
     const dirPath = join(boardDir, dir);
@@ -417,6 +429,36 @@ function checkSchemaVersion(
   }
 
   return { findings };
+}
+
+/**
+ * Collect every issue ID present in the archive, so dependency checks accept
+ * archived issues as valid targets. IDs come from two sources, unioned:
+ *   - tokens in `archive/INDEX.md`
+ *   - filenames of archived issue files (`archive/<quarter>/ISS-XXXX-*.md`)
+ */
+function collectArchivedIssueIds(boardDir: string): Set<string> {
+  const ids = new Set<string>();
+  const archiveDir = join(boardDir, "archive");
+  if (!existsSync(archiveDir)) return ids;
+
+  const idPattern = /ISS-\d{4}/g;
+
+  const indexPath = join(archiveDir, "INDEX.md");
+  if (existsSync(indexPath)) {
+    const index = readFileSync(indexPath, "utf-8");
+    for (const m of index.matchAll(idPattern)) {
+      ids.add(m[0]);
+    }
+  }
+
+  for (const file of collectMarkdownFiles(archiveDir)) {
+    const name = file.replace(/^.*\//, "");
+    const m = name.match(/^(ISS-\d{4})/);
+    if (m) ids.add(m[1]);
+  }
+
+  return ids;
 }
 
 /**
