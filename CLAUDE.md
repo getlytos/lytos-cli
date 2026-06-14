@@ -38,3 +38,12 @@ Read in order:
 - Don't interpret silently — ask if an instruction is ambiguous
 - At end of task: update frontmatter, move the issue file, update BOARD.md
 - Every commit references its issue: `Refs: ISS-XXXX`
+
+## Sessions cloud / mobile (Claude Code web)
+
+Une session lancée depuis le cloud/mobile travaille sur **une seule branche auto-nommée** (`claude/<slug>-<id>`) — son unité de travail est la session, pas l'issue. C'est incompatible avec « une branche par issue ». Dans ce mode :
+
+- garde **un commit par issue** avec un trailer `Refs: ISS-XXXX` ;
+- **déplace les issues dans le board** et synchronise leur `status` comme d'habitude ;
+- à la fin, l'humain **atterrit la branche en un PR de sprint** (exception assumée) **ou** la re-découpe en PR par issue ;
+- n'invente pas de branches `type/ISS-XXXX` que la plateforme t'empêche de créer — assume la branche unique et documente-le.
