@@ -9,10 +9,13 @@ domain: [scaffold, method, board]
 skill: ""
 skills_aux: []
 status: 4-review
+review: go
+review_go_at: 2026-06-14
+reviewer: human:fredericgalline
 branch: "claude/lytos-board-status-7xjjmq"
 depends: [ISS-0079]
 created: 2026-05-25
-updated: 2026-06-13
+updated: 2026-06-14
 started_at: 2026-06-13
 review_at: 2026-06-13
 schema_version: 2
