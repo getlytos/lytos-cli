@@ -1,26 +1,26 @@
 ---
 id: ISS-0076
-title: "AI wrapper integration — write ai_implementer / tokens / cost (phase 4 of schema v2)"
+title: AI wrapper integration — write ai_implementer / tokens / cost (phase 4 of schema v2)
 type: feat
 priority: P2-normal
 effort: M
 complexity: standard
 domain: [integration, audit, ai]
-skill: ""
+skill: 
 skills_aux: []
-status: 4-review
+status: 5-done
 review: go
 review_go_at: 2026-06-14
-reviewer: human:fredericgalline
-branch: "claude/lytos-board-status-7xjjmq"
+reviewer: "human:fredericgalline"
+branch: claude/lytos-board-status-7xjjmq
 depends: [ISS-0074]
 created: 2026-05-25
 updated: 2026-06-14
 started_at: 2026-06-13
 review_at: 2026-06-13
 schema_version: 2
+completed_at: 2026-06-14
 ---
-
 # ISS-0076 — AI wrapper integration (phase 4 of schema v2)
 
 ## Context

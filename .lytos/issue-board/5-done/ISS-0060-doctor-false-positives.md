@@ -8,19 +8,19 @@ complexity: standard
 domain: [cli, doctor]
 skill: code-structure
 skills_aux: [testing]
-status: 4-review
+status: 5-done
 review: go
 review_go_at: 2026-06-14
-reviewer: human:fredericgalline
-branch: "claude/lytos-board-status-7xjjmq"
+reviewer: "human:fredericgalline"
+branch: claude/lytos-board-status-7xjjmq
 depends: []
 created: 2026-04-22
 updated: 2026-06-14
 started_at: 2026-06-13
 review_at: 2026-06-13
 schema_version: 2
+completed_at: 2026-06-14
 ---
-
 # ISS-0060 — `lyt doctor`: fix two false-positive classes
 
 ## Context

@@ -1,26 +1,26 @@
 ---
 id: ISS-0077
-title: "lyt migrate-frontmatter — backfill schema_version + lifecycle fields (phase 5 of schema v2)"
+title: lyt migrate-frontmatter — backfill schema_version + lifecycle fields (phase 5 of schema v2)
 type: feat
 priority: P3-low
 effort: M
 complexity: standard
 domain: [migration, schema, audit]
-skill: ""
+skill: 
 skills_aux: []
-status: 4-review
+status: 5-done
 review: go
 review_go_at: 2026-06-14
-reviewer: human:fredericgalline
-branch: "claude/lytos-board-status-7xjjmq"
+reviewer: "human:fredericgalline"
+branch: claude/lytos-board-status-7xjjmq
 depends: [ISS-0074]
 created: 2026-05-25
 updated: 2026-06-14
 started_at: 2026-06-13
 review_at: 2026-06-13
 schema_version: 2
+completed_at: 2026-06-14
 ---
-
 # ISS-0077 — `lyt migrate-frontmatter` (phase 5 of schema v2)
 
 ## Context

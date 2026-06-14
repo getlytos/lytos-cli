@@ -1,26 +1,26 @@
 ---
 id: ISS-0079
-title: "Gitignore BOARD.md sur lytos-cli (mirror lytos-app ADR-0010)"
+title: Gitignore BOARD.md sur lytos-cli (mirror lytos-app ADR-0010)
 type: refactor
 priority: P2-normal
 effort: XS
 complexity: light
 domain: [board, workflow]
-skill: ""
+skill: 
 skills_aux: []
-status: 4-review
+status: 5-done
 review: go
 review_go_at: 2026-06-14
-reviewer: human:fredericgalline
-branch: "claude/lytos-board-status-7xjjmq"
+reviewer: "human:fredericgalline"
+branch: claude/lytos-board-status-7xjjmq
 depends: []
 created: 2026-05-25
 updated: 2026-06-14
 started_at: 2026-06-13
 review_at: 2026-06-13
 schema_version: 2
+completed_at: 2026-06-14
 ---
-
 # ISS-0079 — Gitignore BOARD.md sur lytos-cli
 
 ## Context

@@ -1,26 +1,26 @@
 ---
 id: ISS-0080
-title: "Inclure BOARD.md dans le .gitignore par défaut du scaffold lyt init"
+title: Inclure BOARD.md dans le .gitignore par défaut du scaffold lyt init
 type: refactor
 priority: P2-normal
 effort: XS
 complexity: light
 domain: [scaffold, method, board]
-skill: ""
+skill: 
 skills_aux: []
-status: 4-review
+status: 5-done
 review: go
 review_go_at: 2026-06-14
-reviewer: human:fredericgalline
-branch: "claude/lytos-board-status-7xjjmq"
+reviewer: "human:fredericgalline"
+branch: claude/lytos-board-status-7xjjmq
 depends: [ISS-0079]
 created: 2026-05-25
 updated: 2026-06-14
 started_at: 2026-06-13
 review_at: 2026-06-13
 schema_version: 2
+completed_at: 2026-06-14
 ---
-
 # ISS-0080 — Scaffold `lyt init` inclut BOARD.md dans le gitignore
 
 ## Context
