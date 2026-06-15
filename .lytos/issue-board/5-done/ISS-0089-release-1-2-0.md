@@ -8,13 +8,14 @@ complexity: light
 domain: [release, npm]
 skill: documentation
 skills_aux: [testing]
-status: 4-review
+status: 5-done
 branch: chore/ISS-0089-release-1-2-0
 depends: [ISS-0076, ISS-0077, ISS-0060, ISS-0079]
 created: 2026-06-14
-updated: 2026-06-14
+updated: 2026-06-15
 schema_version: 2
 assignee: fredericgalline
+completed_at: 2026-06-15
 ---
 # ISS-0089 — Release `1.2.0`
 
@@ -33,7 +34,7 @@ Bump `lytos-cli` from `1.1.0` to `1.2.0`, run the standard release validation (b
 - [x] `npm run build` passes
 - [x] `npm test` green (205/206 — the single failure is the pre-existing flaky `claim.test.ts` git-timeout, [[ISS-0086]], passes in isolation 9/9)
 - [x] `npm pack --dry-run` is clean
-- [ ] `git tag v1.2.0` + `npm publish` (human, post-validation)
+- [x] `git tag v1.2.0` + `npm publish` (human, post-validation)
 
 ## Notes — release notes (consumer-facing)
 
