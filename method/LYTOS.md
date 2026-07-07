@@ -85,6 +85,7 @@ If the human says "write clean code", reformulate it as a verifiable trade-off.
 ### AI models by complexity
 - Ask which models are available (budget, tools)
 - Suggest a distribution: the cheapest model for docs and formatting, the standard model for day-to-day development, the most powerful for architecture and security
+- This table drives two things: the session-model recommendation to the human, and **automatic model selection for delegated subagents** when the tool supports it (e.g. Claude Code's `Agent` tool) — see `skills/session-start.md`, "The appropriate model"
 
 ## Helping the human create issues
 

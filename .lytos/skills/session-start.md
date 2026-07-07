@@ -76,7 +76,9 @@ Once the issue is identified, load **only** what is relevant:
 
 Read the `complexity` field in the issue frontmatter and check the **AI Models by complexity** table in the manifest.
 
-**Important**: most tools today don't let the agent switch models on its own. The agent's role is to **flag the recommendation to the human**, not to switch silently.
+Two distinct cases:
+
+**1. The main session model — recommend, don't switch.** An agent cannot change its own session model. Its role is to **flag the recommendation to the human**, who decides:
 
 ```
 Issue says "complexity: heavy" -> manifest says "heavy = Claude Opus"
@@ -86,9 +88,17 @@ Issue says "complexity: light" -> manifest says "light = Claude Haiku"
 -> Tell the human: "This task is light — Haiku would be sufficient and cheaper."
 ```
 
-If complexity is not specified, assume `standard`. If the table is not filled in the manifest, flag it to the human.
+**2. Delegated subagents — apply the table automatically.** When the tool supports per-subagent model selection (e.g. Claude Code's `Agent` tool and its `model` parameter), the agent applies the manifest table itself when delegating:
 
-When orchestration tools support automatic model switching, this step will become automatic. Until then, the agent recommends and the human decides.
+- Rate **each delegated subtask** on the same `light` / `standard` / `heavy` scale — not the parent issue. A `heavy` issue usually contains `light` subtasks (file search, formatting, boilerplate); that is where the savings are.
+- Map the manifest model to the closest alias the tool accepts (e.g. Claude Haiku 4.5 -> `haiku`, Claude Sonnet -> `sonnet`, Claude Opus -> `opus`).
+- **When in doubt, inherit**: omit the model override so the subagent runs on the session model. Never force a smaller model on quality-critical work (security, architecture, hard debugging) to save tokens — a wrong conclusion costs more than the tokens saved.
+- **The prompt compensates for the power gap**: a smaller model executes well only what is precisely framed. Delegate with a tight brief — exact scope, files to touch, expected output format, what NOT to do. The judgment stays with the orchestrator; the subagent executes. Same logic, less power: never delegate the *decision* to a smaller model, only the *execution*.
+- **Escalate on failure, don't patch**: if a cheaper subagent returns a wrong, incomplete or low-confidence result, re-run the subtask one level up (`light` -> `standard` -> `heavy`) instead of fixing its output from the orchestrator. One clean re-run costs less than a repair loop.
+
+The orchestrator's expensive tokens go to reasoning and synthesis; mechanical reading, searching and formatting go to cheaper models.
+
+If complexity is not specified, assume `standard`. If the table is not filled in the manifest, flag it to the human.
 
 #### Task skills (agentskills.io format)
 
