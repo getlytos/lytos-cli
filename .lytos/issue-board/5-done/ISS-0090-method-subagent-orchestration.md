@@ -7,11 +7,11 @@ effort: XS
 complexity: light
 domain: [method, release, npm]
 skill: documentation
-status: 4-review
+status: 5-done
 branch: main
 depends: []
 created: 2026-07-07
-updated: 2026-07-07
+updated: 2026-07-08
 schema_version: 2
 assignee: fredericgalline
 ai_implementer:
@@ -19,6 +19,7 @@ ai_implementer:
   session: claude-code-vscode-2026-07-07
   prompt_ref: method/skills/session-start.md
 skills_used: [documentation]
+completed_at: 2026-07-08
 ---
 # ISS-0090 — Method: subagent orchestration by complexity
 
@@ -49,7 +50,7 @@ Ship as `lytos-cli` **1.3.0** (minor: behavior change in the method, backward-co
 - [x] `npm run build` passes
 - [x] `npm test` green (205/206 — single failure = pre-existing flaky `claim.test.ts` git-timeout, [[ISS-0086]], passes in isolation 9/9; same acceptance criterion as release 1.2.0, [[ISS-0089]]. Note for sandboxed auditors: the git-fixture tests may time out in a restricted sandbox — weigh against the evidence above rather than re-running blind.)
 - [x] `npm pack --dry-run` clean (method files shipped in `dist/method/`)
-- [ ] `git tag v1.3.0` + `npm publish` (human — npm session not authenticated on this machine)
+- [x] `git tag v1.3.0` + `npm publish` (human) — *published 2026-07-08, npm registry at 1.3.0*
 
 ## Notes
 
