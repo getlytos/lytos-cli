@@ -41,18 +41,61 @@ const REQUIRED_DIRS = [
   { path: "issue-board", fix: "Run `lyt init` to create the issue board" },
 ];
 
-const MANIFEST_SECTIONS = [
-  { pattern: /## Identity/, name: "Identity", fix: "Add an ## Identity section with project name and description" },
-  { pattern: /## Why this project exists/, name: "Why this project exists", fix: "Add a ## Why this project exists section" },
-  { pattern: /## Tech stack/, name: "Tech stack", fix: "Add a ## Tech stack section with your technologies" },
-];
+/**
+ * Manifest sections, per language. `lyt init --lang fr` writes a French manifest
+ * (see templates.ts), so the linter must look for the headings that were actually
+ * generated — otherwise every French project fails with three phantom errors.
+ * Findings stay in English, like the rest of the CLI; only the headings differ.
+ */
+const MANIFEST_SECTIONS = {
+  en: [
+    { pattern: /## Identity/, name: "Identity", fix: "Add an ## Identity section with project name and description" },
+    { pattern: /## Why this project exists/, name: "Why this project exists", fix: "Add a ## Why this project exists section" },
+    { pattern: /## Tech stack/, name: "Tech stack", fix: "Add a ## Tech stack section with your technologies" },
+  ],
+  fr: [
+    { pattern: /## Identité/, name: "Identité", fix: "Add an ## Identité section with project name and description" },
+    { pattern: /## Pourquoi ce projet existe/, name: "Pourquoi ce projet existe", fix: "Add a ## Pourquoi ce projet existe section" },
+    { pattern: /## Stack technique/, name: "Stack technique", fix: "Add a ## Stack technique section with your technologies" },
+  ],
+};
 
-const PLACEHOLDER_PATTERNS = [
-  { pattern: /YYYY-MM-DD/, message: "Date placeholder not replaced", fix: "Replace YYYY-MM-DD with an actual date" },
-  { pattern: /\| Description \|\s*\|/, message: "Empty description in manifest", fix: "Fill in the project description" },
-  { pattern: /\| Owner \|\s*\|/, message: "Empty owner in manifest", fix: "Fill in the project owner" },
-  { pattern: /\*3-5 sentences\. The "why"/, message: "Template placeholder text still present", fix: "Replace the placeholder with your project's purpose" },
-];
+/**
+ * Placeholder text left over from the template, per language. The French template
+ * writes `| Propriétaire |` and `*3-5 phrases…*`, so the English-only patterns
+ * silently never fired on French projects — unfilled manifests passed unnoticed.
+ */
+const PLACEHOLDER_PATTERNS = {
+  en: [
+    { pattern: /YYYY-MM-DD/, message: "Date placeholder not replaced", fix: "Replace YYYY-MM-DD with an actual date" },
+    { pattern: /\| Description \|\s*\|/, message: "Empty description in manifest", fix: "Fill in the project description" },
+    { pattern: /\| Owner \|\s*\|/, message: "Empty owner in manifest", fix: "Fill in the project owner" },
+    { pattern: /\*3-5 sentences\. The "why"/, message: "Template placeholder text still present", fix: "Replace the placeholder with your project's purpose" },
+  ],
+  fr: [
+    { pattern: /YYYY-MM-DD/, message: "Date placeholder not replaced", fix: "Replace YYYY-MM-DD with an actual date" },
+    { pattern: /\| Description \|\s*\|/, message: "Empty description in manifest", fix: "Fill in the project description" },
+    { pattern: /\| Propriétaire \|\s*\|/, message: "Empty owner in manifest", fix: "Fill in the project owner" },
+    { pattern: /\*3-5 phrases\. Le "pourquoi"/, message: "Template placeholder text still present", fix: "Replace the placeholder with your project's purpose" },
+  ],
+};
+
+type Lang = keyof typeof MANIFEST_SECTIONS;
+
+/**
+ * Project language, as written to `.lytos/config.yml` by `lyt init`.
+ * Falls back to English when the file is missing, unreadable or names an
+ * unsupported language — a linter must never fail because of its own config read.
+ */
+function readLanguage(lytosDir: string): Lang {
+  try {
+    const config = readFileSync(join(lytosDir, "config.yml"), "utf-8");
+    const declared = /^language:\s*(\w+)/m.exec(config)?.[1];
+    return declared !== undefined && declared in MANIFEST_SECTIONS ? (declared as Lang) : "en";
+  } catch {
+    return "en";
+  }
+}
 
 const REQUIRED_FRONTMATTER_FIELDS = ["id", "title", "status", "priority"];
 
@@ -69,6 +112,7 @@ const V2_VALIDATION_KEYS = ["tests", "build", "lint"] as const;
 export function lint(lytosDir: string): LintResult {
   const findings: LintFinding[] = [];
   let filesChecked = 0;
+  const lang = readLanguage(lytosDir);
 
   // Check required files
   for (const req of REQUIRED_FILES) {
@@ -104,7 +148,7 @@ export function lint(lytosDir: string): LintResult {
     const content = readFileSync(manifestPath, "utf-8");
     filesChecked++;
 
-    for (const section of MANIFEST_SECTIONS) {
+    for (const section of MANIFEST_SECTIONS[lang]) {
       if (!section.pattern.test(content)) {
         findings.push({
           severity: "error",
@@ -116,7 +160,7 @@ export function lint(lytosDir: string): LintResult {
     }
 
     // Check for placeholders in manifest
-    for (const ph of PLACEHOLDER_PATTERNS) {
+    for (const ph of PLACEHOLDER_PATTERNS[lang]) {
       if (ph.pattern.test(content)) {
         findings.push({
           severity: "warning",
