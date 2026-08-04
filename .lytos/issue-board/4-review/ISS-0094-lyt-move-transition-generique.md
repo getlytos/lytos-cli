@@ -1,21 +1,20 @@
 ---
 id: ISS-0094
-title: "`lyt move ISS-X <étape>` — la transition générique atomique"
+title: `lyt move ISS-X <étape>` — la transition générique atomique
 type: feat
 priority: P1-high
 effort: S
 complexity: light
 domain: [cli, dx]
-skill: ""
+skill: 
 skills_aux: []
-status: 1-backlog
-branch: ""
+status: 4-review
+branch: feat/1.4.0-retour-terrain
 depends: []
 created: 2026-08-04
 updated: 2026-08-04
 schema_version: 2
 ---
-
 # ISS-0094 — Un verbe pour chaque transition, pas seulement les extrémités
 
 ## Retour terrain (immo, 03-04/08)
@@ -32,6 +31,6 @@ board — atomique, comme `start` le fait déjà pour sa transition. Refuse les 
 un verbe dédié plus riche (`3-in-progress` → « utilisez lyt start », `5-done` → « lyt close »)
 pour ne pas contourner leurs garde-fous.
 
-- [ ] Transitions libres entre étapes sans verbe dédié, refus documenté sinon
-- [ ] `--json`, et le même contrôle d'origine que start (`--force`)
-- [ ] Tests par transition, y compris les refus
+- [x] Transitions libres entre étapes sans verbe dédié, refus documenté sinon
+- [x] `--json`, et le même contrôle d'origine que start (`--force`)
+- [x] Tests par transition, y compris les refus
