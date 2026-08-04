@@ -68,16 +68,18 @@ Every bridge points at the same `.lytos/` directory, so switching tools does not
 
 | Command | What it does |
 |---------|-------------|
-| `lyt init` | Scaffold `.lytos/` in a project (interactive, detects the stack) |
+| `lyt init` | Scaffold `.lytos/` in a project (interactive, detects the stack). Also installs the `lytos-issue` git merge driver (`.gitattributes` + git config): issue fiches merge structurally — frontmatter field by field, body as the ordered union of `##` sections — so two branches appending to the same fiche no longer conflict |
 | `lyt board` | Regenerate BOARD.md from issue YAML frontmatter |
 | `lyt archive` | Move completed issues from `5-done/` to `archive/<quarter>/` (default: older than 7 days). `--all`, `--older-than <Nd>`, `--dry-run` |
 | `lyt lint` | Validate `.lytos/` structure and content |
 | `lyt doctor` | Full diagnostic — broken links, stale memory, missing skills, health score |
 | `lyt show [ISS-XXXX]` | Display issue detail with progress bar, or all in-progress issues |
 | `lyt start ISS-XXXX` | Start an issue — move to in-progress, create branch, update board |
+| `lyt move ISS-XXXX <stage>` | Any other transition (e.g. work done → `4-review`) — status, file move, and board in one atomic verb. Stages owned by a richer verb are refused (`3-in-progress` → `lyt start`, `5-done` → `lyt close`) |
+| `lyt pull-notes` | Cherry-pick (`-x`) the `.lytos/`-only commits of `origin/main` missing from HEAD onto the current branch — notes captured on main rejoin the branch board. Mixed commits (code + `.lytos/`) are refused and listed. `--dry-run` previews |
 | `lyt close ISS-XXXX` | Close one issue — promote to `5-done` from `4-review` (or explicitly from in-progress), warns about unchecked items |
 | `lyt close` | Batch-close every issue in 4-review/ → 5-done/ (asks to confirm; `--yes` skips the prompt; `--dry-run` previews) |
-| `lyt review [ISS-XXXX]` | Cross-model audit for issues in `4-review/` — prints a self-contained prompt or ingests a returned audit block (`--accept`). Run from a **fresh AI session**, ideally a different vendor than the implementer. |
+| `lyt review [ISS-XXXX]` | Cross-model audit for issues in `4-review/` — prints a self-contained prompt or ingests a returned audit block (`--accept`). The prompt targets the branch declared by the issue's `branch:` field (and instructs the auditor to check it out); the export warns when `branch:` is empty or missing on origin. Run from a **fresh AI session**, ideally a different vendor than the implementer. |
 | `lyt upgrade` | Pull the latest method files into `.lytos/`. `--migrate-cursor` converts a legacy `.cursorrules` to `.cursor/rules/lytos.mdc`. |
 | `lyt update` | Update lytos-cli to the latest version |
 
@@ -163,7 +165,7 @@ lyt init --force --overwrite-bridges      # re-scaffold, replace bridges too
 
 ## Design principles
 
-- **Offline-first** — `lyt lint`, `lyt doctor`, `lyt board`, `lyt show`, `lyt start`, `lyt close` never need network
+- **Offline-first** — `lyt lint`, `lyt doctor`, `lyt board`, `lyt show`, `lyt start`, `lyt move`, `lyt close` never need network
 - **Zero lock-in** — plain Markdown files, portable across any AI tool
 - **No telemetry** — no tracking, no analytics, ever. Opt-out for update check: `LYT_NO_UPDATE_CHECK=1`
 - **Human-first** — the human defines the method, the AI follows it
