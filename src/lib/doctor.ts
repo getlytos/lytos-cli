@@ -75,6 +75,9 @@ export function diagnose(lytosDir: string): DiagnosticResult {
   // 7. lytos-issue merge driver (.gitattributes + git config) — ISS-0093
   findings.push(...checkMergeDriverInstall(lytosDir));
 
+  // 8. Rules from a generation that predates "The CLI Is the Interface" — ISS-0097
+  findings.push(...checkCliInterfaceSection(lytosDir));
+
   const errors = findings.filter((f) => f.severity === "error").length;
   const warnings = findings.filter((f) => f.severity === "warning").length;
   const infos = findings.filter((f) => f.severity === "info").length;
@@ -463,6 +466,39 @@ function checkMergeDriverInstall(lytosDir: string): DiagnosticFinding[] {
       file: ".git/config",
       message: `git config has no merge.${MERGE_DRIVER_NAME}.driver — the driver declared in .gitattributes cannot run on this clone`,
       fix: `Run \`lyt init\` again, or: git config merge.${MERGE_DRIVER_NAME}.driver "${MERGE_DRIVER_COMMAND}"`,
+    });
+  }
+  return findings;
+}
+
+/**
+ * Warn when the project's rules predate the "The CLI Is the Interface"
+ * section (ISS-0097). An agent that reads rules without it does every
+ * transition by hand — that is a generation gap, not an agent fault.
+ * Any rules/*.md carrying the section (English or French wording)
+ * satisfies the check.
+ */
+function checkCliInterfaceSection(lytosDir: string): DiagnosticFinding[] {
+  const findings: DiagnosticFinding[] = [];
+  const rulesDir = join(lytosDir, "rules");
+  if (!existsSync(rulesDir)) return findings;
+
+  const ruleFiles = readdirSync(rulesDir).filter((f) => f.endsWith(".md"));
+  if (ruleFiles.length === 0) return findings;
+
+  const marker = /is the interface|est l'interface/i;
+  const hasSection = ruleFiles.some((f) =>
+    marker.test(readFileSync(join(rulesDir, f), "utf-8"))
+  );
+
+  if (!hasSection) {
+    findings.push({
+      severity: "warning",
+      category: "rules-cli-section",
+      file: "rules/",
+      message:
+        "Rules never declare the CLI as THE interface to the board — agents reading them will do transitions by hand (frontmatter edits, git mv) even though the verbs exist",
+      fix: "Add the \"The CLI Is the Interface\" section (npx lyt verb table + never-edit-by-hand rule) to rules/default-rules.md, or re-run `lyt init` to regenerate the rules",
     });
   }
   return findings;

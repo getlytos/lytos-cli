@@ -101,11 +101,44 @@ No magic values in production code.
 | No "if appropriate" | An agent does not decide on its own what is "appropriate". If a step in a skill is not applicable in the context, it flags it — it does not skip it |
 | Decision traceability | When an agent makes a technical choice (between two approaches, one lib over another), it mentions it explicitly with the reason, so the human can validate or correct |
 | No work without issue | Any work lasting more than 10 minutes or modifying more than 3 files **must** have an issue. The agent proposes creating one before starting untracked work |
-| Mandatory start phase | Before writing any code, the agent **must**: (1) move the issue file to `3-in-progress/` and update its frontmatter to `status: 3-in-progress`, (2) run `lyt board` to regenerate BOARD.md, (3) create a git branch `type/ISS-XXXX-slug` from main. **Never code on main.** If the agent starts coding without a branch, the human must stop it |
-| Mandatory close phase | After completing a task, the agent **must**: (1) update the issue frontmatter to `4-review`, (2) move the issue file to `4-review/`, (3) run `lyt board` to regenerate BOARD.md, (4) write to memory if learning occurred. Promotion to `5-done` happens only after explicit validation via `lyt close` |
+| Mandatory start phase | Before writing any code, the agent **must** run `npx lyt start ISS-XXXX` — it moves the issue to `3-in-progress/`, regenerates BOARD.md, and creates the `type/ISS-XXXX-slug` git branch in one atomic command. **Never code on main.** If the agent starts coding without a branch, the human must stop it |
+| Mandatory close phase | After completing a task, the agent **must**: (1) run `npx lyt move ISS-XXXX 4-review` — frontmatter, file move, and BOARD.md in one verb, (2) write to memory if learning occurred. Promotion to `5-done` happens only after explicit validation via `npx lyt close` |
 | Incomplete items generate follow-ups | Before closing an issue, review all checklist items. Any unchecked item must either be completed now or generate a new follow-up issue. Never close an issue with silent gaps |
 | No overlapping issues | Two issues must never cover the same scope. When a new issue makes an existing one obsolete, the old issue must be closed with `superseded_by: ISS-XXXX` in its frontmatter. When a new issue reduces the scope of an existing one, update the existing issue. Never leave ambiguity about which issue owns a piece of work |
 | No reactive coding | When a new idea, constraint, or feedback arrives mid-session — **stop**. Do not start coding immediately. The agent must: (1) reformulate the idea clearly, (2) validate it with the human ("here's what I understood — is this what you want?"), (3) create an issue, (4) include it in the workflow (backlog or sprint depending on priority). Only then can work begin via the normal start phase. Impulse and urgency are not reasons to bypass the process |
+
+---
+
+## The CLI Is the Interface
+
+**Every issue transition goes through the CLI — never through a hand edit.** Editing a `status:`
+frontmatter, `git mv`-ing a fiche between columns, or rebuilding the board by hand bypasses the
+tool that exists to make those gestures atomic — and produces boards that lie.
+
+Always invoke it as **`npx lyt`** — the bare `lyt` binary is usually a devDependency and not on
+the PATH. A "command not found" on `lyt` does **not** mean the tool is absent.
+
+| Verb | When to use it |
+|------|----------------|
+| `npx lyt show [ISS-XXXX]` | First call of every session — the real board state (or one issue) in a single read |
+| `npx lyt start ISS-XXXX` | Begin work: status → `3-in-progress`, git branch, board — one atomic command |
+| `npx lyt move ISS-XXXX <stage>` | Any other transition (e.g. work done → `4-review`): status + file + board in one verb |
+| `npx lyt close [ISS-XXXX]` | Promote to `5-done` after validation — `--dry-run` to preview, no argument to batch-close `4-review/` |
+| `npx lyt review [ISS-XXXX]` | Export the cross-model audit prompt, or ingest the returned verdict (`--accept`, `--verdict`) |
+| `npx lyt board` | Regenerate BOARD.md from the frontmatters |
+| `npx lyt pull-notes` | Repatriate `.lytos/`-only commits from origin/main onto the current branch (`--dry-run` first) |
+| `npx lyt lint` | Validate the `.lytos/` structure (usable in CI) |
+
+The rule in the negative: **never edit a `status:` field or move an issue file by hand. If a
+transition has no verb, flag it to the human instead of working around it.**
+
+### Issues live where they will be closed
+
+An issue belongs in the repo of the code that will close it — never in the repo that merely
+discovered the need. A friction felt here but fixed upstream goes to the upstream repo's board,
+with the field case quoted in the issue body. A subject touching two repos becomes two
+cross-referenced issues, never one issue straddling both. The overview is the job of
+`npx lyt board` (multi-repo mode) — not of centralizing issues in one place.
 
 ---
 

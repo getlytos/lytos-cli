@@ -20,6 +20,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   "orphan-dependency": "Orphan Dependencies",
   "schema-v1": "Schema v1 issues (ADR-0001 migration)",
   "merge-driver": "Merge Driver (lytos-issue)",
+  "rules-cli-section": "Rules Generation (CLI-is-the-interface)",
 };
 
 function scoreColor(score: number): (t: string) => string {
