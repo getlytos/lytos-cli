@@ -1,21 +1,20 @@
 ---
 id: ISS-0095
-title: "`lyt review` audite la branche déclarée par la fiche, pas l'arbre courant"
+title: `lyt review` audite la branche déclarée par la fiche, pas l'arbre courant
 type: feat
 priority: P1-high
 effort: M
 complexity: standard
 domain: [cli, review]
-skill: ""
+skill: 
 skills_aux: []
-status: 1-backlog
-branch: ""
+status: 4-review
+branch: feat/1.4.0-retour-terrain
 depends: []
 created: 2026-08-04
 updated: 2026-08-04
 schema_version: 2
 ---
-
 # ISS-0095 — Le faux « aucun correctif versionné »
 
 ## Retour terrain (immo, 03/08)
@@ -32,6 +31,6 @@ de la vérifier là (checkout ou worktree temporaire) ; si `branch:` est vide, l
 l'arbre courant et LE DIT. Bonus : avertir à l'export quand la branche déclarée n'existe pas sur
 origin — c'est un mensonge de fiche, détectable avant l'audit.
 
-- [ ] Le prompt exporté porte la branche + l'instruction de s'y placer
-- [ ] Avertissement si `branch:` absent ou introuvable sur origin
-- [ ] Tests sur les trois cas (branche valide, vide, introuvable)
+- [x] Le prompt exporté porte la branche + l'instruction de s'y placer
+- [x] Avertissement si `branch:` absent ou introuvable sur origin
+- [x] Tests sur les trois cas (branche valide, vide, introuvable)
