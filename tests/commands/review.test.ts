@@ -486,3 +486,101 @@ I read the diff and it looks fine.
     expect(result.stderr).toContain("Invalid verdict");
   });
 });
+
+describe("lyt review — the exported prompt follows the declared branch (ISS-0095)", () => {
+  /**
+   * Git repo with an origin remote (a plain config entry — never
+   * contacted) and a work branch. `withOriginRef` controls whether the
+   * declared branch exists as a remote-tracking ref, i.e. whether origin
+   * "has" it.
+   */
+  function setupBranchFixture(cwd: string, opts: { withOriginRef: boolean }): void {
+    git(["init", "-b", "main"], cwd);
+    git(["config", "user.name", "Lytos Test"], cwd);
+    git(["config", "user.email", "test@example.com"], cwd);
+    writeFileSync(join(cwd, "seed.txt"), "seed\n", "utf-8");
+    git(["add", "."], cwd);
+    git(["commit", "-m", "chore: seed"], cwd);
+    git(["remote", "add", "origin", "https://example.invalid/repo.git"], cwd);
+
+    git(["checkout", "-b", "feat/ISS-9300-branchy"], cwd);
+    writeFileSync(join(cwd, "seed.txt"), "changed\n", "utf-8");
+    git(["add", "."], cwd);
+    git(["commit", "-m", "feat: change"], cwd);
+    git(["checkout", "main"], cwd);
+
+    if (opts.withOriginRef) {
+      git(["update-ref", "refs/remotes/origin/feat/ISS-9300-branchy", "feat/ISS-9300-branchy"], cwd);
+    }
+  }
+
+  function writeBranchIssue(cwd: string, branchLine: string): void {
+    const issueFile = join(cwd, ".lytos", "issue-board", "4-review", "ISS-9300-branchy.md");
+    writeFileSync(
+      issueFile,
+      `---
+id: ISS-9300
+title: "Branchy issue"
+type: feat
+priority: P2-normal
+effort: S
+status: 4-review
+${branchLine}
+depends: []
+created: 2026-08-04
+updated: 2026-08-04
+---
+
+# ISS-9300 — Branchy issue
+`,
+      "utf-8"
+    );
+  }
+
+  it("carries the declared branch and the instruction to audit there (valid branch)", () => {
+    fixture = createEmptyBoardFixture();
+    setupBranchFixture(fixture.cwd, { withOriginRef: true });
+    writeBranchIssue(fixture.cwd, 'branch: "feat/ISS-9300-branchy"');
+
+    const result = run("review ISS-9300", fixture.cwd);
+
+    expect(result.exitCode).toBe(0);
+    // The prompt instructs the auditor to place itself on the branch
+    expect(result.stdout).toContain("Where to audit");
+    expect(result.stdout).toContain("feat/ISS-9300-branchy");
+    expect(result.stdout).toContain("git worktree add");
+    // No false alarm when the branch exists on origin
+    expect(result.stderr).not.toContain("not found on origin");
+    expect(result.stderr).not.toContain("declares no");
+  });
+
+  it("says explicitly that the audit covers the current tree when branch: is empty", () => {
+    fixture = createEmptyBoardFixture();
+    setupBranchFixture(fixture.cwd, { withOriginRef: true });
+    writeBranchIssue(fixture.cwd, 'branch: ""');
+
+    const result = run("review ISS-9300", fixture.cwd);
+
+    expect(result.exitCode).toBe(0);
+    // The prompt states the audit target is the current tree
+    expect(result.stdout).toContain("CURRENT working tree");
+    expect(result.stdout).toContain("No branch is declared");
+    // And the export warns on stderr
+    expect(result.stderr).toContain("declares no");
+    expect(result.stderr).toContain("CURRENT working tree");
+  });
+
+  it("warns when the declared branch is not found on origin — a lying fiche", () => {
+    fixture = createEmptyBoardFixture();
+    setupBranchFixture(fixture.cwd, { withOriginRef: false });
+    writeBranchIssue(fixture.cwd, 'branch: "feat/ISS-9300-branchy"');
+
+    const result = run("review ISS-9300", fixture.cwd);
+
+    expect(result.exitCode).toBe(0);
+    // Prompt still targets the declared branch…
+    expect(result.stdout).toContain("feat/ISS-9300-branchy");
+    // …but the export flags the mismatch before an audit round is wasted
+    expect(result.stderr).toContain("not found on origin");
+  });
+});

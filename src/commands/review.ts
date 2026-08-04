@@ -18,6 +18,7 @@ import {
   applyAudit,
   applyVerdict,
   buildPrompt,
+  checkDeclaredBranch,
   exportAllPrompts,
   findReviewIssue,
   hasExistingAudit,
@@ -26,6 +27,26 @@ import {
   type ReviewVerdict,
 } from "../lib/review.js";
 import { ok, info, warn, error, cyan, bold, green, dim } from "../lib/output.js";
+
+/**
+ * Surface fiche/branch mismatches at export time, before an audit round
+ * is wasted on them (ISS-0095: three false "no fix pushed" verdicts came
+ * from audits reading the wrong tree).
+ */
+function warnDeclaredBranch(cwd: string, issueId: string, issueFilePath: string): void {
+  const status = checkDeclaredBranch(cwd, issueFilePath);
+  if (status.kind === "none") {
+    warn(
+      `${issueId} declares no \`branch:\` — the audit will cover the CURRENT working tree (the prompt says so). ` +
+        `If the work lives on a branch, set \`branch:\` in the issue frontmatter and re-export.`
+    );
+  } else if (status.onOrigin === false) {
+    warn(
+      `${issueId} declares branch \`${status.branch}\` but it was not found on origin — ` +
+        `push it (or fix the \`branch:\` field): the auditor cannot check out a branch origin doesn't have.`
+    );
+  }
+}
 
 function findBoardDir(cwd: string): string | null {
   const candidates = [
@@ -113,6 +134,9 @@ export const reviewCommand = new Command("review")
         console.error(`  ${green("+")} ${dim(w.promptPath)}`);
       }
       console.error("");
+      for (const p of listPendingReviews(boardDir)) {
+        warnDeclaredBranch(cwd, p.id, p.filePath);
+      }
       ok(
         `${written.length} prompt file(s) written under .lytos/review/. Feed each to a fresh AI session.`
       );
@@ -228,7 +252,9 @@ export const reviewCommand = new Command("review")
       return;
     }
 
-    // Mode 2 (default): print the audit prompt.
+    // Mode 2 (default): print the audit prompt. Branch mismatches are
+    // warned on stderr so `> prompt.md` redirections stay clean.
+    warnDeclaredBranch(cwd, issueId, issueFile);
     const prompt = buildPrompt({
       cwd,
       issueFilePath: issueFile,

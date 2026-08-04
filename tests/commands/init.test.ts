@@ -62,6 +62,66 @@ describe("lytos init", () => {
     expect(existsSync(join(fixture.cwd, ".lytos", "issue-board", "BOARD.md"))).toBe(true);
   });
 
+  it("installs the lytos-issue merge driver in a git repo (ISS-0093)", () => {
+    fixture = createEmptyFixture();
+    const { execSync } = require("child_process");
+    execSync("git init -b main", { cwd: fixture.cwd, stdio: "pipe" });
+
+    const result = run('init --name "Test Project" --tool none --yes', fixture.cwd);
+    expect(result.exitCode).toBe(0);
+
+    // .gitattributes maps issue fiches to the driver
+    const attrs = readFileSync(join(fixture.cwd, ".gitattributes"), "utf-8");
+    expect(attrs).toContain(".lytos/issue-board/**/*.md merge=lytos-issue");
+
+    // git config declares the driver command
+    const driver = execSync("git config --get merge.lytos-issue.driver", {
+      cwd: fixture.cwd,
+      encoding: "utf-8",
+    }).trim();
+    expect(driver).toBe("npx lyt _merge-issue %O %A %B");
+  });
+
+  it("appends the merge driver line to an existing .gitattributes without clobbering it (ISS-0093)", () => {
+    fixture = createEmptyFixture();
+    const { execSync } = require("child_process");
+    execSync("git init -b main", { cwd: fixture.cwd, stdio: "pipe" });
+    writeFileSync(join(fixture.cwd, ".gitattributes"), "*.png binary\n");
+
+    const result = run('init --name "Test Project" --tool none --yes', fixture.cwd);
+    expect(result.exitCode).toBe(0);
+
+    const attrs = readFileSync(join(fixture.cwd, ".gitattributes"), "utf-8");
+    expect(attrs).toContain("*.png binary");
+    expect(attrs).toContain(".lytos/issue-board/**/*.md merge=lytos-issue");
+  });
+
+  it("generated rules declare the CLI as the interface, and session-start opens with npx lyt show (ISS-0097)", () => {
+    fixture = createEmptyFixture();
+    const result = run('init --name "Test Project" --tool none --yes', fixture.cwd);
+    expect(result.exitCode).toBe(0);
+
+    const rules = readFileSync(join(fixture.cwd, ".lytos", "rules", "default-rules.md"), "utf-8");
+    // The dedicated section, with the verb table invoked via npx
+    expect(rules).toContain("The CLI Is the Interface");
+    expect(rules).toContain("npx lyt move");
+    expect(rules).toContain("npx lyt show");
+    // The rule in the negative
+    expect(rules).toMatch(/never edit a `status:` field/i);
+    // Issue locality: an issue lives in the repo of the code that closes it
+    expect(rules).toContain("Issues live where they will be closed");
+
+    const sessionStart = readFileSync(join(fixture.cwd, ".lytos", "skills", "session-start.md"), "utf-8");
+    // The skill opens with the real state in one call
+    const step0 = sessionStart.indexOf("npx lyt show");
+    const step1 = sessionStart.indexOf("Load global context");
+    expect(step0).toBeGreaterThan(-1);
+    expect(step0).toBeLessThan(step1);
+    // Task completion goes through the atomic verb, not a manual git mv
+    expect(sessionStart).toContain("npx lyt move ISS-XXXX 4-review");
+    expect(sessionStart).not.toContain("git mv .lytos/issue-board/3-in-progress");
+  });
+
   it("pre-fills manifest with project name", () => {
     fixture = createEmptyFixture();
     run('init --name "My Awesome API" --tool none --yes', fixture.cwd);

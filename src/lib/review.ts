@@ -92,6 +92,46 @@ function issueBranch(issueBody: string): string | null {
 }
 
 /**
+ * Where the audit should look, resolved from the issue's `branch:` field.
+ *
+ * - `none`     : no branch declared — the audit covers the current tree
+ *                (and the prompt says so explicitly).
+ * - `declared` : a branch is declared. `onOrigin` is true/false when the
+ *                project has an origin remote to check against, "unknown"
+ *                when it doesn't (not a git repo, no origin) — in which
+ *                case no warning is emitted, nothing can be verified.
+ *
+ * A declared branch missing on origin is a lying fiche: the auditor
+ * (a fresh session, possibly a fresh clone) can never reach it. That is
+ * detectable at export time, before an audit round is wasted on it.
+ */
+export type BranchAuditStatus =
+  | { kind: "none" }
+  | { kind: "declared"; branch: string; onOrigin: boolean | "unknown" };
+
+export function checkDeclaredBranch(cwd: string, issueFilePath: string): BranchAuditStatus {
+  const branch = issueBranch(safeRead(issueFilePath));
+  if (!branch) return { kind: "none" };
+
+  try {
+    execFileSync("git", ["rev-parse", "--is-inside-work-tree"], { cwd, stdio: "pipe" });
+    execFileSync("git", ["remote", "get-url", "origin"], { cwd, stdio: "pipe" });
+  } catch {
+    return { kind: "declared", branch, onOrigin: "unknown" };
+  }
+
+  try {
+    execFileSync("git", ["rev-parse", "--verify", `refs/remotes/origin/${branch}`], {
+      cwd,
+      stdio: "pipe",
+    });
+    return { kind: "declared", branch, onOrigin: true };
+  } catch {
+    return { kind: "declared", branch, onOrigin: false };
+  }
+}
+
+/**
  * Capture the implementation diff for the branch declared in the issue
  * frontmatter. Falling back to HEAD is a last resort for older issues
  * that predate the branch field.
@@ -131,11 +171,27 @@ export function buildPrompt(opts: BuildPromptOptions): string {
   const diffRef = declaredBranch || "HEAD";
   const diff = tryGitDiff(opts.cwd, diffRef);
 
+  // The audit must happen where the issue says the work lives — not on
+  // whatever tree the auditor's session happens to be open on. A re-review
+  // reading the wrong tree produces false "no fix was pushed" verdicts.
+  const whereToAudit = declaredBranch
+    ? `**Where to audit:** the issue declares its work on branch \`${declaredBranch}\`. Audit THAT branch, not the tree your session was opened on. Place yourself on it first — either check it out, or create a temporary worktree:
+
+\`\`\`bash
+git fetch origin ${declaredBranch}
+git worktree add /tmp/audit-${opts.issueId} ${declaredBranch}   # or: git checkout ${declaredBranch}
+\`\`\`
+
+Run every check (tests, file reads, greps) against that branch.`
+    : `**Where to audit:** the issue declares no \`branch:\` — this audit covers the CURRENT working tree (HEAD) as-is. State this explicitly in your Notes: your findings apply to the tree you were opened on, not to a declared implementation branch.`;
+
   return `# Cross-model audit prompt — ${opts.issueId}
 
 ## 1 — Your role
 
 You are auditing a Lytos-managed project. **You did NOT implement this issue.** Another AI session (or human) wrote the code. Your job is to read the issue, read the diff, apply the project's rules and the code-review skill, and return a single GO or NO_GO verdict in the exact block format defined in section 8.
+
+${whereToAudit}
 
 Do not correct the code. Do not implement anything. Do not propose a diff. Only audit.
 
@@ -179,7 +235,9 @@ ${issueBody}
 
 ## 7 — Implementation diff
 
-The issue declares branch \`${diffRef}\`. The diff below is generated from \`git diff main...${diffRef}\`:
+${declaredBranch
+  ? `The issue declares branch \`${declaredBranch}\`. The diff below is generated from \`git diff main...${declaredBranch}\`:`
+  : `No branch is declared in the issue frontmatter — the diff below is taken from the current \`HEAD\` (\`git diff main...HEAD\`), i.e. the tree this prompt was exported from:`}
 
 \`\`\`diff
 ${diff}

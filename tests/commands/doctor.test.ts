@@ -62,7 +62,10 @@ This is a test project.
 
   writeFileSync(lyt("LYTOS.md"), "# LYTOS\nMethod reference.");
   writeFileSync(lyt("memory/MEMORY.md"), "# Memory\nIndex.");
-  writeFileSync(lyt("rules/default-rules.md"), "# Rules\nDefault rules.");
+  writeFileSync(
+    lyt("rules/default-rules.md"),
+    "# Rules\n\n## The CLI Is the Interface\n\nEvery transition goes through `npx lyt` — never a hand edit.\n\nDefault rules."
+  );
   writeFileSync(lyt("issue-board/BOARD.md"), "# Board\nEmpty.");
   // session-start stays flat (Lytos bootstrap protocol)
   writeFileSync(lyt("skills/session-start.md"), "# Session Start\nSkill.");
@@ -395,6 +398,83 @@ schema_version: 2
     );
     expect(schemaFindings).toHaveLength(1);
     expect(schemaFindings[0].file).toContain("ISS-0001-v1.md");
+  });
+
+  it("warns when a git repo lacks the lytos-issue merge driver (ISS-0093)", () => {
+    fixture = createEmptyFixture();
+    createValidLytos(fixture.cwd);
+    const { execSync } = require("child_process");
+    execSync("git init -b main", { cwd: fixture.cwd, stdio: "pipe" });
+
+    const result = run("doctor --json", fixture.cwd);
+    const parsed = JSON.parse(result.stdout);
+    const driverFindings = parsed.findings.filter((f: { category: string }) => f.category === "merge-driver");
+
+    // Both halves missing: .gitattributes mapping AND git config
+    expect(driverFindings).toHaveLength(2);
+    expect(driverFindings.every((f: { severity: string }) => f.severity === "warning")).toBe(true);
+  });
+
+  it("stays silent about the merge driver when both halves are installed (ISS-0093)", () => {
+    fixture = createEmptyFixture();
+    createValidLytos(fixture.cwd);
+    const { execSync } = require("child_process");
+    execSync("git init -b main", { cwd: fixture.cwd, stdio: "pipe" });
+    writeFileSync(
+      resolve(fixture.cwd, ".gitattributes"),
+      ".lytos/issue-board/**/*.md merge=lytos-issue\n"
+    );
+    execSync('git config merge.lytos-issue.driver "npx lyt _merge-issue %O %A %B"', {
+      cwd: fixture.cwd,
+      stdio: "pipe",
+    });
+
+    const result = run("doctor --json", fixture.cwd);
+    const parsed = JSON.parse(result.stdout);
+    const driverFindings = parsed.findings.filter((f: { category: string }) => f.category === "merge-driver");
+    expect(driverFindings).toHaveLength(0);
+  });
+
+  it("skips the merge driver check outside a git repo (ISS-0093)", () => {
+    fixture = createEmptyFixture();
+    createValidLytos(fixture.cwd);
+
+    const result = run("doctor --json", fixture.cwd);
+    const parsed = JSON.parse(result.stdout);
+    const driverFindings = parsed.findings.filter((f: { category: string }) => f.category === "merge-driver");
+    expect(driverFindings).toHaveLength(0);
+  });
+
+  it("warns when the rules predate the CLI-is-the-interface section (ISS-0097)", () => {
+    fixture = createEmptyFixture();
+    createValidLytos(fixture.cwd);
+    // Simulate rules from an older generation — no section anywhere in rules/.
+    writeFileSync(
+      resolve(fixture.cwd, ".lytos", "rules", "default-rules.md"),
+      "# Rules\nDefault rules without the section."
+    );
+
+    const result = run("doctor --json", fixture.cwd);
+    const parsed = JSON.parse(result.stdout);
+    const findings = parsed.findings.filter((f: { category: string }) => f.category === "rules-cli-section");
+
+    expect(findings).toHaveLength(1);
+    expect(findings[0].severity).toBe("warning");
+    expect(findings[0].message).toContain("CLI");
+  });
+
+  it("accepts the French wording of the CLI-is-the-interface section (ISS-0097)", () => {
+    fixture = createEmptyFixture();
+    createValidLytos(fixture.cwd);
+    writeFileSync(
+      resolve(fixture.cwd, ".lytos", "rules", "default-rules.md"),
+      "# Règles\n\n## Le CLI Lytos est l'interface du board\n\nLes transitions passent par `npx lyt`.\n"
+    );
+
+    const result = run("doctor --json", fixture.cwd);
+    const parsed = JSON.parse(result.stdout);
+    const findings = parsed.findings.filter((f: { category: string }) => f.category === "rules-cli-section");
+    expect(findings).toHaveLength(0);
   });
 
   it("computes a reduced score with findings", () => {

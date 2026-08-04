@@ -14,6 +14,25 @@
 
 ## Procedure
 
+### 0. Read the real state — `npx lyt show`
+
+The session opens with **one call**:
+
+```bash
+npx lyt show            # the live board state: columns, counts, in-progress work
+npx lyt show ISS-XXXX   # one issue in detail, once the task is known
+```
+
+This is the actual state — frontmatters read by the tool, not a possibly stale
+BOARD.md or a guess. Always `npx lyt`: the bare `lyt` binary is usually a
+devDependency and not on the PATH ("command not found" on `lyt` does not mean
+the tool is absent).
+
+The CLI is the interface to the board for the whole session: transitions go
+through `npx lyt start` / `npx lyt move` / `npx lyt close`, never through a
+hand-edited frontmatter or a manual `git mv` (see "The CLI Is the Interface"
+in `rules/default-rules.md`).
+
 ### 1. Load global context (always)
 
 These files are read at **every** session, without exception:
@@ -187,7 +206,7 @@ The issue's Definition of Done is a live contract, not a summary. When a DoD ite
 **Why batching at the end fails:**
 - Easy to miss items under review pressure — the implementer's confidence replaces explicit state.
 - An unchecked box reads as "not done yet" to the next session, the auditor, or the human — whether the code exists or not.
-- A cross-model audit (`lyt review`) reads the unchecked list as the truth. Missed ticks produce false NO_GO verdicts and wasted audit rounds.
+- A cross-model audit (`npx lyt review`) reads the unchecked list as the truth. Missed ticks produce false NO_GO verdicts and wasted audit rounds.
 
 **When to tick:**
 - Code change committed and tested → tick the code item.
@@ -211,7 +230,7 @@ During a session, the human will have new ideas, spot problems, think of improve
 3. **Assess priority.** Is this P0 (blocks current work)? P1 (important but can wait)? P2 (nice to have)?
 4. **Create an issue.** Always. Even if it takes 30 seconds.
 5. **Decide together.** Start it now (P0/P1) or put it in backlog (P2+)?
-6. **If starting now:** follow the normal start phase — `lyt start ISS-XXXX`, branch, board.
+6. **If starting now:** follow the normal start phase — `npx lyt start ISS-XXXX` (status, branch, board in one command).
 
 **Why this matters:**
 - An idea that skips the process becomes invisible work
@@ -268,39 +287,35 @@ The review needs the full quality framework, not detailed technical context.
 
 ## Task completion — 3 mandatory actions
 
-When the task is done coding (all done criteria met), the agent performs these 3 actions in this order. **Finishing coding does not mean the issue is "done" — it means the issue is ready for review**. The human (or CI, or a peer) then validates and runs `lyt close` to promote the issue to `5-done`.
+When the task is done coding (all done criteria met), the agent performs these 3 actions in this order. **Finishing coding does not mean the issue is "done" — it means the issue is ready for review**. The human (or CI, or a peer) then validates and runs `npx lyt close` to promote the issue to `5-done`.
 
 **Exception — bootstrap/multi-task sessions**: When working on multiple issues in one session (e.g., project setup, creating the sprint, initial scaffolding), it is acceptable to batch the issue updates at the end of the session rather than after each individual task. The key rule remains: by the time you commit, every completed issue must have its frontmatter and folder updated.
 
-### 1. Update the issue frontmatter
-
-The YAML frontmatter is the **source of truth**. Update the `status` field:
-
-```yaml
-status: 4-review    # was 3-in-progress
-updated: 2026-04-20
-```
-
-### 2. Move the issue file
-
-The folder represents the status visually. Move the file:
+### 1–3. One verb does all three — `npx lyt move`
 
 ```bash
-git mv .lytos/issue-board/3-in-progress/ISS-XXXX-title.md .lytos/issue-board/4-review/
+npx lyt move ISS-XXXX 4-review
 ```
 
-### 3. Update the BOARD.md
+This single command performs the three mandatory actions atomically:
 
-Move the issue line to the corresponding section in BOARD.md.
+1. **Updates the frontmatter** — `status: 4-review` + `updated:` (the YAML frontmatter is the source of truth)
+2. **Moves the issue file** to `4-review/` (the folder represents the status visually)
+3. **Regenerates BOARD.md** from the frontmatters
+
+Never do these three steps by hand — a hand-edited frontmatter, a manual
+`git mv`, or a stale BOARD.md is exactly how boards start lying. If a
+transition you need has no CLI verb, flag it to the human instead of
+working around it.
 
 ### The close step (human or CI)
 
 Once validation is green, either:
 
-- `lyt close ISS-XXXX` — promote one issue from `4-review/` to `5-done/`, or
-- `lyt close` — batch-promote every issue in `4-review/` at once (prompts for confirmation; `--yes` skips it).
+- `npx lyt close ISS-XXXX` — promote one issue from `4-review/` to `5-done/`, or
+- `npx lyt close` — batch-promote every issue in `4-review/` at once (prompts for confirmation; `--yes` skips it).
 
-The agent normally stops at step 3 and lets the human decide when reviews are complete. A trivial fix can still go directly to `5-done/` via `lyt close ISS-XXXX` while the issue is in `3-in-progress/` — it's an explicit skip-review shortcut, not the default path.
+The agent normally stops at step 3 and lets the human decide when reviews are complete. A trivial fix can still go directly to `5-done/` via `npx lyt close ISS-XXXX` while the issue is in `3-in-progress/` — it's an explicit skip-review shortcut, not the default path.
 
 ### If learning occurred
 
@@ -326,7 +341,7 @@ Every field is optional. `issue` may be omitted — `lyt absorb` resolves the
 active issue from the branch name or the single in-progress issue. Use
 `role: "reviewer"` for audit sessions so they land in `ai_reviewer`.
 
-**Consumer side (end of session):** run `lyt absorb --apply`. It aggregates the
+**Consumer side (end of session):** run `npx lyt absorb --apply`. It aggregates the
 journal into the active issue's frontmatter (sums counters, unions `skills_used`,
 takes the last model/session per role). It is idempotent — safe to run repeatedly.
 

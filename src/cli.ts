@@ -9,10 +9,13 @@ import { lintCommand } from "./commands/lint.js";
 import { doctorCommand } from "./commands/doctor.js";
 import { showCommand } from "./commands/show.js";
 import { startCommand } from "./commands/start.js";
+import { moveCommand } from "./commands/move.js";
+import { pullNotesCommand } from "./commands/pull-notes.js";
 import { closeCommand } from "./commands/close.js";
 import { claimCommand, unclaimCommand } from "./commands/claim.js";
 import { migrateFrontmatterCommand } from "./commands/migrate-frontmatter.js";
 import { absorbCommand } from "./commands/absorb.js";
+import { mergeIssueDriverCommand } from "./commands/merge-issue.js";
 import { upgradeCommand } from "./commands/upgrade.js";
 import { ok, error, bold, cyan, green } from "./lib/output.js";
 
@@ -37,8 +40,10 @@ program.on("--help", () => {
   console.log("  lyt board");
   console.log("  lyt board --all");
   console.log("  lyt start ISS-0053");
+  console.log("  lyt move ISS-0053 4-review");
   console.log("  lyt close ISS-0053");
   console.log("  lyt close --dry-run");
+  console.log("  lyt pull-notes --dry-run   # preview .lytos-only commits to repatriate from origin/main");
   console.log("  lyt upgrade --dry-run");
   console.log("  lyt review                 # list pending reviews");
   console.log("  lyt review ISS-0053        # print the audit prompt (use a FRESH AI session, ideally a different vendor)");
@@ -56,11 +61,15 @@ program.addCommand(lintCommand);
 program.addCommand(doctorCommand);
 program.addCommand(showCommand);
 program.addCommand(startCommand);
+program.addCommand(moveCommand);
+program.addCommand(pullNotesCommand);
 program.addCommand(closeCommand);
 program.addCommand(claimCommand);
 program.addCommand(unclaimCommand);
 program.addCommand(migrateFrontmatterCommand);
 program.addCommand(absorbCommand);
+// Hidden: called by git as a merge driver, never by hand.
+program.addCommand(mergeIssueDriverCommand, { hidden: true });
 program.addCommand(upgradeCommand);
 
 program

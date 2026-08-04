@@ -23,6 +23,7 @@ import {
 } from "./templates.js";
 import type { DetectedStack } from "./detect-stack.js";
 import { installPreCommitHook } from "./hooks.js";
+import { installMergeDriver } from "./merge-driver.js";
 
 const METHOD_DIR = join(
   dirname(fileURLToPath(import.meta.url)),
@@ -350,6 +351,16 @@ export function scaffold(options: ScaffoldOptions): ScaffoldResult {
   } else if (hookResult === "no-git") {
     result.warnings.push("No .git/ directory found — pre-commit hook not installed. Run `git init` first.");
   }
+
+  // Install the lytos-issue merge driver (.gitattributes + git config) so
+  // two branches appending to the same fiche stop producing merge conflicts.
+  const mergeResult = installMergeDriver(options.cwd, options.dryRun);
+  if (mergeResult === "installed" || mergeResult === "dry-run") {
+    result.filesCreated.push(join(options.cwd, ".gitattributes"));
+  } else if (mergeResult === "error") {
+    result.warnings.push("Could not install the lytos-issue merge driver — check .gitattributes and `git config merge.lytos-issue.driver` by hand.");
+  }
+  // "no-git" already warned above for the hook; "already" is silent.
 
   return result;
 }
