@@ -1,21 +1,20 @@
 ---
 id: ISS-0096
-title: "`lyt pull-notes` — rapatrier les commits .lytos de main vers la branche courante"
+title: `lyt pull-notes` — rapatrier les commits .lytos de main vers la branche courante
 type: feat
 priority: P2-medium
 effort: S
 complexity: light
 domain: [cli, git, dx]
-skill: ""
+skill: 
 skills_aux: []
-status: 1-backlog
-branch: ""
+status: 4-review
+branch: feat/1.4.0-retour-terrain
 depends: []
 created: 2026-08-04
 updated: 2026-08-04
 schema_version: 2
 ---
-
 # ISS-0096 — Les notes mobiles atterrissent sur main, le travail vit sur des branches
 
 ## Retour terrain (immo, 03-04/08)
@@ -31,6 +30,6 @@ en repérant les SHA à l'œil.
 `.lytos/`, les cherry-picke (`-x`) dans l'ordre, régénère le board. Refuse (et liste) ceux qui
 touchent aussi du code — ceux-là relèvent d'un merge, pas d'un rapatriement.
 
-- [ ] Détection .lytos-only, cherry-picks -x ordonnés, board régénéré
-- [ ] `--dry-run` qui liste sans agir ; refus motivé des commits mixtes
-- [ ] Tests : notes pures, commit mixte refusé, aucun commit à rapatrier
+- [x] Détection .lytos-only, cherry-picks -x ordonnés, board régénéré
+- [x] `--dry-run` qui liste sans agir ; refus motivé des commits mixtes
+- [x] Tests : notes pures, commit mixte refusé, aucun commit à rapatrier
