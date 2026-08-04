@@ -341,3 +341,108 @@ This project exists for real reasons.
     expect(result.stderr).toContain("Empty description");
   });
 });
+
+/**
+ * `lyt init --lang fr` writes a French manifest, so the linter has to look for the
+ * headings it actually generated. Before this, every French project failed lint with
+ * three phantom "Missing section" errors — and its placeholder warnings never fired.
+ */
+describe("lyt lint — French projects", () => {
+  function createFrenchLytos(cwd: string, manifest: string): void {
+    createValidLytos(cwd);
+    const lyt = (p: string) => resolve(cwd, ".lytos", p);
+    writeFileSync(lyt("config.yml"), "# Lytos configuration\nlanguage: fr\nprofile: solo\n");
+    writeFileSync(lyt("manifest.md"), manifest);
+  }
+
+  const MANIFESTE_REMPLI = `# Manifest — test
+
+## Identité
+
+| Champ | Valeur |
+|-------|--------|
+| Nom | test |
+| Description | Un projet de test |
+| Propriétaire | testeur |
+
+## Pourquoi ce projet existe
+
+Projet de test pour valider lyt lint.
+
+## Stack technique
+
+| Composant | Technologie |
+|-----------|-------------|
+| Langage | TypeScript |
+`;
+
+  it("passes on a French manifest when config.yml declares language: fr", () => {
+    fixture = createEmptyFixture();
+    createFrenchLytos(fixture.cwd, MANIFESTE_REMPLI);
+
+    const result = run("lint", fixture.cwd);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).toContain("All checks passed");
+    expect(result.stderr).not.toContain("Missing section");
+  });
+
+  it("still reports the French sections when they are genuinely missing", () => {
+    fixture = createEmptyFixture();
+    createFrenchLytos(fixture.cwd, "# Manifest — test\n\nAucune section.\n");
+
+    const result = run("lint", fixture.cwd);
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("Missing section: Identité");
+    expect(result.stderr).toContain("Missing section: Pourquoi ce projet existe");
+    expect(result.stderr).toContain("Missing section: Stack technique");
+  });
+
+  it("catches French template placeholders that the English patterns missed", () => {
+    fixture = createEmptyFixture();
+    createFrenchLytos(
+      fixture.cwd,
+      `# Manifest — test
+
+## Identité
+
+| Champ | Valeur |
+|-------|--------|
+| Nom | test |
+| Description | |
+| Propriétaire | |
+
+## Pourquoi ce projet existe
+
+*3-5 phrases. Le "pourquoi" de ce projet.*
+
+## Stack technique
+
+| Composant | Technologie |
+|-----------|-------------|
+`
+    );
+
+    const result = run("lint", fixture.cwd);
+
+    expect(result.stderr).toContain("Empty description");
+    expect(result.stderr).toContain("Empty owner");
+    expect(result.stderr).toContain("placeholder");
+  });
+
+  it("falls back to English when config.yml names an unknown language", () => {
+    fixture = createEmptyFixture();
+    createValidLytos(fixture.cwd);
+    writeFileSync(
+      resolve(fixture.cwd, ".lytos", "config.yml"),
+      "# Lytos configuration\nlanguage: klingon\nprofile: solo\n"
+    );
+
+    const result = run("lint", fixture.cwd);
+
+    // The manifest written by createValidLytos is English — it must still pass.
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).toContain("All checks passed");
+  });
+});
