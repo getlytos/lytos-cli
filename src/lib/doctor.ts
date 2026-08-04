@@ -13,6 +13,7 @@
 import { existsSync, readFileSync, readdirSync, statSync } from "fs";
 import { join, relative } from "path";
 import { parseFrontmatter } from "./frontmatter.js";
+import { checkMergeDriver, GITATTRIBUTES_LINE, MERGE_DRIVER_COMMAND, MERGE_DRIVER_NAME } from "./merge-driver.js";
 
 export type DiagnosticSeverity = "error" | "warning" | "info";
 
@@ -70,6 +71,9 @@ export function diagnose(lytosDir: string): DiagnosticResult {
   // 6. Frontmatter schema v1 detection (info-level, doesn't reduce score)
   const schemaResults = checkSchemaVersion(lytosDir);
   findings.push(...schemaResults.findings);
+
+  // 7. lytos-issue merge driver (.gitattributes + git config) — ISS-0093
+  findings.push(...checkMergeDriverInstall(lytosDir));
 
   const errors = findings.filter((f) => f.severity === "error").length;
   const warnings = findings.filter((f) => f.severity === "warning").length;
@@ -429,6 +433,39 @@ function checkSchemaVersion(
   }
 
   return { findings };
+}
+
+/**
+ * Verify the lytos-issue merge driver is installed (ISS-0093): the
+ * .gitattributes mapping AND the per-clone git config. Skipped silently
+ * when the project isn't a git repo — nothing to merge there.
+ */
+function checkMergeDriverInstall(lytosDir: string): DiagnosticFinding[] {
+  const findings: DiagnosticFinding[] = [];
+  const projectRoot = join(lytosDir, "..");
+  const check = checkMergeDriver(projectRoot);
+
+  if (!check.gitRepo) return findings;
+
+  if (!check.attributesOk) {
+    findings.push({
+      severity: "warning",
+      category: "merge-driver",
+      file: ".gitattributes",
+      message: `Issue fiches are not mapped to the ${MERGE_DRIVER_NAME} merge driver — two branches appending to the same fiche will conflict`,
+      fix: `Run \`lyt init\` again, or add this line to .gitattributes: ${GITATTRIBUTES_LINE}`,
+    });
+  }
+  if (!check.configOk) {
+    findings.push({
+      severity: "warning",
+      category: "merge-driver",
+      file: ".git/config",
+      message: `git config has no merge.${MERGE_DRIVER_NAME}.driver — the driver declared in .gitattributes cannot run on this clone`,
+      fix: `Run \`lyt init\` again, or: git config merge.${MERGE_DRIVER_NAME}.driver "${MERGE_DRIVER_COMMAND}"`,
+    });
+  }
+  return findings;
 }
 
 /**

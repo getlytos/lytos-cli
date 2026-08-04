@@ -15,6 +15,7 @@ import { closeCommand } from "./commands/close.js";
 import { claimCommand, unclaimCommand } from "./commands/claim.js";
 import { migrateFrontmatterCommand } from "./commands/migrate-frontmatter.js";
 import { absorbCommand } from "./commands/absorb.js";
+import { mergeIssueDriverCommand } from "./commands/merge-issue.js";
 import { upgradeCommand } from "./commands/upgrade.js";
 import { ok, error, bold, cyan, green } from "./lib/output.js";
 
@@ -67,6 +68,8 @@ program.addCommand(claimCommand);
 program.addCommand(unclaimCommand);
 program.addCommand(migrateFrontmatterCommand);
 program.addCommand(absorbCommand);
+// Hidden: called by git as a merge driver, never by hand.
+program.addCommand(mergeIssueDriverCommand, { hidden: true });
 program.addCommand(upgradeCommand);
 
 program

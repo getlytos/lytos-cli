@@ -62,6 +62,40 @@ describe("lytos init", () => {
     expect(existsSync(join(fixture.cwd, ".lytos", "issue-board", "BOARD.md"))).toBe(true);
   });
 
+  it("installs the lytos-issue merge driver in a git repo (ISS-0093)", () => {
+    fixture = createEmptyFixture();
+    const { execSync } = require("child_process");
+    execSync("git init -b main", { cwd: fixture.cwd, stdio: "pipe" });
+
+    const result = run('init --name "Test Project" --tool none --yes', fixture.cwd);
+    expect(result.exitCode).toBe(0);
+
+    // .gitattributes maps issue fiches to the driver
+    const attrs = readFileSync(join(fixture.cwd, ".gitattributes"), "utf-8");
+    expect(attrs).toContain(".lytos/issue-board/**/*.md merge=lytos-issue");
+
+    // git config declares the driver command
+    const driver = execSync("git config --get merge.lytos-issue.driver", {
+      cwd: fixture.cwd,
+      encoding: "utf-8",
+    }).trim();
+    expect(driver).toBe("npx lyt _merge-issue %O %A %B");
+  });
+
+  it("appends the merge driver line to an existing .gitattributes without clobbering it (ISS-0093)", () => {
+    fixture = createEmptyFixture();
+    const { execSync } = require("child_process");
+    execSync("git init -b main", { cwd: fixture.cwd, stdio: "pipe" });
+    writeFileSync(join(fixture.cwd, ".gitattributes"), "*.png binary\n");
+
+    const result = run('init --name "Test Project" --tool none --yes', fixture.cwd);
+    expect(result.exitCode).toBe(0);
+
+    const attrs = readFileSync(join(fixture.cwd, ".gitattributes"), "utf-8");
+    expect(attrs).toContain("*.png binary");
+    expect(attrs).toContain(".lytos/issue-board/**/*.md merge=lytos-issue");
+  });
+
   it("pre-fills manifest with project name", () => {
     fixture = createEmptyFixture();
     run('init --name "My Awesome API" --tool none --yes', fixture.cwd);

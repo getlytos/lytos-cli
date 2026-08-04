@@ -397,6 +397,51 @@ schema_version: 2
     expect(schemaFindings[0].file).toContain("ISS-0001-v1.md");
   });
 
+  it("warns when a git repo lacks the lytos-issue merge driver (ISS-0093)", () => {
+    fixture = createEmptyFixture();
+    createValidLytos(fixture.cwd);
+    const { execSync } = require("child_process");
+    execSync("git init -b main", { cwd: fixture.cwd, stdio: "pipe" });
+
+    const result = run("doctor --json", fixture.cwd);
+    const parsed = JSON.parse(result.stdout);
+    const driverFindings = parsed.findings.filter((f: { category: string }) => f.category === "merge-driver");
+
+    // Both halves missing: .gitattributes mapping AND git config
+    expect(driverFindings).toHaveLength(2);
+    expect(driverFindings.every((f: { severity: string }) => f.severity === "warning")).toBe(true);
+  });
+
+  it("stays silent about the merge driver when both halves are installed (ISS-0093)", () => {
+    fixture = createEmptyFixture();
+    createValidLytos(fixture.cwd);
+    const { execSync } = require("child_process");
+    execSync("git init -b main", { cwd: fixture.cwd, stdio: "pipe" });
+    writeFileSync(
+      resolve(fixture.cwd, ".gitattributes"),
+      ".lytos/issue-board/**/*.md merge=lytos-issue\n"
+    );
+    execSync('git config merge.lytos-issue.driver "npx lyt _merge-issue %O %A %B"', {
+      cwd: fixture.cwd,
+      stdio: "pipe",
+    });
+
+    const result = run("doctor --json", fixture.cwd);
+    const parsed = JSON.parse(result.stdout);
+    const driverFindings = parsed.findings.filter((f: { category: string }) => f.category === "merge-driver");
+    expect(driverFindings).toHaveLength(0);
+  });
+
+  it("skips the merge driver check outside a git repo (ISS-0093)", () => {
+    fixture = createEmptyFixture();
+    createValidLytos(fixture.cwd);
+
+    const result = run("doctor --json", fixture.cwd);
+    const parsed = JSON.parse(result.stdout);
+    const driverFindings = parsed.findings.filter((f: { category: string }) => f.category === "merge-driver");
+    expect(driverFindings).toHaveLength(0);
+  });
+
   it("computes a reduced score with findings", () => {
     fixture = createEmptyFixture();
     createValidLytos(fixture.cwd);

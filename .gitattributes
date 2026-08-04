@@ -1,0 +1,3 @@
+# Lytos: structural merge for issue fiches — frontmatter field by field,
+# body as the ordered union of ## sections (see `lyt _merge-issue`).
+.lytos/issue-board/**/*.md merge=lytos-issue

@@ -19,6 +19,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   "status-mismatch": "Status Mismatches",
   "orphan-dependency": "Orphan Dependencies",
   "schema-v1": "Schema v1 issues (ADR-0001 migration)",
+  "merge-driver": "Merge Driver (lytos-issue)",
 };
 
 function scoreColor(score: number): (t: string) => string {

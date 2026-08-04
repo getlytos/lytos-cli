@@ -1,21 +1,20 @@
 ---
 id: ISS-0093
-title: "Merge driver « union de sections » pour les fiches d'issues"
+title: Merge driver « union de sections » pour les fiches d'issues
 type: feat
 priority: P1-high
 effort: M
 complexity: standard
 domain: [cli, git, dx]
-skill: ""
+skill: 
 skills_aux: []
-status: 1-backlog
-branch: ""
+status: 4-review
+branch: feat/1.4.0-retour-terrain
 depends: []
 created: 2026-08-04
 updated: 2026-08-04
 schema_version: 2
 ---
-
 # ISS-0093 — Les fiches d'issues ne doivent plus produire de conflits de merge
 
 ## Retour terrain (projet immo, nuit du 03 au 04/08)
@@ -33,7 +32,7 @@ diverge — c'est le seul cas qui mérite un humain), corps fusionné par union 
 `##` ajoutées. Implémentation : sous-commande cachée `lyt _merge-issue %O %A %B` + config git posée
 par init.
 
-- [ ] Driver : union des sections de corps, fusion champ à champ du frontmatter
-- [ ] `lyt init` pose .gitattributes + git config ; `lyt doctor` vérifie leur présence
-- [ ] Tests : append//append (auto), même champ modifié (conflit maintenu), section réécrite des
+- [x] Driver : union des sections de corps, fusion champ à champ du frontmatter
+- [x] `lyt init` pose .gitattributes + git config ; `lyt doctor` vérifie leur présence
+- [x] Tests : append//append (auto), même champ modifié (conflit maintenu), section réécrite des
       deux côtés (conflit maintenu — une réécriture n'est pas un append)
