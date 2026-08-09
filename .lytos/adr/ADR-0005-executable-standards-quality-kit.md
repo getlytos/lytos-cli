@@ -15,8 +15,9 @@ whether agents actually work well:
 
 - How do we ensure agents use the **real, current stack** (pinned versions, real APIs)
   and do not invent a stack or reach for deprecated / hallucinated APIs?
-- How do we ensure **modern design** (design tokens, oklch, spacing rhythm, type scale)
-  instead of an ever-growing pile of ad-hoc CSS on every addition?
+- How do we ensure agents **conform to the project's declared design system** (whatever
+  it is — Tailwind, Material, a custom token set…) instead of an ever-growing pile of
+  ad-hoc CSS on every addition?
 - How do we keep agents **accessibility-aware** by construction?
 - How do we hold the line on **SOLID / KISS** and prevent over-engineering?
 
@@ -54,8 +55,10 @@ A per-project kit, living in the repo (e.g. `.lytos/quality/`), holds:
 - **Stack contract** — pinned versions (the lockfile is truth), the allow-list of
   dependencies, a `no-new-dependency-without-ADR` rule, and the source of current docs
   for injection.
-- **Design system** — the single source of design tokens: an oklch color ramp, a
-  spacing scale on one base unit, a type scale, radii.
+- **Design system** — the project's *declared* DS (Tailwind, Material, a custom token
+  set, …) and its guideline source. The kit does not prescribe a DS; it records which one
+  the project uses so the gate can enforce conformance to *that* DS. (A custom token set
+  might be an oklch ramp + spacing/type scales — that is one example, not the rule.)
 - **Gate configs** — lint / type / format / a11y / architecture / complexity configs.
 - **Reviewer rubric** — the versioned prompt the adversarial reviewer applies.
 
@@ -71,20 +74,22 @@ typecheck/tests (which catch an invented API) **+** the reviewer checking citati
 Doc sources are **allow-listed and version-pinned**: pulling live docs into an autonomous
 loop is a prompt-injection surface, and a poisoned page is a real vector.
 
-### 4. The oklch ↔ accessibility synergy
+### 4. Accessibility contrast is a deterministic gate
 
-Because contrast is computable from oklch, a gate can **reject a token pair** that fails
-WCAG/APCA — accessibility contrast becomes a deterministic gate, not a hope. The
-irreducible part of a11y (real screen-reader behavior, logical order) stays on the human
-checklist.
+Contrast ratio is computable from any color representation (oklch makes it convenient, but
+is not required), so a gate can **reject a color pair** that fails WCAG/APCA —
+accessibility contrast becomes a deterministic gate, not a hope. The irreducible part of
+a11y (real screen-reader behavior, logical order) stays on the human checklist.
 
-### 5. Design sprawl is a structural, not a moral, problem
+### 5. Design sprawl is a structural, not a moral, problem — enforce the *declared* DS
 
-"Endless CSS on every addition" is prevented by construction: with a token-only styling
-contract, adding UI *composes existing tokens* instead of writing new CSS. Where the
-project uses Tailwind (e.g. `lytos-app`), the gate forbids arbitrary values (`[...]`),
-mandates a single oklch theme in config, and enforces tokens-only — Tailwind *is* a token
-system; the gate forces it to be used as one.
+"Endless CSS on every addition" is prevented by construction: adding UI must **conform to
+the project's declared design system** instead of writing ad-hoc CSS. The gate is
+parameterized by that DS — Tailwind → tokens-only, no arbitrary values (`[...]`), single
+theme config; Material/MUI → theme tokens and the component API, no hardcoded values; a
+custom token set → `var(--token)` only. **The method never prescribes a DS** (oklch, a
+particular scale…); those are examples. It enforces conformance to whichever the project
+declared — and injects that DS's guidelines the same way it injects code-API docs (§3).
 
 ## Invariants & limits (the honest lines)
 
@@ -102,8 +107,8 @@ system; the gate forces it to be used as one.
 ## Consequences
 
 **Issues** (`lytos-cli`): the versioned quality kit + executable rules (ISS-0107), the
-ground-truth injection skill (ISS-0108), the executable design system — oklch tokens +
-tokens-only gate + computed-contrast gate (ISS-0109).
+ground-truth injection skill (ISS-0108), the declared-DS conformance gate + computed-
+contrast gate (ISS-0109).
 
 **Relationship to ADR-0004**: the loop *consumes* these gates; it does not define them.
 The kit is what the loop's `verify: auto` items point at.
