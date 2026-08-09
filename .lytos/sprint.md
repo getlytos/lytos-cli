@@ -71,6 +71,8 @@ Issu d'un red-team/blue-team (deux panels adverses) : le côté *humain* de « h
 
 Answer-issues transverses (affinent des ADR antérieurs) : **ISS-0122** — décorrélation mesurée + juges non-LLM + filets aval (ADR-0004 §5/0005/0007) ; **ISS-0123** — journaliser le raisonnement rejeté (ADR-0006). ADR-0008 inscrit ses **conditions de falsifiabilité** (cohorte C≥A, MTTR A/B, kill-rate) — la méthode s'engage à être réfutable.
 
+**Transmission (face compétence, forme lisible)** : **ISS-0124** — `lyt journal`, le journal de bord dérivé (changelog du *pourquoi* + sommaire cliquable + carnet de compagnonnage), rendu dans l'App. **ISS-0125** *(icebox)* — mode elearning : le prof interactif posé au-dessus du journal, avec `dev_level` à l'init.
+
 ### Track parallèle — Continuité multi-surface & multi-user (ADR-0006)
 
 Déjà en grande partie construite — `claim`/`unclaim` (ISS-0041/0042), `pull-notes` (ISS-0096), union-merge (ISS-0093), `board --remote` (ISS-0043), compat surfaces (ISS-0040). ADR-0006 ne laisse que **trois trous**, insérables dans n'importe quel sprint (indépendants du loop) :
