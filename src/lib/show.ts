@@ -26,6 +26,8 @@ export interface IssueDetail {
   id: string;
   title: string;
   status: string;
+  parkReason: string;
+  parkedAt: string;
   priority: string;
   effort: string;
   skill: string;
@@ -57,6 +59,7 @@ export interface IssueSummary {
 const STATUS_DIRS = [
   "0-icebox", "1-backlog", "2-sprint",
   "3-in-progress", "4-review", "5-done",
+  "parked", // side-state (ADR-0004 §3)
 ];
 
 /**
@@ -119,6 +122,8 @@ export function parseIssueDetail(
     id: str(fm.id),
     title: str(fm.title),
     status: found.dir,
+    parkReason: str(fm.park_reason),
+    parkedAt: str(fm.parked_at),
     priority: str(fm.priority),
     effort: str(fm.effort),
     skill: str(fm.skill),

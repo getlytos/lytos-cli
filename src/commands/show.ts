@@ -41,6 +41,10 @@ function displayDetail(issue: IssueDetail): void {
   console.error("");
   console.error(`  ${cyan(bold(issue.id))} ${dim("—")} ${cyan(bold(issue.title))}`);
   console.error(`  ${statusLabel(issue.status)}  ${dim("·")}  ${blue("Effort:")} ${issue.effort}  ${dim("·")}  ${issue.daysOpen}d`);
+  if (issue.status === "parked" && issue.parkReason) {
+    const since = issue.parkedAt ? ` ${dim(`(since ${issue.parkedAt})`)}` : "";
+    console.error(`  ${yellow("⏸ Parked:")} ${yellow(issue.parkReason)}${since}`);
+  }
   console.error("");
 
   // Progress

@@ -14,6 +14,7 @@ import { collectIssues, generateBoardMarkdown } from "./board-generator.js";
 const STATUS_DIRS = [
   "0-icebox", "1-backlog", "2-sprint",
   "3-in-progress", "4-review", "5-done",
+  "parked", // side-state (ADR-0004 §3), not a linear stage
 ];
 
 export interface IssueLocation {

@@ -167,6 +167,7 @@ function lintIssues(lytosDir: string): { findings: LintFinding[]; filesChecked: 
   const statusDirs = [
     "0-icebox", "1-backlog", "2-sprint",
     "3-in-progress", "4-review", "5-done",
+    "parked", // side-state (ADR-0004 §3)
   ];
 
   for (const dir of statusDirs) {

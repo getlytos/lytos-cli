@@ -8,12 +8,14 @@ complexity: standard
 domain: [cli, method]
 skill: 
 skills_aux: []
-status: 2-sprint
+status: 4-review
 branch: claude/claude-loops-lytos-wtkc94
 depends: []
 created: 2026-08-09
 updated: 2026-08-09
 schema_version: 2
+assignee: Claude
+started_at: 2026-08-09
 ---
 # ISS-0100 — Garer plutôt que deviner
 
@@ -35,10 +37,10 @@ Nouveau statut `parked` (hors flux du board, à côté de `3-in-progress`) et ve
 
 ## Definition of done
 
-- [ ] Statut `parked` + dossier + `lyt park`/`unpark` atomiques — *verify: auto*
-- [ ] `--reason` validé contre la taxonomie fermée ; refus sinon — *verify: auto*
-- [ ] `park_reason`/`parked_at` en frontmatter ; `lyt show` les affiche — *verify: auto*
-- [ ] Tests par raison + reprise — *verify: auto*
+- [x] Statut `parked` + dossier + `lyt park`/`unpark` atomiques — *verify: auto*
+- [x] `--reason` validé contre la taxonomie fermée ; refus sinon — *verify: auto*
+- [x] `park_reason`/`parked_at` en frontmatter ; `lyt show` les affiche — *verify: auto*
+- [x] Tests par raison + reprise — *verify: auto*
 
 ## Notes
 

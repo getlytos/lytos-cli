@@ -32,6 +32,7 @@ const MOVABLE_STAGES = ["0-icebox", "1-backlog", "2-sprint", "4-review"];
 const RESERVED_STAGES: Record<string, string> = {
   "3-in-progress": "lyt start",
   "5-done": "lyt close",
+  "parked": "lyt park",
 };
 
 const ALL_STAGES = [...MOVABLE_STAGES, ...Object.keys(RESERVED_STAGES)].sort();
