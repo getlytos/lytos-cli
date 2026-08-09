@@ -155,6 +155,15 @@ export function gatesForRisk(kit: QualityKit, risk: RiskTier): QualityGate[] {
 }
 
 /**
+ * The risk tier of an issue (ADR-0007 §1): the `risk` frontmatter field, or
+ * `medium` as the safe default when absent or invalid.
+ */
+export function riskOf(risk: FrontmatterValue | undefined): RiskTier {
+  const value = typeof risk === "string" ? (risk.trim().toLowerCase() as RiskTier) : "";
+  return TIER_VALUES.includes(value as RiskTier) ? (value as RiskTier) : "medium";
+}
+
+/**
  * DoD items may pin a gate: `— verify: auto:secrets-scan`. Returns the referenced
  * gate ids that do NOT resolve to a kit entry (so `lyt doctor` can flag them).
  */

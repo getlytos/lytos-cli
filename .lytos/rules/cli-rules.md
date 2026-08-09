@@ -81,6 +81,11 @@ To **add an executable rule**: add a row to `kit.md`, fill its `tool` for this s
 item pins a gate with `— verify: auto:<id>`; `lyt doctor` flags unresolved refs and any
 malformed row. A project may only **tighten** tiers, never loosen below `low`.
 
+**The risk → gate matrix (ADR-0007 §1):** an issue's `risk` field (`low|medium|high`,
+**default `medium`** when absent) selects which gates are mandatory. `lyt gates ISS-XXXX`
+resolves them (grouped auto/reviewer/human); `lyt gates` alone prints the whole matrix.
+Nothing is always-on — a low-risk change carries only the `low` gates.
+
 ---
 
 ## Continuous improvement — propagation rule

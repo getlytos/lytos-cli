@@ -8,12 +8,14 @@ complexity: heavy
 domain: [cli, method]
 skill: 
 skills_aux: []
-status: 2-sprint
+status: 4-review
 branch: claude/claude-loops-lytos-wtkc94
 depends: [ISS-0107]
 created: 2026-08-09
 updated: 2026-08-09
 schema_version: 2
+assignee: Claude
+started_at: 2026-08-09
 ---
 # ISS-0114 — La rigueur suit le rayon de souffle, pas l'inverse
 
@@ -34,10 +36,10 @@ liste des gates dus et signale ceux manquants.
 
 ## Definition of done
 
-- [ ] Matrice risque→gates dans le kit, format documenté — *verify: auto*
-- [ ] Résolution : pour une issue, la liste des gates obligatoires selon `risk` — *verify: auto*
-- [ ] `risk` absent = `medium` ; un projet ne peut que resserrer — *verify: auto*
-- [ ] Tests par niveau de risque — *verify: auto*
+- [x] Matrice risque→gates dans le kit, format documenté — *verify: auto*
+- [x] Résolution : pour une issue, la liste des gates obligatoires selon `risk` — *verify: auto*
+- [x] `risk` absent = `medium` ; un projet ne peut que resserrer — *verify: auto*
+- [x] Tests par niveau de risque — *verify: auto*
 - [ ] Doc L1 du mécanisme — *verify: doc L1*
 - [ ] Le tiering par défaut est-il sain pour de vrais projets — *verify: human*
 
