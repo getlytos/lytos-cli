@@ -8,12 +8,14 @@ complexity: standard
 domain: [cli, method]
 skill: 
 skills_aux: []
-status: 2-sprint
+status: 4-review
 branch: claude/claude-loops-lytos-wtkc94
 depends: []
 created: 2026-08-09
 updated: 2026-08-09
 schema_version: 2
+assignee: Claude
+started_at: 2026-08-09
 ---
 # ISS-0115 — Attraper l'ambiguïté avant de dépenser des tokens
 
@@ -34,9 +36,9 @@ DoD testable (ADR-0004 §4), `risk` renseigné. Section `## Ready` normée dans 
 ## Definition of done
 
 - [ ] Critères de Ready définis + section `## Ready` au template (projet + method/) — *verify: doc L1*
-- [ ] `lyt next` : une issue non-ready n'est pas éligible (raison `not-ready`) — *verify: auto*
-- [ ] `lyt lint` signale les issues du sprint non-ready — *verify: auto*
-- [ ] Tests : ready complet / champ manquant / hors-scope absent — *verify: auto*
+- [x] `lyt next` : une issue non-ready n'est pas éligible (raison `not-ready`) — *verify: auto*
+- [x] `lyt lint` signale les issues du sprint non-ready — *verify: auto*
+- [x] Tests : ready complet / champ manquant / hors-scope absent — *verify: auto*
 - [ ] Les critères sont-ils suffisants sans être bureaucratiques — *verify: human*
 
 ## Notes

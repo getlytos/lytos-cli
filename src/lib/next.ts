@@ -17,6 +17,7 @@ import { existsSync, readFileSync, readdirSync } from "fs";
 import { join } from "path";
 import { parseFrontmatter, type FrontmatterValue } from "./frontmatter.js";
 import { analyzeDod, type DodAnalysis } from "./dod.js";
+import { analyzeReady } from "./ready.js";
 import { findIssueFile } from "./show.js";
 
 export interface NextCandidate {
@@ -29,7 +30,7 @@ export interface NextCandidate {
   dod: DodAnalysis;
 }
 
-export type BlockedReason = "deps-pending" | "all-human-dod" | "no-dod";
+export type BlockedReason = "deps-pending" | "all-human-dod" | "no-dod" | "not-ready";
 
 export interface NextBlocked {
   id: string;
@@ -100,6 +101,12 @@ export function selectNext(lytosDir: string): NextResult {
     }
     if (!dod.loopEligible) {
       blocked.push({ id, title, reason: "all-human-dod", detail: "DoD is 100% verify: human — for a human, not the loop" });
+      continue;
+    }
+    // Definition of Ready (ADR-0007 §3): entry gate beyond the DoD.
+    const ready = analyzeReady(content, fm);
+    if (!ready.ready) {
+      blocked.push({ id, title, reason: "not-ready", detail: `not ready: ${ready.missing.join(", ")}` });
       continue;
     }
     const pending = pendingDeps(lytosDir, fm.depends);

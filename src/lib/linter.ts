@@ -10,6 +10,7 @@ import { existsSync, readFileSync, readdirSync } from "fs";
 import { join } from "path";
 import { parseFrontmatter } from "./frontmatter.js";
 import { analyzeDod } from "./dod.js";
+import { analyzeReady } from "./ready.js";
 
 export type Severity = "error" | "warning";
 
@@ -233,6 +234,19 @@ function lintIssues(lytosDir: string): { findings: LintFinding[]; filesChecked: 
             message: `${dod.unqualified} Definition-of-Done item(s) without a verify: marker`,
             fix: "Append '— verify: auto' or '— verify: human' to each DoD item (ADR-0004 §4)",
           });
+        }
+
+        // Definition of Ready (ADR-0007 §3, ISS-0115): sprint issues must be ready.
+        if (dir === "2-sprint") {
+          const ready = analyzeReady(content, fm);
+          if (!ready.ready) {
+            findings.push({
+              severity: "warning",
+              file: relPath,
+              message: `Sprint issue not ready: ${ready.missing.join(", ")}`,
+              fix: "Set `risk`, give the DoD a machine-verifiable item, and declare an out-of-scope (ADR-0007 §3)",
+            });
+          }
         }
       }
     }

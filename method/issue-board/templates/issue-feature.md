@@ -76,6 +76,15 @@ schema_version: 2
 
 *What we'll concretely do to solve the problem.*
 
+## Ready
+
+*Definition of Ready (ADR-0007 §3) — the entry gate; an issue is loop-eligible only when ready.*
+
+- **Scope** — what this issue does, in one line.
+- **Constraints** — what it must respect.
+- **Out of scope** — what it explicitly does NOT do.
+- `risk:` set in the frontmatter (low | medium | high), and the DoD below has ≥1 machine-verifiable item.
+
 ## Definition of done
 
 *How we know this issue is finished. The bigger the issue, the more precise the done criteria should be.*

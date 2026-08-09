@@ -18,8 +18,10 @@ function run(args: string, cwd: string): { stdout: string; stderr: string; exitC
 const AUTO_DOD = "## Definition of done\n\n- [ ] Ship it — verify: auto\n";
 const HUMAN_DOD = "## Definition of done\n\n- [ ] Looks right — verify: human\n";
 
-function issue(id: string, opts: { status: string; priority?: string; depends?: string; dod?: string }): string {
-  return `---\nid: ${id}\ntitle: "${id} title"\ntype: feat\npriority: ${opts.priority ?? "P2-normal"}\neffort: S\nstatus: ${opts.status}\ndepends: [${opts.depends ?? ""}]\ncreated: 2026-08-01\n---\n\n# ${id}\n\n${opts.dod ?? "## Context\n\nno dod\n"}`;
+function issue(id: string, opts: { status: string; priority?: string; depends?: string; dod?: string; risk?: string }): string {
+  const risk = opts.risk ? `risk: ${opts.risk}\n` : "";
+  const body = `${opts.dod ?? "## Context\n\nno dod\n"}\n\nOut of scope: none.\n`;
+  return `---\nid: ${id}\ntitle: "${id} title"\ntype: feat\npriority: ${opts.priority ?? "P2-normal"}\neffort: S\n${risk}status: ${opts.status}\ndepends: [${opts.depends ?? ""}]\ncreated: 2026-08-01\n---\n\n# ${id}\n\n${body}`;
 }
 
 function createFixture(cwd: string): void {
@@ -36,16 +38,18 @@ function createFixture(cwd: string): void {
   w("5-done", "ISS-0010-dep-done", issue("ISS-0010", { status: "5-done" }));
   w("1-backlog", "ISS-0011-dep-pending", issue("ISS-0011", { status: "1-backlog" }));
 
-  // Eligible (deps done, DoD auto), P1
-  w("2-sprint", "ISS-0001-a", issue("ISS-0001", { status: "2-sprint", priority: "P1-high", depends: "ISS-0010", dod: AUTO_DOD }));
+  // Eligible (ready: risk + out-of-scope, deps done, DoD auto), P1
+  w("2-sprint", "ISS-0001-a", issue("ISS-0001", { status: "2-sprint", priority: "P1-high", depends: "ISS-0010", dod: AUTO_DOD, risk: "low" }));
   // Eligible, P0 → should be the pick
-  w("2-sprint", "ISS-0002-b", issue("ISS-0002", { status: "2-sprint", priority: "P0-critical", dod: AUTO_DOD }));
-  // Blocked: deps pending
-  w("2-sprint", "ISS-0003-c", issue("ISS-0003", { status: "2-sprint", depends: "ISS-0011", dod: AUTO_DOD }));
+  w("2-sprint", "ISS-0002-b", issue("ISS-0002", { status: "2-sprint", priority: "P0-critical", dod: AUTO_DOD, risk: "high" }));
+  // Blocked: deps pending (ready otherwise)
+  w("2-sprint", "ISS-0003-c", issue("ISS-0003", { status: "2-sprint", depends: "ISS-0011", dod: AUTO_DOD, risk: "low" }));
   // Blocked: all-human DoD
   w("2-sprint", "ISS-0004-d", issue("ISS-0004", { status: "2-sprint", dod: HUMAN_DOD }));
   // Blocked: no DoD
   w("2-sprint", "ISS-0005-e", issue("ISS-0005", { status: "2-sprint" }));
+  // Blocked: not ready (good DoD + deps ok, but no risk field)
+  w("2-sprint", "ISS-0006-f", issue("ISS-0006", { status: "2-sprint", dod: AUTO_DOD }));
 }
 
 let fixture: Fixture;
@@ -74,6 +78,7 @@ describe("lyt next", () => {
     expect(byId["ISS-0003"]).toBe("deps-pending");
     expect(byId["ISS-0004"]).toBe("all-human-dod");
     expect(byId["ISS-0005"]).toBe("no-dod");
+    expect(byId["ISS-0006"]).toBe("not-ready");
   });
 
   it("returns pick=null and lists blockers when nothing is eligible", () => {
