@@ -8,12 +8,14 @@ complexity: standard
 domain: [cli, dx]
 skill: 
 skills_aux: []
-status: 2-sprint
+status: 4-review
 branch: claude/claude-loops-lytos-wtkc94
 depends: [ISS-0101]
 created: 2026-08-09
 updated: 2026-08-09
 schema_version: 2
+assignee: Claude
+started_at: 2026-08-09
 ---
 # ISS-0099 — La prochaine issue que le loop a le droit de prendre
 
@@ -33,9 +35,9 @@ rien n'est éligible (ex. « ISS-X en tête mais DoD 100% human → à traiter �
 
 ## Definition of done
 
-- [ ] Sélection respecte sprint + status + deps/enfants + DoD machine-vérifiable — *verify: auto*
-- [ ] Sortie `--json` et sortie humaine ; raison explicite quand vide/refusé — *verify: auto*
-- [ ] Tests : cas nominal, deps non satisfaites, DoD tout-human refusée, sprint vide — *verify: auto*
+- [x] Sélection respecte sprint + status + deps/enfants + DoD machine-vérifiable — *verify: auto*
+- [x] Sortie `--json` et sortie humaine ; raison explicite quand vide/refusé — *verify: auto*
+- [x] Tests : cas nominal, deps non satisfaites, DoD tout-human refusée, sprint vide — *verify: auto*
 
 ## Notes
 
