@@ -27,7 +27,8 @@ et ISS-0092 pour d'autres décisions.
 ## Le geste
 
 Porter dans `lytos-method` les décisions **ADR-0004** (loop-B), **ADR-0005**
-(standards exécutables) **et ADR-0006** (continuité multi-surface/multi-user) : les deux
+(standards exécutables), **ADR-0006** (continuité multi-surface/multi-user) **et ADR-0007**
+(gates proportionnels au risque + niveaux de doc + Definition of Ready) : les deux
 gates réels + interdiction de self-close, le
 park-on-ambiguity, la DoD à mode de vérification, la checklist de review comme objet de
 première classe. **Et surtout, ériger en principe Lytos de premier plan** (manifest /
@@ -38,7 +39,7 @@ vérifient la conformité. Décider au passage si `lytos-method` se dote enfin d
 
 ## Definition of done
 
-- [ ] Contrat loop-B (ADR-0004) + standards exécutables (ADR-0005) + continuité (ADR-0006) reflétés dans LYTOS.md / rules — *verify: human*
+- [ ] Contrat loop-B (ADR-0004) + standards (ADR-0005) + continuité (ADR-0006) + gates proportionnels (ADR-0007) reflétés dans LYTOS.md / rules — *verify: human*
 - [ ] Principe « Lytos ne dicte pas la stack, il en garantit le respect » énoncé dans le manifest — *verify: human*
 - [ ] Décision « adr/ dans method ? » tranchée et appliquée — *verify: human*
 - [ ] Cohérence croisée cli ↔ method vérifiée (pas de contradiction) — *verify: human*

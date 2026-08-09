@@ -28,8 +28,12 @@ le repo (multi-projet → on ne mémorise pas quelle config).
 
 Un kit `.lytos/quality/` par projet : **contrat de stack** (versions épinglées + deps
 allow-listées + `no-new-dependency-without-ADR` + source des docs), **configs de gates**
-(lint/type/format/archi/complexité), **rubrique du relecteur** (prompt versionné). Les
-items `verify: auto` de la DoD (ISS-0101) **pointent** vers une entrée du kit. Les règles
+(lint/type/format/archi/complexité + les dimensions repliées d'ADR-0007 : secrets,
+reproductibilité du build, audit de deps, budget perf/taille en régression, observabilité
+/« fail with context », compat/migrations, doc L0/L3), **rubrique du relecteur** (prompt
+versionné). Chaque dimension est **sélectionnée par la matrice risque** (ISS-0114), pas
+appliquée uniformément. Les items `verify: auto` de la DoD (ISS-0101) **pointent** vers
+une entrée du kit. Les règles
 non gatables sont marquées `reviewer-judged` ou `human-checked` — jamais « appliquée » en
 silence. Signaux anti-sur-ingénierie inclus : taille de diff vs `effort`, complexité,
 nb de nouvelles abstractions.
@@ -37,6 +41,7 @@ nb de nouvelles abstractions.
 ## Definition of done
 
 - [ ] Structure `.lytos/quality/` + schéma du contrat de stack — *verify: auto*
+- [ ] Dimensions repliées d'ADR-0007 présentes comme checkers (secrets, repro, audit deps, perf, observabilité, compat, doc L0/L3) — *verify: auto*
 - [ ] `lyt doctor` vérifie la présence/cohérence du kit — *verify: auto*
 - [ ] Convention : un item `verify: auto` référence une entrée de kit résoluble — *verify: auto*
 - [ ] Règles non gatables explicitement classées reviewer/human — *verify: human*

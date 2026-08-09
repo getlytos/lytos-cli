@@ -64,7 +64,9 @@ Le but complet (loop-B sous gouvernance + standards exécutables) tient en trois
 
 - **#04 — Le rail** *(ce sprint)* : primitives décidables — ISS-0099, 0100, 0101, 0102.
 - **#05 — Le gate humain** : quality kit (ISS-0107) + review packet (ISS-0103) + checklist/sign-off (ISS-0104).
-- **#06 — Standards exécutables & fermeture** : injection vérité-terrain (ISS-0108), conformité DS (ISS-0109), rapport de sprint (ISS-0105), propagation `lytos-method` (ISS-0106), clôture de l'épic ISS-0098.
+- **#06 — Standards exécutables & fermeture** : injection vérité-terrain (ISS-0108), conformité DS (ISS-0109), **matrice risque→gates (ISS-0114)**, **Definition of Ready (ISS-0115)**, **niveaux de doc (ISS-0116)**, rapport de sprint (ISS-0105), propagation `lytos-method` (ISS-0106), clôture de l'épic ISS-0098.
+
+> **ADR-0007** (gates proportionnels au risque + niveaux de doc + Definition of Ready) affine ADR-0005 : la rigueur suit le risque, rien n'est « toujours on ». Les dimensions oubliées (observabilité, sécu, perf, compat, reproductibilité) sont **repliées dans le quality kit (ISS-0107)** comme checkers sélectionnés par la matrice — pas 8 issues de plus.
 
 ### Track parallèle — Continuité multi-surface & multi-user (ADR-0006)
 
