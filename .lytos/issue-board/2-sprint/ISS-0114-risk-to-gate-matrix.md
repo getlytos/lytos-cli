@@ -1,14 +1,14 @@
 ---
 id: ISS-0114
-title: "Matrice risque → gates — la rigueur proportionnelle"
+title: Matrice risque → gates — la rigueur proportionnelle
 type: feat
 priority: P1-high
 effort: M
 complexity: heavy
 domain: [cli, method]
-skill: ""
+skill: 
 skills_aux: []
-status: 1-backlog
+status: 2-sprint
 branch: claude/claude-loops-lytos-wtkc94
 depends: [ISS-0107]
 created: 2026-08-09

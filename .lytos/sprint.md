@@ -1,21 +1,20 @@
-# Sprint #04 — Poser le rail : les primitives décidables du loop-B
+# Sprint #05 — Standards exécutables & proportionnalité (ADR-0005 + ADR-0007)
 
-> **Objective**: Livrer les briques d'ADR-0004 sans conception lourde — le périmètre décidable par machine (`lyt next`), la sortie sûre (`parked` + taxonomie), la classification des gates (DoD `verify:`), et la condition d'arrêt (`lyt budget`). À la fin du sprint, on peut faire tourner à blanc **la sélection + le park** d'un sprint. Le review packet et la checklist (design-lourds) viennent au #05.
+> **Objective**: Intégrer **en priorité** le socle standards. Le quality kit (ISS-0107) rend les gates réels ; la matrice risque→gates (ISS-0114) les rend proportionnels (rien n'est « toujours on ») ; la Definition of Ready (ISS-0115) déplace l'ambiguïté à gauche. C'est le cœur d'ADR-0005/0007 — la rigueur qui assure du bon code quelle que soit la stack, sans sur-ingénierie.
 > **Start**: 2026-08-09
-> **Target end**: 2026-08-16
+> **Target end**: 2026-08-20 *(sprint un peu plus large : deux issues heavy)*
 
 ---
 
 ## Why this sprint
 
-ADR-0004 pose le contrat de gouvernance de la boucle autonome. Ces quatre briques en sont la **colonne vertébrale** et débloquent tout l'aval (review packet, checklist). Elles sont volontairement les moins « design-lourdes » du lot, pour livrer vite un socle exécutable et démontrable.
+Après le rail (#04), le loop peut sélectionner, garer et s'arrêter — mais rien ne garantit encore que le code rendu est **bon**. Ce sprint pose les gates et leur proportionnalité.
 
-- **ISS-0101** est la fondation : sans le mode de vérification par item de DoD, `lyt next` ne peut pas juger une issue « loop-éligible », et plus tard le packet/checklist ne peuvent pas se découper.
-- **ISS-0100** (park) matérialise l'invariant « l'ambiguïté gare, elle ne devine pas » — indépendant, livrable en parallèle.
-- **ISS-0099** (`lyt next`) est le périmètre décidable : la seule chose que le loop a le droit de prendre.
-- **ISS-0102** (`lyt budget`) donne la condition d'arrêt chiffrée, en s'appuyant sur les champs coût du schema v2 déjà présents.
+- **ISS-0107** (quality kit) est la **fondation** : le kit versionné qui héberge le contrat de stack, les configs de gates (+ dimensions repliées d'ADR-0007 : secrets, repro, audit deps, perf, observabilité, compat, doc L0/L3) et la rubrique du relecteur. Tout le reste en dépend.
+- **ISS-0114** (matrice risque→gates) est le **keystone anti-sur-ingénierie** : le champ `risk` sélectionne les gates dus — audit sécu sur `high`, pas sur une typo.
+- **ISS-0115** (Definition of Ready) est le **jumeau amont de la DoD** : une issue non-ready n'entre pas dans le loop. Prévention, pas post-mortem.
 
-Rappel manifest : **le CLI n'exécute pas le loop**. Il expose ces primitives ; le wrapper/App orchestrent.
+Rappel : le kit est **stack-agnostique** — chaque dimension est universelle, branchée sur un outil par-stack (comme la conformité DS). C'est ça, « bon quelle que soit la stack ».
 
 ---
 
@@ -23,54 +22,48 @@ Rappel manifest : **le CLI n'exécute pas le loop**. Il expose ces primitives ; 
 
 | Issue | Title | Effort | Depends | Status |
 |-------|-------|--------|---------|--------|
-| ISS-0101 | DoD à mode de vérification `verify: auto\|human` | M | — | 4-review ✅ |
-| ISS-0100 | Statut `parked` + `lyt park` + taxonomie de raisons | M | — | 4-review ✅ |
-| ISS-0099 | `lyt next` — sélecteur d'issue éligible au loop | M | ISS-0101 | 4-review ✅ |
-| ISS-0102 | `lyt budget` — garde-fou budget non-interactif | S | — | 4-review ✅ |
-
-> **État au 2026-08-09** : les 4 issues sont implémentées (code + tests), 282 tests verts, en `4-review`. Elles attendent la validation humaine (`lyt close`). Les items `verify: human` (docs, jugement) restent à confirmer par le relecteur.
+| ISS-0107 | Quality kit versionné — Pilier Standards exécutable | L | — | sprint |
+| ISS-0114 | Matrice risque → gates (proportionnalité) | M | ISS-0107 | sprint |
+| ISS-0115 | Definition of Ready — le gate d'entrée | M | — | sprint |
 
 ---
 
 ## Suggested order
 
-1. **ISS-0101** d'abord — fondation, débloque `lyt next` (et plus tard le packet/checklist).
-2. **ISS-0100** en parallèle — indépendant, pas de dépendance.
-3. **ISS-0099** après 0101 — a besoin du mode de vérification pour filtrer l'éligibilité.
-4. **ISS-0102** à tout moment — S, indépendant.
+1. **ISS-0107** d'abord — fondation ; les gates n'existent nulle part ailleurs.
+2. **ISS-0114** après le kit — la matrice sélectionne dans les configs du kit.
+3. **ISS-0115** en parallèle — indépendant ; étend `lyt next` (livré au #04).
 
 ## Dependency graph
 
 ```
-ISS-0101 (verify mode) ── ISS-0099 (lyt next)
-ISS-0100 (parked)      ── indépendant
-ISS-0102 (budget)      ── indépendant
+ISS-0107 (quality kit) ── ISS-0114 (risk → gate matrix)
+ISS-0115 (Definition of Ready) ── indépendant
 ```
 
 ---
 
 ## Out of scope / notes
 
-- **ISS-0067** est encore dans `2-sprint` : reliquat du sprint #03 (propagation implementer/auditor vers `lytos-method`), **non rattaché** à l'objectif #04. À fermer ou reverser au backlog au prochain point.
-- Le **review packet (ISS-0103)**, la **checklist/sign-off (ISS-0104)** et le **quality kit (ISS-0107)** — plus design-lourds — sont pour le **sprint #05**.
-- L'épic **ISS-0098** reste ouvert (multi-sprint) ; il se fermera au #06.
-- ADR-0004 / ADR-0005 sont en `Proposed` — leur passage en `Accepted` par l'humain est un prérequis assumé avant d'exécuter ces issues.
+- **ISS-0116** (niveaux de doc L0–L4) suit immédiatement au #06 — P2, dépend du kit.
+- Le **review packet (ISS-0103)** et la **checklist/sign-off (ISS-0104)** glissent au **#06** : on priorise les standards, comme demandé.
+- **ISS-0067** traîne encore dans `2-sprint` (reliquat #03) — non rattaché à #05. À fermer ou reverser au backlog.
+- **Sprint #04** : ses 4 issues sont en `4-review`, en attente de `lyt close`. Elles finissent leur review pendant #05.
+- ADR-0005 / ADR-0007 sont en `Proposed` — passage en `Accepted` par l'humain, prérequis assumé.
 
 ---
 
 ## Roadmap vers le but (multi-sprint)
 
-Le but complet (loop-B sous gouvernance + standards exécutables) tient en trois sprints :
+- **#04 — Le rail** ✅ *(livré, en review)* : primitives décidables — ISS-0099, 0100, 0101, 0102.
+- **#05 — Standards & proportionnalité** *(ce sprint)* : quality kit (0107) + matrice risque→gates (0114) + Definition of Ready (0115).
+- **#06 — Le gate humain & fermeture** : review packet (0103), checklist/sign-off (0104), niveaux de doc (0116), injection vérité-terrain (0108), conformité DS (0109), rapport de sprint (0105), propagation `lytos-method` (0106), clôture de l'épic ISS-0098.
 
-- **#04 — Le rail** *(ce sprint)* : primitives décidables — ISS-0099, 0100, 0101, 0102.
-- **#05 — Le gate humain** : quality kit (ISS-0107) + review packet (ISS-0103) + checklist/sign-off (ISS-0104).
-- **#06 — Standards exécutables & fermeture** : injection vérité-terrain (ISS-0108), conformité DS (ISS-0109), **matrice risque→gates (ISS-0114)**, **Definition of Ready (ISS-0115)**, **niveaux de doc (ISS-0116)**, rapport de sprint (ISS-0105), propagation `lytos-method` (ISS-0106), clôture de l'épic ISS-0098.
-
-> **ADR-0007** (gates proportionnels au risque + niveaux de doc + Definition of Ready) affine ADR-0005 : la rigueur suit le risque, rien n'est « toujours on ». Les dimensions oubliées (observabilité, sécu, perf, compat, reproductibilité) sont **repliées dans le quality kit (ISS-0107)** comme checkers sélectionnés par la matrice — pas 8 issues de plus.
+> **ADR-0007** affine ADR-0005 : la rigueur suit le risque. Les dimensions oubliées (observabilité, sécu, perf, compat, reproductibilité) sont **repliées dans le quality kit (ISS-0107)** comme checkers sélectionnés par la matrice — pas 8 issues de plus.
 
 ### Track parallèle — Continuité multi-surface & multi-user (ADR-0006)
 
-La continuité repo-first (démarrer sur mobile, reprendre dans VSCode/App sans rien perdre) est **déjà en grande partie construite** — `claim`/`unclaim` (ISS-0041/0042), `pull-notes` (ISS-0096), union-merge (ISS-0093), `board --remote` (ISS-0043), compat surfaces (ISS-0040). ADR-0006 énonce le contrat et ne laisse que **trois trous** à combler, insérables dans n'importe quel sprint (indépendants du loop) :
+Déjà en grande partie construite — `claim`/`unclaim` (ISS-0041/0042), `pull-notes` (ISS-0096), union-merge (ISS-0093), `board --remote` (ISS-0043), compat surfaces (ISS-0040). ADR-0006 ne laisse que **trois trous**, insérables dans n'importe quel sprint (indépendants du loop) :
 
 - **ISS-0110** — `lyt checkpoint` (filet : commit WIP + push au changement de surface).
 - **ISS-0112** — convention de note de handoff WIP (le contexte portable est l'issue, pas le chat).
@@ -81,6 +74,9 @@ Côté surface-handoff UX (VSCode, App « continue where you left off ») : dire
 ---
 
 ## Previous sprints
+
+### Sprint #04 — Poser le rail (2026-08-09) ✅ Livré (en review)
+ISS-0099 (`lyt next`), ISS-0100 (`parked` + `lyt park`), ISS-0101 (DoD `verify:`), ISS-0102 (`lyt budget`). Code + tests (282 verts), en `4-review` en attente de `close`.
 
 ### Sprint #03 — Boucler le schema v2 (2026-06-13 → 2026-06-20) ⚠️ Partiel
 ISS-0076 (AI wrapper) et ISS-0077 (migrate-frontmatter) livrés. ISS-0067 (propagation vers `lytos-method`) reste ouvert → reporté.

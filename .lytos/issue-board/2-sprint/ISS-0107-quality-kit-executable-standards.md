@@ -1,14 +1,14 @@
 ---
 id: ISS-0107
-title: "Quality kit versionné — Pilier Standards exécutable"
+title: Quality kit versionné — Pilier Standards exécutable
 type: feat
 priority: P1-high
 effort: L
 complexity: heavy
 domain: [cli, method]
-skill: ""
+skill: 
 skills_aux: []
-status: 1-backlog
+status: 2-sprint
 branch: claude/claude-loops-lytos-wtkc94
 depends: []
 created: 2026-08-09

@@ -1,14 +1,14 @@
 ---
 id: ISS-0115
-title: "Definition of Ready — le gate d'entrée, jumeau de la DoD"
+title: Definition of Ready — le gate d'entrée, jumeau de la DoD
 type: feat
 priority: P1-high
 effort: M
 complexity: standard
 domain: [cli, method]
-skill: ""
+skill: 
 skills_aux: []
-status: 1-backlog
+status: 2-sprint
 branch: claude/claude-loops-lytos-wtkc94
 depends: []
 created: 2026-08-09
