@@ -61,6 +61,16 @@ ISS-0115 (Definition of Ready) ── indépendant
 
 > **ADR-0007** affine ADR-0005 : la rigueur suit le risque. Les dimensions oubliées (observabilité, sécu, perf, compat, reproductibilité) sont **repliées dans le quality kit (ISS-0107)** comme checkers sélectionnés par la matrice — pas 8 issues de plus.
 
+### Track — Le contrat de capacité humaine (ADR-0008)
+
+Issu d'un red-team/blue-team (deux panels adverses) : le côté *humain* de « human-governed » était présumé, jamais outillé. Attaque et défense ont convergé sur les mêmes ajouts — trois faces, toutes risk-tiered :
+
+- **Compréhension** : **ISS-0117** — explain-back de mémoire avant `close` (`verify: human-comprehension`).
+- **Compétence** : **ISS-0118** — métrique d'exposition au jugement (la dette au bilan) ; **ISS-0119** — mode `learning` (inverser le routage) + rotation + diffs-pièges relecteur.
+- **Opérabilité** : **ISS-0120** — runbook L4 exécutable + observabilité (risk: high) ; **ISS-0121** — loop-C (prod→issue) + MTTR.
+
+Answer-issues transverses (affinent des ADR antérieurs) : **ISS-0122** — décorrélation mesurée + juges non-LLM + filets aval (ADR-0004 §5/0005/0007) ; **ISS-0123** — journaliser le raisonnement rejeté (ADR-0006). ADR-0008 inscrit ses **conditions de falsifiabilité** (cohorte C≥A, MTTR A/B, kill-rate) — la méthode s'engage à être réfutable.
+
 ### Track parallèle — Continuité multi-surface & multi-user (ADR-0006)
 
 Déjà en grande partie construite — `claim`/`unclaim` (ISS-0041/0042), `pull-notes` (ISS-0096), union-merge (ISS-0093), `board --remote` (ISS-0043), compat surfaces (ISS-0040). ADR-0006 ne laisse que **trois trous**, insérables dans n'importe quel sprint (indépendants du loop) :
