@@ -9,6 +9,7 @@
 import { existsSync, readFileSync, readdirSync } from "fs";
 import { join } from "path";
 import { parseFrontmatter, type Frontmatter, type FrontmatterValue } from "./frontmatter.js";
+import { analyzeDod, type DodAnalysis } from "./dod.js";
 
 export interface ChecklistItem {
   text: string;
@@ -39,6 +40,7 @@ export interface IssueDetail {
   checklistTotal: number;
   progress: number;
   dependencies: DependencyInfo[];
+  dod: DodAnalysis;
   body: string;
 }
 
@@ -131,6 +133,7 @@ export function parseIssueDetail(
     checklistTotal,
     progress,
     dependencies,
+    dod: analyzeDod(content),
     body,
   };
 }

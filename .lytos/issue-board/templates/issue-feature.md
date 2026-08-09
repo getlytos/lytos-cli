@@ -80,10 +80,12 @@ schema_version: 2
 
 *How we know this issue is finished. The bigger the issue, the more precise the done criteria should be.*
 
-- [ ] Verifiable criterion 1
-- [ ] Verifiable criterion 2
-- [ ] Tests written and passing
-- [ ] Documentation up to date
+*Declare how each item is verified (ADR-0004 §4): `— verify: auto` for a machine gate (test, typecheck, lint, build) or `— verify: human` for a human checklist item. Unmarked items default to auto and are flagged by `lyt lint`. A DoD with at least one `verify: auto` item is loop-eligible; an all-`human` DoD is not loop work.*
+
+- [ ] Verifiable criterion 1 — verify: auto
+- [ ] Verifiable criterion 2 — verify: auto
+- [ ] Tests written and passing — verify: auto
+- [ ] Documentation up to date — verify: human
 
 ## Checklist
 

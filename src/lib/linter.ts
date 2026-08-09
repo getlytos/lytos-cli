@@ -9,6 +9,7 @@
 import { existsSync, readFileSync, readdirSync } from "fs";
 import { join } from "path";
 import { parseFrontmatter } from "./frontmatter.js";
+import { analyzeDod } from "./dod.js";
 
 export type Severity = "error" | "warning";
 
@@ -219,6 +220,20 @@ function lintIssues(lytosDir: string): { findings: LintFinding[]; filesChecked: 
 
       // Schema v2 enum validation (ADR-0001). Only when the field is present.
       validateV2Fields(fm, relPath, findings);
+
+      // DoD verification mode (ADR-0004 §4, ISS-0101): on schema v2 issues,
+      // flag Definition-of-Done items that lack a `verify: auto|human` marker.
+      if (String(fm.schema_version) === "2") {
+        const dod = analyzeDod(content);
+        if (dod.hasDod && dod.unqualified > 0) {
+          findings.push({
+            severity: "warning",
+            file: relPath,
+            message: `${dod.unqualified} Definition-of-Done item(s) without a verify: marker`,
+            fix: "Append '— verify: auto' or '— verify: human' to each DoD item (ADR-0004 §4)",
+          });
+        }
+      }
     }
   }
 

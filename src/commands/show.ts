@@ -62,6 +62,21 @@ function displayDetail(issue: IssueDetail): void {
 
   console.error("");
 
+  // Loop-eligibility (ADR-0004 §1) from the DoD verification modes (ISS-0101)
+  if (issue.dod.hasDod) {
+    const d = issue.dod;
+    const counts = `${d.machine} auto${d.human > 0 ? ` · ${d.human} human` : ""}`;
+    if (d.loopEligible) {
+      console.error(`  ${blue("Loop:")} ${green("éligible")} ${dim(`(DoD ${counts})`)}`);
+    } else {
+      console.error(`  ${blue("Loop:")} ${yellow("inéligible")} ${dim("(DoD 100% human — à traiter à la main)")}`);
+    }
+    if (d.unqualified > 0) {
+      console.error(`  ${dim(`↳ ${d.unqualified} item(s) de DoD sans marqueur verify: — 'lyt lint' le signale`)}`);
+    }
+    console.error("");
+  }
+
   // Metadata
   const meta: string[] = [];
   if (issue.skill) meta.push(`${blue("Skill:")} ${issue.skill}`);

@@ -8,12 +8,14 @@ complexity: standard
 domain: [cli, method]
 skill: 
 skills_aux: []
-status: 2-sprint
+status: 4-review
 branch: claude/claude-loops-lytos-wtkc94
 depends: []
 created: 2026-08-09
 updated: 2026-08-09
 schema_version: 2
+assignee: Claude
+started_at: 2026-08-09
 ---
 # ISS-0101 — Chaque item de DoD déclare comment on le vérifie
 
@@ -34,9 +36,9 @@ les items sont `verify: human` est marquée **non éligible au loop**.
 
 ## Definition of done
 
-- [ ] Parsing du marqueur `verify:` sur les items de DoD, tolérant à la casse/espaces — *verify: auto*
-- [ ] `lyt show ISS-X` affiche le décompte auto/human et le flag « loop-inéligible » — *verify: auto*
-- [ ] `lyt lint` avertit sur tout item de DoD non qualifié — *verify: auto*
+- [x] Parsing du marqueur `verify:` sur les items de DoD, tolérant à la casse/espaces — *verify: auto*
+- [x] `lyt show ISS-X` affiche le décompte auto/human et le flag « loop-inéligible » — *verify: auto*
+- [x] `lyt lint` avertit sur tout item de DoD non qualifié — *verify: auto*
 - [ ] Doc de la convention dans le template d'issue + rules — *verify: human*
 
 ## Notes
