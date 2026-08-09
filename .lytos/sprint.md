@@ -22,9 +22,11 @@ Rappel : le kit est **stack-agnostique** — chaque dimension est universelle, b
 
 | Issue | Title | Effort | Depends | Status |
 |-------|-------|--------|---------|--------|
-| ISS-0107 | Quality kit versionné — Pilier Standards exécutable | L | — | sprint |
-| ISS-0114 | Matrice risque → gates (proportionnalité) | M | ISS-0107 | sprint |
-| ISS-0115 | Definition of Ready — le gate d'entrée | M | — | sprint |
+| ISS-0107 | Quality kit versionné — Pilier Standards exécutable | L | — | 4-review ✅ |
+| ISS-0114 | Matrice risque → gates (proportionnalité) | M | ISS-0107 | 4-review ✅ |
+| ISS-0115 | Definition of Ready — le gate d'entrée | M | — | 4-review ✅ |
+
+> **État au 2026-08-09** : les 3 issues sont implémentées (code + tests), 303 tests verts, en `4-review`. Livrées : `lyt` reconnaît le quality kit (`.lytos/quality/`, dogfoodé), `lyt gates ISS-X` résout la matrice risque→gates, `lyt next`/`lyt lint` appliquent la Definition of Ready. Les items `verify: human` / `doc L1` restent à confirmer par le relecteur.
 
 ---
 
