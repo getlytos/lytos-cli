@@ -40,6 +40,14 @@ must be **versioned and live in the repo**, travelling with the project.
 
 ## Decision
 
+> **Guiding principle — Lytos does not dictate the stack; it ensures the declared
+> stack is respected.** The project chooses its languages, libraries, and design
+> system; the kit *records* those choices and the gates *enforce conformance* to them.
+> This is the same stance Lytos already takes on AI providers (interchangeable, never
+> prescribed) and on the method itself (repo-first, no lock-in) — now applied to the
+> technical stack. The line with vibecoding is not "here is the right stack"; it is
+> "whatever the stack, we never silently drift from it."
+
 ### 1. Pillar 3 (Standards) becomes *executable*
 
 Today `rules/` holds prose quality criteria. This ADR binds **each rule to a checker**.

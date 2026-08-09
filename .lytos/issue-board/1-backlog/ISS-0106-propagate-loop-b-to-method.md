@@ -26,14 +26,19 @@ et ISS-0092 pour d'autres décisions.
 
 ## Le geste
 
-Porter dans `lytos-method` : le principe des deux gates réels + interdiction de
-self-close, le park-on-ambiguity, la DoD à mode de vérification, la checklist de review
-comme objet de première classe. Décider au passage si `lytos-method` se dote enfin d'un
-dossier `adr/` (et alors y copier ADR-0004) ou si LYTOS.md/rules suffisent.
+Porter dans `lytos-method` les décisions **ADR-0004** (loop-B) **et ADR-0005**
+(standards exécutables) : les deux gates réels + interdiction de self-close, le
+park-on-ambiguity, la DoD à mode de vérification, la checklist de review comme objet de
+première classe. **Et surtout, ériger en principe Lytos de premier plan** (manifest /
+LYTOS.md) : **« Lytos ne dicte pas la stack, il en garantit le respect »** — le projet
+choisit (langages, libs, design system, provider IA) ; le kit enregistre, les gates
+vérifient la conformité. Décider au passage si `lytos-method` se dote enfin d'un dossier
+`adr/` (et alors y copier ADR-0004/0005) ou si LYTOS.md/rules suffisent.
 
 ## Definition of done
 
-- [ ] Contrat loop-B reflété dans LYTOS.md / rules de `lytos-method` — *verify: human*
+- [ ] Contrat loop-B (ADR-0004) + standards exécutables (ADR-0005) reflétés dans LYTOS.md / rules — *verify: human*
+- [ ] Principe « Lytos ne dicte pas la stack, il en garantit le respect » énoncé dans le manifest — *verify: human*
 - [ ] Décision « adr/ dans method ? » tranchée et appliquée — *verify: human*
 - [ ] Cohérence croisée cli ↔ method vérifiée (pas de contradiction) — *verify: human*
 
