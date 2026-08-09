@@ -64,6 +64,16 @@ Le but complet (loop-B sous gouvernance + standards exécutables) tient en trois
 - **#05 — Le gate humain** : quality kit (ISS-0107) + review packet (ISS-0103) + checklist/sign-off (ISS-0104).
 - **#06 — Standards exécutables & fermeture** : injection vérité-terrain (ISS-0108), conformité DS (ISS-0109), rapport de sprint (ISS-0105), propagation `lytos-method` (ISS-0106), clôture de l'épic ISS-0098.
 
+### Track parallèle — Continuité multi-surface & multi-user (ADR-0006)
+
+La continuité repo-first (démarrer sur mobile, reprendre dans VSCode/App sans rien perdre) est **déjà en grande partie construite** — `claim`/`unclaim` (ISS-0041/0042), `pull-notes` (ISS-0096), union-merge (ISS-0093), `board --remote` (ISS-0043), compat surfaces (ISS-0040). ADR-0006 énonce le contrat et ne laisse que **trois trous** à combler, insérables dans n'importe quel sprint (indépendants du loop) :
+
+- **ISS-0110** — `lyt checkpoint` (filet : commit WIP + push au changement de surface).
+- **ISS-0112** — convention de note de handoff WIP (le contexte portable est l'issue, pas le chat).
+- **ISS-0111** — `lyt resume` (« où j'en étais » à travers repos/surfaces) — dépend d'ISS-0112.
+
+Côté surface-handoff UX (VSCode, App « continue where you left off ») : direction 2, repo `lytos-app`.
+
 ---
 
 ## Previous sprints
