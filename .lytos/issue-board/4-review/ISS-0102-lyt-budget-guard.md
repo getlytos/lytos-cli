@@ -8,12 +8,14 @@ complexity: standard
 domain: [cli, dx]
 skill: 
 skills_aux: []
-status: 2-sprint
+status: 4-review
 branch: claude/claude-loops-lytos-wtkc94
 depends: []
 created: 2026-08-09
 updated: 2026-08-09
 schema_version: 2
+assignee: Claude
+started_at: 2026-08-09
 ---
 # ISS-0102 — Un plafond que le loop peut lire
 
@@ -31,10 +33,10 @@ un plafond (`--max-usd`, `--max-issues`, ou un champ `budget:` de `sprint.md`). 
 
 ## Definition of done
 
-- [ ] Agrégation coût/nombre d'issues sur le sprint courant — *verify: auto*
-- [ ] Exit code non-zéro au dépassement ; `--json` — *verify: auto*
-- [ ] Plafond depuis flag ou `sprint.md` ; message clair si non défini — *verify: auto*
-- [ ] Tests : sous/au/au-dessus du plafond, plafond absent — *verify: auto*
+- [x] Agrégation coût/nombre d'issues sur le sprint courant — *verify: auto*
+- [x] Exit code non-zéro au dépassement ; `--json` — *verify: auto*
+- [x] Plafond depuis flag ou `sprint.md` ; message clair si non défini — *verify: auto*
+- [x] Tests : sous/au/au-dessus du plafond, plafond absent — *verify: auto*
 
 ## Notes
 
