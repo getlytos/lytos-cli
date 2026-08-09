@@ -14,6 +14,7 @@ import { existsSync, readFileSync, readdirSync, statSync } from "fs";
 import { join, relative } from "path";
 import { parseFrontmatter } from "./frontmatter.js";
 import { checkMergeDriver, GITATTRIBUTES_LINE, MERGE_DRIVER_COMMAND, MERGE_DRIVER_NAME } from "./merge-driver.js";
+import { loadKit, validateKit, unresolvedGateRefs } from "./quality.js";
 
 export type DiagnosticSeverity = "error" | "warning" | "info";
 
@@ -77,6 +78,9 @@ export function diagnose(lytosDir: string): DiagnosticResult {
 
   // 8. Rules from a generation that predates "The CLI Is the Interface" — ISS-0097
   findings.push(...checkCliInterfaceSection(lytosDir));
+
+  // 9. Quality kit presence + coherence (ADR-0005/0007, ISS-0107)
+  findings.push(...checkQualityKit(lytosDir));
 
   const errors = findings.filter((f) => f.severity === "error").length;
   const warnings = findings.filter((f) => f.severity === "warning").length;
@@ -478,6 +482,58 @@ function checkMergeDriverInstall(lytosDir: string): DiagnosticFinding[] {
  * Any rules/*.md carrying the section (English or French wording)
  * satisfies the check.
  */
+/**
+ * Quality kit (ISS-0107): presence, structural coherence, and DoD gate-refs.
+ * Absence is info-level (the kit is additive); a malformed kit is a warning.
+ */
+function checkQualityKit(lytosDir: string): DiagnosticFinding[] {
+  const findings: DiagnosticFinding[] = [];
+  const kit = loadKit(lytosDir);
+
+  if (!kit) {
+    findings.push({
+      severity: "info",
+      category: "quality-kit",
+      file: "quality/",
+      message: "No quality kit — gates and the risk matrix have nothing to select from",
+      fix: "Add `.lytos/quality/kit.md` (gate catalog) and `stack.md` (stack contract), or re-run `lyt init`",
+    });
+    return findings;
+  }
+
+  for (const problem of validateKit(kit)) {
+    findings.push({
+      severity: "warning",
+      category: "quality-kit",
+      file: "quality/kit.md",
+      message: `Malformed quality kit: ${problem}`,
+      fix: "Fix the gate row: | id | gate|reviewer|human | low,medium,high | tool |",
+    });
+  }
+
+  // DoD items may pin a gate (`verify: auto:<id>`) — flag refs the kit can't resolve.
+  const boardDir = join(lytosDir, "issue-board");
+  const statusDirs = ["0-icebox", "1-backlog", "2-sprint", "3-in-progress", "4-review", "5-done", "parked"];
+  for (const dir of statusDirs) {
+    const dirPath = join(boardDir, dir);
+    if (!existsSync(dirPath)) continue;
+    for (const file of readdirSync(dirPath).filter((f) => f.startsWith("ISS-") && f.endsWith(".md"))) {
+      const unresolved = unresolvedGateRefs(readFileSync(join(dirPath, file), "utf-8"), kit);
+      if (unresolved.length > 0) {
+        findings.push({
+          severity: "warning",
+          category: "quality-kit",
+          file: `issue-board/${dir}/${file}`,
+          message: `DoD pins gate(s) absent from the kit: ${unresolved.join(", ")}`,
+          fix: "Add the gate to quality/kit.md, or fix the `verify: auto:<id>` reference",
+        });
+      }
+    }
+  }
+
+  return findings;
+}
+
 function checkCliInterfaceSection(lytosDir: string): DiagnosticFinding[] {
   const findings: DiagnosticFinding[] = [];
   const rulesDir = join(lytosDir, "rules");

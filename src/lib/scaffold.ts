@@ -84,6 +84,9 @@ const REMOTE_FILES = [
     remote: "issue-board/templates/issue-task.md",
     local: "issue-board/templates/issue-task.md",
   },
+  // Quality kit — executable Standards pillar (ADR-0005/0007, ISS-0107)
+  { remote: "quality/kit.md", local: "quality/kit.md" },
+  { remote: "quality/stack.md", local: "quality/stack.md" },
 ];
 
 export type LytosTool =

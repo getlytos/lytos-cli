@@ -31,13 +31,19 @@ function createValidLytos(cwd: string): void {
   const lyt = (p: string) => resolve(cwd, ".lytos", p);
 
   for (const dir of [
-    "skills", "rules", "memory/cortex", "scripts",
+    "skills", "rules", "memory/cortex", "scripts", "quality",
     "issue-board/0-icebox", "issue-board/1-backlog",
     "issue-board/2-sprint", "issue-board/3-in-progress",
     "issue-board/4-review", "issue-board/5-done",
   ]) {
     mkdirSync(lyt(dir), { recursive: true });
   }
+
+  // A healthy project carries a quality kit (ADR-0005/0007, ISS-0107).
+  writeFileSync(
+    lyt("quality/kit.md"),
+    "# Quality kit\n\n| id | kind | tiers | tool |\n|----|------|-------|------|\n| tests-unit | gate | low,medium,high | npm test |\n"
+  );
 
   writeFileSync(lyt("manifest.md"), `# Manifest — test
 

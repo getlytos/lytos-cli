@@ -66,6 +66,23 @@ On schema v2 issues, **every Definition-of-Done item declares how it is verified
 
 ---
 
+## Quality kit — executable Standards (ADR-0005/0007)
+
+The kit lives in `.lytos/quality/`:
+
+- **`kit.md`** — the gate catalog, a markdown table `| id | kind | tiers | tool |`.
+  `kind` ∈ `gate` (machine), `reviewer` (rubric), `human` (checklist). `tiers` lists the
+  risk levels where it is mandatory — the risk matrix (ISS-0114) selects from here. A rule
+  that can't be bound to a checker is `reviewer`/`human`, **never silently enforced**.
+- **`stack.md`** — the stack contract: `lockfile`, `docs_source`, and the allowed-deps list
+  (a new dependency needs an ADR, not a silent add).
+
+To **add an executable rule**: add a row to `kit.md`, fill its `tool` for this stack. A DoD
+item pins a gate with `— verify: auto:<id>`; `lyt doctor` flags unresolved refs and any
+malformed row. A project may only **tighten** tiers, never loosen below `low`.
+
+---
+
 ## Continuous improvement — propagation rule
 
 When a rule, skill, or template is improved locally (in this project's `.lytos/`), the improvement **must** be propagated to:

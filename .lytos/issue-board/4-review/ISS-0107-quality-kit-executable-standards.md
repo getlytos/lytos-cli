@@ -8,12 +8,14 @@ complexity: heavy
 domain: [cli, method]
 skill: 
 skills_aux: []
-status: 2-sprint
+status: 4-review
 branch: claude/claude-loops-lytos-wtkc94
 depends: []
 created: 2026-08-09
 updated: 2026-08-09
 schema_version: 2
+assignee: Claude
+started_at: 2026-08-09
 ---
 # ISS-0107 — Rendre le Pilier 3 (Standards) exécutable
 
@@ -40,10 +42,10 @@ nb de nouvelles abstractions.
 
 ## Definition of done
 
-- [ ] Structure `.lytos/quality/` + schéma du contrat de stack — *verify: auto*
-- [ ] Dimensions repliées d'ADR-0007 présentes comme checkers (secrets, repro, audit deps, perf, observabilité, compat, doc L0/L3) — *verify: auto*
-- [ ] `lyt doctor` vérifie la présence/cohérence du kit — *verify: auto*
-- [ ] Convention : un item `verify: auto` référence une entrée de kit résoluble — *verify: auto*
+- [x] Structure `.lytos/quality/` + schéma du contrat de stack — *verify: auto*
+- [x] Dimensions repliées d'ADR-0007 présentes comme checkers (secrets, repro, audit deps, perf, observabilité, compat, doc L0/L3) — *verify: auto*
+- [x] `lyt doctor` vérifie la présence/cohérence du kit — *verify: auto*
+- [x] Convention : un item `verify: auto` référence une entrée de kit résoluble — *verify: auto*
 - [ ] Règles non gatables explicitement classées reviewer/human — *verify: human*
 - [ ] Doc : comment ajouter une règle exécutable au kit — *verify: human*
 
