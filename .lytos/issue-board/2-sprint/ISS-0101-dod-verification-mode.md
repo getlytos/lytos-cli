@@ -6,9 +6,9 @@ priority: P1-high
 effort: M
 complexity: standard
 domain: [cli, method]
-skill: ""
+skill: 
 skills_aux: []
-status: 1-backlog
+status: 2-sprint
 branch: claude/claude-loops-lytos-wtkc94
 depends: []
 created: 2026-08-09

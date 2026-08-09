@@ -1,18 +1,21 @@
-# Sprint #03 — Boucler le schema v2 (auditabilité durable)
+# Sprint #04 — Poser le rail : les primitives décidables du loop-B
 
-> **Objective**: Terminer l'épic du frontmatter schema v2 (ADR-0001) ouvert par ISS-0074. Les deux phases restantes (AI wrapper, migration) + la propagation manquante de la règle implementer/auditor à `lytos-method` ferment la boucle de l'auditabilité durable — le différenciateur cœur de Lytos.
-> **Start**: 2026-06-13
-> **Target end**: 2026-06-20
+> **Objective**: Livrer les briques d'ADR-0004 sans conception lourde — le périmètre décidable par machine (`lyt next`), la sortie sûre (`parked` + taxonomie), la classification des gates (DoD `verify:`), et la condition d'arrêt (`lyt budget`). À la fin du sprint, on peut faire tourner à blanc **la sélection + le park** d'un sprint. Le review packet et la checklist (design-lourds) viennent au #05.
+> **Start**: 2026-08-09
+> **Target end**: 2026-08-16
 
 ---
 
 ## Why this sprint
 
-ISS-0074 a livré le spec + les phases 1–3 du schema v2 (lecture + write-paths de `lyt start` / `lyt review` / `lyt close`). Il reste deux trous concrets :
+ADR-0004 pose le contrat de gouvernance de la boucle autonome. Ces quatre briques en sont la **colonne vertébrale** et débloquent tout l'aval (review packet, checklist). Elles sont volontairement les moins « design-lourdes » du lot, pour livrer vite un socle exécutable et démontrable.
 
-- **Phase 4 (ISS-0076)** — les champs les plus distinctifs (`ai_implementer`, `tokens`, `cost`, `skills_used`) ne peuvent être remplis que par le wrapper IA qui pilote la session. Sans eux, le schema v2 a un trou exactement là où Lytos prétend se distinguer du vibecoding.
-- **Phase 5 (ISS-0077)** — les issues existantes (`5-done/`, archive, icebox) restent en v1 et `lyt doctor` émet une info par issue. Sur **ce repo même**, doctor signale encore 9 infos `schema-v1` qu'une migration one-shot efface.
-- **Propagation (ISS-0067)** — la section « implementer ≠ auditor » introduite par ISS-0059 n'a jamais été propagée à `lytos-method`, en violation de la règle de propagation des cli-rules. Petit reliquat d'audit, cohérent avec le thème.
+- **ISS-0101** est la fondation : sans le mode de vérification par item de DoD, `lyt next` ne peut pas juger une issue « loop-éligible », et plus tard le packet/checklist ne peuvent pas se découper.
+- **ISS-0100** (park) matérialise l'invariant « l'ambiguïté gare, elle ne devine pas » — indépendant, livrable en parallèle.
+- **ISS-0099** (`lyt next`) est le périmètre décidable : la seule chose que le loop a le droit de prendre.
+- **ISS-0102** (`lyt budget`) donne la condition d'arrêt chiffrée, en s'appuyant sur les champs coût du schema v2 déjà présents.
+
+Rappel manifest : **le CLI n'exécute pas le loop**. Il expose ces primitives ; le wrapper/App orchestrent.
 
 ---
 
@@ -20,36 +23,53 @@ ISS-0074 a livré le spec + les phases 1–3 du schema v2 (lecture + write-paths
 
 | Issue | Title | Effort | Depends | Status |
 |-------|-------|--------|---------|--------|
-| ISS-0077 | `lyt migrate-frontmatter` — backfill schema_version + lifecycle (phase 5) | M | ISS-0074 ✅ | sprint |
-| ISS-0076 | AI wrapper integration — write ai_implementer / tokens / cost (phase 4) | M | ISS-0074 ✅ | sprint |
-| ISS-0067 | Propagate implementer/auditor section to lytos-method | XS | — | sprint |
+| ISS-0101 | DoD à mode de vérification `verify: auto\|human` | M | — | sprint |
+| ISS-0100 | Statut `parked` + `lyt park` + taxonomie de raisons | M | — | sprint |
+| ISS-0099 | `lyt next` — sélecteur d'issue éligible au loop | M | ISS-0101 | sprint |
+| ISS-0102 | `lyt budget` — garde-fou budget non-interactif | S | — | sprint |
 
 ---
 
 ## Suggested order
 
-1. **ISS-0077** d'abord — self-contained, valeur immédiate (efface les infos `schema-v1` de `lyt doctor`), et exerce les write-paths v2 sur l'ensemble du board.
-2. **ISS-0076** ensuite — nécessite un peu de design (comment le wrapper écrit les champs), le plus structurant des trois.
-3. **ISS-0067** à tout moment — XS, propagation docs vers `lytos-method`, sans dépendance.
+1. **ISS-0101** d'abord — fondation, débloque `lyt next` (et plus tard le packet/checklist).
+2. **ISS-0100** en parallèle — indépendant, pas de dépendance.
+3. **ISS-0099** après 0101 — a besoin du mode de vérification pour filtrer l'éligibilité.
+4. **ISS-0102** à tout moment — S, indépendant.
 
 ## Dependency graph
 
 ```
-ISS-0074 (done) ──┬── ISS-0077 (migrate-frontmatter)
-                  └── ISS-0076 (AI wrapper integration)
-ISS-0067 (propagation) ── independent
+ISS-0101 (verify mode) ── ISS-0099 (lyt next)
+ISS-0100 (parked)      ── indépendant
+ISS-0102 (budget)      ── indépendant
 ```
 
 ---
 
 ## Out of scope / notes
 
-- ISS-0076 touche le contrat avec les wrappers (Claude Code, Cursor, Codex). La spec d'intégration par cible peut elle-même se découper en sous-issues si nécessaire — voir le corps d'ISS-0076.
-- ISS-0067 implique un commit sur le repo `lytos-method` (hors `lytos-cli`). À traiter via son propre repo/branche au moment de l'exécution.
+- **ISS-0067** est encore dans `2-sprint` : reliquat du sprint #03 (propagation implementer/auditor vers `lytos-method`), **non rattaché** à l'objectif #04. À fermer ou reverser au backlog au prochain point.
+- Le **review packet (ISS-0103)**, la **checklist/sign-off (ISS-0104)** et le **quality kit (ISS-0107)** — plus design-lourds — sont pour le **sprint #05**.
+- L'épic **ISS-0098** reste ouvert (multi-sprint) ; il se fermera au #06.
+- ADR-0004 / ADR-0005 sont en `Proposed` — leur passage en `Accepted` par l'humain est un prérequis assumé avant d'exécuter ces issues.
+
+---
+
+## Roadmap vers le but (multi-sprint)
+
+Le but complet (loop-B sous gouvernance + standards exécutables) tient en trois sprints :
+
+- **#04 — Le rail** *(ce sprint)* : primitives décidables — ISS-0099, 0100, 0101, 0102.
+- **#05 — Le gate humain** : quality kit (ISS-0107) + review packet (ISS-0103) + checklist/sign-off (ISS-0104).
+- **#06 — Standards exécutables & fermeture** : injection vérité-terrain (ISS-0108), conformité DS (ISS-0109), rapport de sprint (ISS-0105), propagation `lytos-method` (ISS-0106), clôture de l'épic ISS-0098.
 
 ---
 
 ## Previous sprints
+
+### Sprint #03 — Boucler le schema v2 (2026-06-13 → 2026-06-20) ⚠️ Partiel
+ISS-0076 (AI wrapper) et ISS-0077 (migrate-frontmatter) livrés. ISS-0067 (propagation vers `lytos-method`) reste ouvert → reporté.
 
 ### Sprint #02 — Rename socle → lytos (2026-04-14 → 2026-04-20) ✅
 ISS-0011 → ISS-0015 : rename de toutes les références « socle » → « lytos » dans les repos method / CLI / website, publication npm, configuration des domaines.

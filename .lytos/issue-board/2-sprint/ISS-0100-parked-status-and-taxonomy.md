@@ -1,14 +1,14 @@
 ---
 id: ISS-0100
-title: "Statut `parked` + `lyt park` + taxonomie de raisons"
+title: Statut `parked` + `lyt park` + taxonomie de raisons
 type: feat
 priority: P1-high
 effort: M
 complexity: standard
 domain: [cli, method]
-skill: ""
+skill: 
 skills_aux: []
-status: 1-backlog
+status: 2-sprint
 branch: claude/claude-loops-lytos-wtkc94
 depends: []
 created: 2026-08-09

@@ -1,14 +1,14 @@
 ---
 id: ISS-0102
-title: "`lyt budget` — garde-fou budget non-interactif"
+title: `lyt budget` — garde-fou budget non-interactif
 type: feat
 priority: P2-normal
 effort: S
 complexity: standard
 domain: [cli, dx]
-skill: ""
+skill: 
 skills_aux: []
-status: 1-backlog
+status: 2-sprint
 branch: claude/claude-loops-lytos-wtkc94
 depends: []
 created: 2026-08-09

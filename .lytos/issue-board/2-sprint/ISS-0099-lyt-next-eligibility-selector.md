@@ -1,14 +1,14 @@
 ---
 id: ISS-0099
-title: "`lyt next` — sélecteur d'issue éligible au loop"
+title: `lyt next` — sélecteur d'issue éligible au loop
 type: feat
 priority: P1-high
 effort: M
 complexity: standard
 domain: [cli, dx]
-skill: ""
+skill: 
 skills_aux: []
-status: 1-backlog
+status: 2-sprint
 branch: claude/claude-loops-lytos-wtkc94
 depends: [ISS-0101]
 created: 2026-08-09
