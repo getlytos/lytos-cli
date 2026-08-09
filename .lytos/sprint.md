@@ -23,10 +23,12 @@ Rappel manifest : **le CLI n'exécute pas le loop**. Il expose ces primitives ; 
 
 | Issue | Title | Effort | Depends | Status |
 |-------|-------|--------|---------|--------|
-| ISS-0101 | DoD à mode de vérification `verify: auto\|human` | M | — | sprint |
-| ISS-0100 | Statut `parked` + `lyt park` + taxonomie de raisons | M | — | sprint |
-| ISS-0099 | `lyt next` — sélecteur d'issue éligible au loop | M | ISS-0101 | sprint |
-| ISS-0102 | `lyt budget` — garde-fou budget non-interactif | S | — | sprint |
+| ISS-0101 | DoD à mode de vérification `verify: auto\|human` | M | — | 4-review ✅ |
+| ISS-0100 | Statut `parked` + `lyt park` + taxonomie de raisons | M | — | 4-review ✅ |
+| ISS-0099 | `lyt next` — sélecteur d'issue éligible au loop | M | ISS-0101 | 4-review ✅ |
+| ISS-0102 | `lyt budget` — garde-fou budget non-interactif | S | — | 4-review ✅ |
+
+> **État au 2026-08-09** : les 4 issues sont implémentées (code + tests), 282 tests verts, en `4-review`. Elles attendent la validation humaine (`lyt close`). Les items `verify: human` (docs, jugement) restent à confirmer par le relecteur.
 
 ---
 
