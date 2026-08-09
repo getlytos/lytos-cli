@@ -53,6 +53,12 @@ program.on("--help", () => {
   console.log("  lyt migrate-frontmatter    # dry-run: backfill schema v2 fields on existing issues");
   console.log("  lyt absorb                 # dry-run: merge the AI session journal into the active issue");
   console.log("");
+  console.log("  Loop primitives (ADR-0004) — the CLI exposes them; the wrapper/App orchestrate:");
+  console.log("  lyt next                   # the next loop-eligible issue in the sprint (read-only)");
+  console.log("  lyt park ISS-0053 --reason ambiguous-spec   # halt instead of guessing");
+  console.log("  lyt unpark ISS-0053        # return a parked issue to the sprint");
+  console.log("  lyt budget --max-usd 50    # aggregate pipeline cost vs a ceiling (non-zero exit when breached)");
+  console.log("");
   console.log('Use "lyt <command> --help" for command-specific options and arguments.');
 });
 
