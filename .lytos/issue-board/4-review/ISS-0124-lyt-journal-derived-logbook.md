@@ -8,12 +8,14 @@ complexity: standard
 domain: [cli, docs, app]
 skill: 
 skills_aux: []
-status: 2-sprint
+status: 4-review
 branch: claude/claude-loops-lytos-wtkc94
 depends: []
 created: 2026-08-09
 updated: 2026-08-10
 schema_version: 2
+assignee: Claude
+started_at: 2026-08-10
 ---
 # ISS-0124 — Le récit du projet, dérivé au lieu d'écrit
 
@@ -40,10 +42,10 @@ enrichissent l'entrée. `--json` pour que l'**App** le rende (timeline + drill-d
 
 ## Definition of done
 
-- [ ] `lyt journal` génère un récit chronologique groupé par sprint depuis 5-done + archive — *verify: auto*
-- [ ] Chaque entrée : pourquoi (1 phrase) + verdict `review` + lien vers la fiche — *verify: auto*
-- [ ] `--json` consommable par l'App — *verify: auto*
-- [ ] Statut dérivé/gitignore tranché selon le précédent ADR-0002 — *verify: auto*
+- [x] `lyt journal` génère un récit chronologique groupé par sprint depuis 5-done + archive — *verify: auto*
+- [x] Chaque entrée : pourquoi (1 phrase) + verdict `review` + lien vers la fiche — *verify: auto*
+- [x] `--json` consommable par l'App — *verify: auto*
+- [x] Statut dérivé/gitignore tranché selon le précédent ADR-0002 — *verify: auto*
 - [ ] Tests : board mixte, sprint sans verdict, issue archivée — *verify: auto*
 - [ ] Le récit est-il réellement lisible par un non-technique — *verify: human*
 - [ ] Doc de la commande + du format — *verify: doc L1*
