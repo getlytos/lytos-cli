@@ -17,6 +17,9 @@ schema_version: 2
 risk: low
 assignee: fredericgalline
 started_at: 2026-08-10
+review: go-pending-human
+review_at: 2026-08-10
+reviewer: fredericgalline
 ---
 # ISS-0126 — The fiches a stranger reads first are in the wrong language
 
@@ -64,3 +67,19 @@ value of translating them is low.
 - Follows the language rule added to `rules/cli-rules.md`.
 - The seven fiches in `4-review/` are translated before their re-audit, so the auditor reads an
   English fiche rather than a French one with an English audit block stapled to it.
+
+## Audit — 2026-08-10
+
+**Verdict:** GO_PENDING_HUMAN
+
+### Checks
+- [x] Tests pass (326)
+- [x] Machine-verifiable DoD items (`verify: auto`) complete
+- [x] Rules respected
+- [x] Documentation aligned
+
+### Notes
+The change is limited to the live issue columns and sprint document, preserves frontmatter data other than titles, keeps the audit blocks intact, and retains the renamed epic's cross-references. `lyt lint` passes; the doctor findings are pre-existing stale review-prompt links outside this change.
+
+### Awaiting human judgment
+- [ ] The translations preserve the original argument rather than smoothing it

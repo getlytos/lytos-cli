@@ -16,6 +16,9 @@ updated: 2026-08-10
 schema_version: 2
 assignee: Claude
 started_at: 2026-08-09
+review: go-pending-human
+review_at: 2026-08-10
+reviewer: fredericgalline
 ---
 # ISS-0107 — Make Pillar 3 (Standards) executable
 

@@ -1,6 +1,6 @@
 ---
 id: ISS-0103
-title: "`lyt report ISS-X` — review packet generation"
+title: `lyt report ISS-X` — review packet generation
 type: feat
 priority: P1-high
 effort: L
@@ -16,6 +16,9 @@ updated: 2026-08-10
 schema_version: 2
 assignee: Claude
 started_at: 2026-08-10
+review: go-pending-human
+review_at: 2026-08-10
+reviewer: fredericgalline
 ---
 # ISS-0103 — The autopilot → pilot interface
 

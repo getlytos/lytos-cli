@@ -1,6 +1,6 @@
 ---
 id: ISS-0124
-title: "`lyt journal` — the derived logbook (a changelog of the why)"
+title: `lyt journal` — the derived logbook (a changelog of the why)
 type: feat
 priority: P2-normal
 effort: M
@@ -16,6 +16,9 @@ updated: 2026-08-10
 schema_version: 2
 assignee: Claude
 started_at: 2026-08-10
+review: go-pending-human
+review_at: 2026-08-10
+reviewer: fredericgalline
 ---
 # ISS-0124 — The project's narrative, derived instead of written
 
