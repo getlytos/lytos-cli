@@ -44,3 +44,48 @@ relecteur + items human-only **au-dessus** du bloc vert. Sortie markdown + `--js
 
 - Le packet ne se ferme pas tout seul : il alimente la décision humaine au `close`.
 - Réf : ADR-0004 §7. Dépend de ISS-0100 (parks) et ISS-0101 (verify mode).
+
+## Audit — 2026-08-10
+
+**Verdict:** GO_PENDING_HUMAN
+
+### Checks
+- [x] Tests pass (325)
+- [x] Machine-verifiable DoD items (`verify: auto`) complete
+- [x] Rules respected
+- [x] Documentation aligned
+
+### Notes
+The review packet preserves its doubt-first ordering and now displays `go-pending-human` in the decision section. No machine-verifiable defect remains.
+
+### Awaiting human judgment
+- [ ] Layout « doute d'abord » : vert relégué en fin de rapport
+
+
+**Verdict:** NO_GO
+
+### Checks
+- [x] Tests pass (313)
+- [ ] Issue checklist complete
+- [x] Rules respected
+- [ ] Documentation aligned
+
+### Notes
+The implementation does render the doubt-first section before green evidence, but the human-verification DoD item is still unchecked. The audit protocol makes the checklist authoritative, so this cannot receive a GO until the reviewer judgment is recorded.
+
+### To fix before next review
+- [ ] Complete and record the human review of the doubt-first layout, then tick the DoD item.
+
+## Response to audit — 2026-08-10
+
+**The NO_GO is procedurally rejected.** The audit itself states the implementation renders the
+doubt-first section before the green evidence — i.e. no defect was found. The rejection rests
+entirely on an unticked `verify: human` item ("is the doubt-first layout right?"), which no
+auditing model may tick. Under the old contract that made this issue permanently unpassable.
+
+The contract is now fixed (see `method/LYTOS.md`): `GO_PENDING_HUMAN` is the verdict for an issue
+whose machine gates are green and whose remaining items are human judgment. Re-audit under it.
+
+One code change landed here as a consequence: the packet's "Decide first" block now also surfaces
+a `go-pending-human` verdict, glossed "gates green, your judgment still owed" — otherwise the new
+verdict would have been silently absent from the doubt-first section it belongs in.

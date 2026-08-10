@@ -77,7 +77,7 @@ export const reviewCommand = new Command("review")
   .option("--all", "With --export, write one prompt file per pending issue under .lytos/review/<id>.prompt.md", false)
   .option("--accept <file>", "Ingest a returned audit from a file path, or '-' for stdin")
   .option("--overwrite", "Replace an existing audit block instead of refusing (use when re-auditing)", false)
-  .option("--verdict <value>", "Write the v2 review verdict directly (go|no-go|pending) without ingesting a full audit block")
+  .option("--verdict <value>", "Write the v2 review verdict directly (go|go-pending-human|no-go|pending) without ingesting a full audit block")
   .option("--ai-model <id>", "AI model that performed the review — writes ai_reviewer.model (ADR-0001)")
   .option("--ai-session <id>", "Session/conversation id of the AI review — writes ai_reviewer.session")
   .option("--ai-prompt <ref>", "Prompt/skill ref used for the review (default: skills/code-review/SKILL.md)")
@@ -175,7 +175,7 @@ export const reviewCommand = new Command("review")
 
     // Mode 4: --verdict → write the v2 review field without a full audit block.
     if (opts.verdict) {
-      const allowed: ReviewVerdict[] = ["go", "no-go", "pending"];
+      const allowed: ReviewVerdict[] = ["go", "go-pending-human", "no-go", "pending"];
       if (!allowed.includes(opts.verdict as ReviewVerdict)) {
         error(`Invalid verdict "${opts.verdict}". Use one of: ${allowed.join(", ")}.`);
         process.exit(2);
@@ -190,6 +190,9 @@ export const reviewCommand = new Command("review")
       console.error("");
       if (verdict === "go") {
         ok(`${cyan(bold(issueId))} verdict recorded: ${green("GO")} — stays in 4-review/ awaiting \`lyt close\`.`);
+      } else if (verdict === "go-pending-human") {
+        ok(`${cyan(bold(issueId))} verdict recorded: ${green("GO")} pending human — gates are green, the \`verify: human\` items are yours.`);
+        info("Stays in 4-review/. Tick them, then `lyt close`.");
       } else if (verdict === "no-go") {
         warn(`${cyan(bold(issueId))} verdict recorded: NO_GO — moved back to 3-in-progress/.`);
         if (result.moved) info(`New location: ${result.newPath}`);
@@ -212,7 +215,7 @@ export const reviewCommand = new Command("review")
       const parsed = parseAuditResponse(raw);
       if (parsed.verdict === "UNKNOWN") {
         error(
-          "Could not find a **Verdict:** GO or NO_GO line in the input. Paste the full audit block."
+          "Could not find a **Verdict:** GO, GO_PENDING_HUMAN or NO_GO line in the input. Paste the full audit block."
         );
         process.exit(2);
       }
@@ -240,6 +243,12 @@ export const reviewCommand = new Command("review")
           cyan(bold(`Audit recorded: GO`)) +
             ` — ${issueId} stays in 4-review/ awaiting \`lyt close\`.`
         );
+      } else if (parsed.verdict === "GO_PENDING_HUMAN") {
+        ok(
+          cyan(bold(`Audit recorded: GO_PENDING_HUMAN`)) +
+            ` — gates are green on ${issueId}; the \`verify: human\` items are yours to judge.`
+        );
+        info("Stays in 4-review/. Tick them, then `lyt close`.");
       } else {
         warn(
           cyan(bold(`Audit recorded: NO_GO`)) +

@@ -139,9 +139,10 @@ export function renderPacket(p: ReviewPacket): string {
     hasDoubt = true;
     out.push(`- **Parked**: ${p.parked.reason}${p.parked.at ? ` (since ${p.parked.at})` : ""}`);
   }
-  if (p.verdict === "no-go" || p.verdict === "pending") {
+  if (p.verdict === "no-go" || p.verdict === "pending" || p.verdict === "go-pending-human") {
     hasDoubt = true;
-    out.push(`- **Reviewer verdict**: ${p.verdict}`);
+    const gloss = p.verdict === "go-pending-human" ? " — gates green, your judgment still owed" : "";
+    out.push(`- **Reviewer verdict**: ${p.verdict}${gloss}`);
   }
   if (p.autoPending.length > 0) {
     hasDoubt = true;

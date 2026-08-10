@@ -23,7 +23,7 @@ export interface PendingReview {
   hasAudit: boolean;
 }
 
-export type AuditVerdict = "GO" | "NO_GO" | "UNKNOWN";
+export type AuditVerdict = "GO" | "GO_PENDING_HUMAN" | "NO_GO" | "UNKNOWN";
 
 export interface ParsedAudit {
   verdict: AuditVerdict;
@@ -189,7 +189,7 @@ Run every check (tests, file reads, greps) against that branch.`
 
 ## 1 — Your role
 
-You are auditing a Lytos-managed project. **You did NOT implement this issue.** Another AI session (or human) wrote the code. Your job is to read the issue, read the diff, apply the project's rules and the code-review skill, and return a single GO or NO_GO verdict in the exact block format defined in section 8.
+You are auditing a Lytos-managed project. **You did NOT implement this issue.** Another AI session (or human) wrote the code. Your job is to read the issue, read the diff, apply the project's rules and the code-review skill, and return a single verdict — GO, GO_PENDING_HUMAN, or NO_GO — in the exact block format defined in section 8.
 
 ${whereToAudit}
 
@@ -200,6 +200,19 @@ Do not correct the code. Do not implement anything. Do not propose a diff. Only 
 Lytos is a human-first method for AI-assisted development. The project's context (identity, conventions, rules, past decisions, issue lifecycle) lives as Markdown in the Git repo. Every AI session reads that context at the start. Issues move through Kanban columns: \`3-in-progress → 4-review → 5-done\`. An issue in \`4-review/\` is code-complete per the implementer; your job is to rule whether it passes review.
 
 An audit that says **GO** lets the human run \`lyt close\` to promote the issue. An audit that says **NO_GO** sends the issue back to \`3-in-progress\` with a concrete list of points to fix.
+
+### Definition-of-Done items declare who verifies them
+
+Each DoD item may carry a verification marker (ISS-0101):
+
+- \`— verify: auto\` — a **machine gate**. You judge it: the test exists and passes, the behaviour is in the diff, the claim is true. An unchecked or unproven \`auto\` item is a **defect** → NO_GO.
+- \`— verify: human\` — a **judgment call reserved for the accountable human** ("is the wording clear?", "is this readable by a non-technical reader?"). You are not the human. You **cannot** tick these, and their being unticked is **not a defect**.
+
+This distinction has a hard consequence: **never return NO_GO because a \`verify: human\` item is unchecked.** Doing so makes every issue that carries one unpassable — no model can ever tick it, so the issue would bounce forever. That is what the third verdict exists for:
+
+- **GO_PENDING_HUMAN** — every \`verify: auto\` item is green, you found no defect, and what remains is human judgment. You are attesting the machine-verifiable half and handing the rest to the human. List the pending items so they know exactly what they own.
+
+Judge the code, not the checkbox discipline. One caveat: if a DoD item promises a **deliverable** that simply does not exist (documentation that was never written, a test case that was never added), that is a real defect and warrants NO_GO — regardless of which marker it carries. The marker says *who verifies*, not *whether the work was done*.
 
 ## 3 — Project manifest excerpt
 
@@ -252,25 +265,37 @@ Return **only** the markdown block below, with your verdict filled in. No commen
 
 **Verdict:** GO
 <or>
+**Verdict:** GO_PENDING_HUMAN
+<or>
 **Verdict:** NO_GO
 
 ### Checks
 - [x] Tests pass (mention count if visible in the diff)
-- [x] Issue checklist complete
+- [x] Machine-verifiable DoD items (\`verify: auto\`) complete
 - [x] Rules respected (file/fn size, params, coverage as defined in default-rules.md)
 - [x] Documentation aligned
 
 ### Notes
 Free prose — reference specific files and line ranges from the diff when relevant.
 
+### Awaiting human judgment (only include this section if GO_PENDING_HUMAN)
+- [ ] The \`verify: human\` item, quoted verbatim from the issue
+- [ ] …
+
 ### To fix before next review (only include this section if NO_GO)
 - [ ] Concrete actionable point 1
 - [ ] Concrete actionable point 2
 \`\`\`
 
+Pick the verdict by this rule, in order:
+
+1. A defect, a failing/missing gate, or a promised deliverable that does not exist → **NO_GO**.
+2. Otherwise, one or more \`verify: human\` items still open → **GO_PENDING_HUMAN**.
+3. Otherwise → **GO**.
+
 ## 9 — Exit instructions
 
-- If you have filesystem tools: append your audit block at the end of the issue file (\`${opts.issueFilePath}\`). If the verdict is NO_GO, also move the file from \`4-review/\` to \`3-in-progress/\` and update its frontmatter \`status\` to \`3-in-progress\`.
+- If you have filesystem tools: append your audit block at the end of the issue file (\`${opts.issueFilePath}\`). If — and only if — the verdict is NO_GO, also move the file from \`4-review/\` to \`3-in-progress/\` and update its frontmatter \`status\` to \`3-in-progress\`. GO and GO_PENDING_HUMAN both leave the issue in \`4-review/\`: the human decides from there.
 - If you do not have filesystem tools: reply with **only** the audit block (no preamble, no postscript). The human will pipe it back into \`lyt review ${opts.issueId} --accept\` to land the changes.
 
 Do not mix the two modes.
@@ -289,9 +314,12 @@ export function parseAuditResponse(raw: string): ParsedAudit {
   const match = unwrapped.match(/(^|\n)(##\s+Audit\s+—\s+\d{4}-\d{2}-\d{2}[\s\S]*?)$/);
   const block = match ? match[2].trim() : unwrapped.trim();
 
+  // Order matters: GO_PENDING_HUMAN must be tested before the bare GO, whose
+  // `\b` would otherwise swallow a hyphenated spelling of the longer verdict.
   let verdict: AuditVerdict = "UNKNOWN";
-  if (/\*\*Verdict:\*\*\s*GO\b/i.test(block)) verdict = "GO";
+  if (/\*\*Verdict:\*\*\s*GO[_\s-]?PENDING[_\s-]?HUMAN\b/i.test(block)) verdict = "GO_PENDING_HUMAN";
   else if (/\*\*Verdict:\*\*\s*NO[_\s-]?GO\b/i.test(block)) verdict = "NO_GO";
+  else if (/\*\*Verdict:\*\*\s*GO\b/i.test(block)) verdict = "GO";
 
   return { verdict, block };
 }
@@ -378,7 +406,12 @@ export function applyAudit(options: ApplyAuditOptions): ApplyAuditResult {
   return { newPath: targetPath, moved, replacedExisting };
 }
 
-export type ReviewVerdict = "go" | "no-go" | "pending";
+/**
+ * The v2 `review:` field. `pending` means "not audited yet"; `go-pending-human`
+ * means "audited, machine half green, human judgment still owed" (ISS-0101) —
+ * the two are different states and must not be collapsed.
+ */
+export type ReviewVerdict = "go" | "go-pending-human" | "no-go" | "pending";
 
 export interface ApplyVerdictOptions {
   boardDir: string;

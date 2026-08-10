@@ -474,6 +474,52 @@ I read the diff and it looks fine.
     expect(content).toMatch(/^status:\s*4-review$/m);
   });
 
+  // --- The third verdict: gates green, human judgment still owed (ISS-0101) ---
+
+  it("--accept with GO_PENDING_HUMAN keeps the issue in 4-review/", () => {
+    fixture = createEmptyBoardFixture();
+    const issueFile = writeReviewIssue(fixture.cwd, "ISS-9500");
+
+    const auditPath = join(fixture.cwd, "audit.md");
+    writeFileSync(
+      auditPath,
+      `## Audit — 2026-08-10
+
+**Verdict:** GO_PENDING_HUMAN
+
+### Checks
+- [x] Tests pass
+- [x] Machine-verifiable DoD items (\`verify: auto\`) complete
+
+### Awaiting human judgment
+- [ ] Is the wording clear — *verify: human*
+`,
+      "utf-8"
+    );
+
+    const result = run(`review ISS-9500 --accept ${auditPath}`, fixture.cwd);
+    expect(result.exitCode).toBe(0);
+    expect(existsSync(issueFile)).toBe(true);
+    expect(readFileSync(issueFile, "utf-8")).toContain("**Verdict:** GO_PENDING_HUMAN");
+    expect(result.stderr).toContain("Audit recorded: GO_PENDING_HUMAN");
+    expect(result.stderr).not.toContain("NO_GO");
+  });
+
+  it("--verdict go-pending-human records the verdict and keeps the issue in 4-review", () => {
+    fixture = createEmptyBoardFixture();
+    git(["init", "-b", "main"], fixture.cwd);
+    git(["config", "user.name", "carol"], fixture.cwd);
+    git(["config", "user.email", "carol@test"], fixture.cwd);
+    const issueFile = writeReviewIssue(fixture.cwd, "ISS-0084", "verdict-pending-human");
+
+    const result = run("review ISS-0084 --verdict go-pending-human", fixture.cwd);
+    expect(result.exitCode).toBe(0);
+
+    const content = readFileSync(issueFile, "utf-8");
+    expect(content).toMatch(/^review:\s*go-pending-human$/m);
+    expect(content).toMatch(/^status:\s*4-review$/m);
+  });
+
   it("--verdict rejects invalid values", () => {
     fixture = createEmptyBoardFixture();
     git(["init", "-b", "main"], fixture.cwd);

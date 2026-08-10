@@ -60,7 +60,7 @@ const REQUIRED_FRONTMATTER_FIELDS = ["id", "title", "status", "priority"];
 
 // Schema v2 enum domains (ADR-0001). All v2 fields are optional;
 // validation runs only when the field is present.
-const V2_REVIEW_VALUES = ["go", "no-go", "pending", "none"];
+const V2_REVIEW_VALUES = ["go", "go-pending-human", "no-go", "pending", "none"];
 const V2_RISK_VALUES = ["low", "medium", "high"];
 const V2_VALIDATION_VALUES = ["pass", "fail", "skip"];
 const V2_VALIDATION_KEYS = ["tests", "build", "lint"] as const;

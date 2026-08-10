@@ -131,10 +131,11 @@ function buildTree(issues: Issue[]): DisplayIssue[] {
 /** Color a v2 review verdict marker (shown in 4-review section only). */
 function reviewMarker(verdict: string): string {
   switch (verdict) {
-    case "go":      return green("✓");
-    case "no-go":   return c("31", "✗");
-    case "pending": return yellow("⌛");
-    default:        return "";
+    case "go":               return green("✓");
+    case "go-pending-human": return yellow("◐"); // gates green, human judgment owed
+    case "no-go":            return c("31", "✗");
+    case "pending":          return yellow("⌛");
+    default:                 return "";
   }
 }
 
