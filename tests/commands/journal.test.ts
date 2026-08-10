@@ -65,4 +65,35 @@ describe("lyt journal", () => {
     mkdirSync(resolve(fixture.cwd, ".lytos/issue-board/5-done"), { recursive: true });
     expect(JSON.parse(run("journal --json", fixture.cwd).stdout)).toEqual([]);
   });
+
+  it("ignores open stages on a mixed board — only closed work has a story", () => {
+    fixture = createEmptyFixture();
+    createFixture(fixture.cwd);
+    const lyt = (p: string) => resolve(fixture.cwd, ".lytos", p);
+    for (const stage of ["1-backlog", "2-sprint", "3-in-progress", "4-review"]) {
+      mkdirSync(lyt(`issue-board/${stage}`), { recursive: true });
+      writeFileSync(
+        lyt(`issue-board/${stage}/ISS-07${stage[0]}0.md`),
+        `---\nid: ISS-07${stage[0]}0\ntitle: "Still open"\nstatus: ${stage}\nreview: go\n---\n\n## Context\n\nNot closed yet.\n`
+      );
+    }
+    const groups = JSON.parse(run("journal --json", fixture.cwd).stdout);
+    const ids = groups.flatMap((g: { entries: { id: string }[] }) => g.entries.map((e) => e.id));
+    expect(ids).toEqual(["ISS-0050", "ISS-0009"]);
+    expect(run("journal", fixture.cwd).stdout).not.toContain("Still open");
+  });
+
+  it("renders a sprint group whose issue carries no verdict", () => {
+    fixture = createEmptyFixture();
+    mkdirSync(resolve(fixture.cwd, ".lytos/issue-board/5-done"), { recursive: true });
+    writeFileSync(
+      resolve(fixture.cwd, ".lytos/issue-board/5-done/ISS-0061.md"),
+      `---\nid: ISS-0061\ntitle: "Closed without audit"\nstatus: 5-done\nsprint: "Sprint #06"\ncompleted_at: 2026-08-07\n---\n\n## Context\n\nShipped before the audit loop existed.\n`
+    );
+    const groups = JSON.parse(run("journal --json", fixture.cwd).stdout);
+    expect(groups).toHaveLength(1);
+    expect(groups[0].key).toBe("Sprint #06");
+    expect(groups[0].entries[0].verdict).toBe("—");
+    expect(run("journal", fixture.cwd).stdout).toContain("**ISS-0061** Closed without audit");
+  });
 });

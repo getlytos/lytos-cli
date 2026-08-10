@@ -46,9 +46,9 @@ enrichissent l'entrée. `--json` pour que l'**App** le rende (timeline + drill-d
 - [x] Chaque entrée : pourquoi (1 phrase) + verdict `review` + lien vers la fiche — *verify: auto*
 - [x] `--json` consommable par l'App — *verify: auto*
 - [x] Statut dérivé/gitignore tranché selon le précédent ADR-0002 — *verify: auto*
-- [ ] Tests : board mixte, sprint sans verdict, issue archivée — *verify: auto*
+- [x] Tests : board mixte, sprint sans verdict, issue archivée — *verify: auto*
 - [ ] Le récit est-il réellement lisible par un non-technique — *verify: human*
-- [ ] Doc de la commande + du format — *verify: doc L1*
+- [ ] Doc de la commande + du format, doc L1 — *verify: human*
 
 ## Notes
 
@@ -56,3 +56,52 @@ enrichissent l'entrée. `--json` pour que l'**App** le rende (timeline + drill-d
 - Granularité à confirmer : par sprint qui déplie ses issues *(défaut retenu)* vs une entrée plate par issue.
 - Rendu App = direction 2 (`lytos-app`) : « histoire du projet » / onboarding / portail client.
 - Aucun outil concurrent ne peut auto-générer le *pourquoi* — il n'est capturé structurellement que par Lytos (mémoire technique versionnée, manifest app).
+
+## Audit — 2026-08-10
+
+**Verdict:** GO_PENDING_HUMAN
+
+### Checks
+- [x] Tests pass (325)
+- [x] Machine-verifiable DoD items (`verify: auto`) complete
+- [x] Rules respected
+- [x] Documentation aligned
+
+### Notes
+The journal now has the promised mixed-board and no-verdict coverage, and the command plus its derived-output contract are documented in the public command reference. No machine-verifiable defect remains.
+
+### Awaiting human judgment
+- [ ] Le récit est-il réellement lisible par un non-technique
+- [ ] Doc de la commande + du format, doc L1
+
+
+**Verdict:** NO_GO
+
+### Checks
+- [x] Tests pass (313)
+- [ ] Issue checklist complete
+- [x] Rules respected
+- [ ] Documentation aligned
+
+### Notes
+[WARNING] tests/commands/journal.test.ts covers a done issue and an archived issue, but does not cover the promised board-mix or missing-review-verdict cases. The public README command table also omits `lyt journal`; the documentation DoD is correctly still unchecked. `verify: doc L1` is currently reported as unqualified by `lyt lint`.
+
+### To fix before next review
+- [x] Add the missing mixed-board and no-verdict test cases.
+- [x] Document `lyt journal` and its output format, then complete the human readability review and use a recognized verification marker.
+
+## Response to audit — 2026-08-10
+
+**Accepted — the [WARNING] was right on both counts.** The DoD promised three test cases and
+shipped one; that is a genuine `verify: auto` failure, correctly caught.
+
+Added to `tests/commands/journal.test.ts`: a mixed board (issues in `1-backlog`, `2-sprint`,
+`3-in-progress`, `4-review` must not surface — only closed work has a story) and a sprint group
+whose issue carries no `review:` verdict (renders as `—`, exercising the `sprint:` grouping path
+at the same time). 6 cases now cover the command.
+
+Documentation: `lyt journal` is in the README command table, and in the website CLI overview and
+index (EN + FR). The `verify: doc L1` marker is now `verify: human` per the taxonomy decision.
+
+Remaining: whether the narrative actually reads well to a non-technical reader — human judgment,
+and the reason `GO_PENDING_HUMAN` exists.
