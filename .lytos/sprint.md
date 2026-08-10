@@ -22,9 +22,11 @@ Elles partagent une base commune (lecture de frontmatter + assemblage) — d'où
 
 | Issue | Title | Effort | Depends | Status |
 |-------|-------|--------|---------|--------|
-| ISS-0103 | `lyt report ISS-X` — review packet (doute-first) | L | ISS-0100, ISS-0101 | sprint |
-| ISS-0105 | Rapport de sprint — agrégat des packets | M | ISS-0103 | sprint |
-| ISS-0124 | `lyt journal` — journal de bord dérivé | M | — | sprint |
+| ISS-0103 | `lyt report ISS-X` — review packet (doute-first) | L | ISS-0100, ISS-0101 | 4-review ✅ |
+| ISS-0105 | `lyt report --sprint` — agrégat des packets | M | ISS-0103 | 4-review ✅ |
+| ISS-0124 | `lyt journal` — journal de bord dérivé | M | — | 4-review ✅ |
+
+> **État au 2026-08-09** : les 3 vues dérivées sont livrées (code + tests), 313 tests verts, en `4-review`. `lyt report ISS-X` (packet doute-first), `lyt report --sprint` (agrégat), `lyt journal` (récit du pourquoi) — toutes dogfoodées sur ce repo.
 
 ## Suggested order
 
