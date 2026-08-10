@@ -55,9 +55,9 @@ describe("lyt journal", () => {
     fixture = createEmptyFixture();
     createFixture(fixture.cwd);
     const md = run("journal", fixture.cwd).stdout;
-    expect(md).toContain("# Journal de bord");
+    expect(md).toContain("# Journal");
     expect(md).toContain("**ISS-0050** Add parking");
-    expect(md).toContain("[détail](issue-board/5-done/ISS-0050.md)");
+    expect(md).toContain("[detail](issue-board/5-done/ISS-0050.md)");
   });
 
   it("handles an empty board", () => {

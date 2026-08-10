@@ -77,11 +77,11 @@ describe("lyt report", () => {
     fixture = createEmptyFixture();
     createFixture(fixture.cwd);
     const md = run("report ISS-0042", fixture.cwd).stdout;
-    expect(md).toContain("## ⚠ À trancher");
+    expect(md).toContain("## ⚠ Decide first");
     expect(md).toContain("Human checklist");
     expect(md).toContain("Reviewer verdict");
-    // doubt-first: the "À trancher" section appears before the green evidence
-    expect(md.indexOf("À trancher")).toBeLessThan(md.indexOf("Evidence (green)"));
+    // doubt-first: the "Decide first" section appears before the green evidence
+    expect(md.indexOf("Decide first")).toBeLessThan(md.indexOf("Evidence (green)"));
   });
 });
 
@@ -118,7 +118,7 @@ describe("lyt report --sprint", () => {
     fixture = createEmptyFixture();
     createSprintFixture(fixture.cwd);
     const md = run("report --sprint", fixture.cwd).stdout;
-    expect(md.indexOf("À trancher")).toBeLessThan(md.indexOf("Evidence (green)"));
+    expect(md.indexOf("Decide first")).toBeLessThan(md.indexOf("Evidence (green)"));
     expect(md).toContain("ambiguous-spec");
   });
 });

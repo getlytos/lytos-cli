@@ -125,14 +125,14 @@ export function buildJournal(lytosDir: string): JournalGroup[] {
 
 /** Render the journal as a readable markdown logbook. */
 export function renderJournal(groups: JournalGroup[]): string {
-  const out: string[] = ["# Journal de bord", ""];
+  const out: string[] = ["# Journal", ""];
   if (groups.length === 0) out.push("*(no closed issues yet)*");
   for (const g of groups) {
     out.push(`## ${g.key}`);
     out.push("");
     for (const e of g.entries) {
       const why = e.why ? ` — ${e.why}` : "";
-      out.push(`- **${e.id}** ${e.title}${why} _(${e.verdict})_ · [détail](${e.link})`);
+      out.push(`- **${e.id}** ${e.title}${why} _(${e.verdict})_ · [detail](${e.link})`);
     }
     out.push("");
   }

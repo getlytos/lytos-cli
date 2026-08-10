@@ -133,7 +133,7 @@ export function renderPacket(p: ReviewPacket): string {
   out.push("");
 
   // ── Doubt first ──────────────────────────────────────────────
-  out.push("## ⚠ À trancher");
+  out.push("## ⚠ Decide first");
   let hasDoubt = false;
   if (p.parked) {
     hasDoubt = true;
@@ -240,7 +240,7 @@ export function renderSprintReport(r: SprintReport): string {
   const out: string[] = [];
   out.push("# Sprint report");
   out.push("");
-  out.push("## ⚠ À trancher");
+  out.push("## ⚠ Decide first");
   const parkedEntries = Object.entries(r.parkedByReason);
   if (parkedEntries.length > 0) {
     out.push(`- **Parked** (${r.counts.parked}):`);
