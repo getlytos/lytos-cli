@@ -1,6 +1,6 @@
 ---
 id: ISS-0111
-title: "`lyt resume` — « où j'en étais » à travers repos et surfaces"
+title: "`lyt resume` — \"where was I\" across repos and surfaces"
 type: feat
 priority: P1-high
 effort: M
@@ -15,29 +15,29 @@ created: 2026-08-09
 updated: 2026-08-09
 schema_version: 2
 ---
-# ISS-0111 — Reprendre en une commande
+# ISS-0111 — Pick the work back up in one command
 
-## Contexte
+## Context
 
-En rouvrant VSCode ou l'App demain, il faut une réponse immédiate à « où j'en étais ». Le
-board porte déjà l'issue active (via claim → in-progress) ; il manque la vue « la mienne »
-qui rassemble état + note WIP + fraîcheur, à travers repos et surfaces (ADR-0006 §2).
+Reopening VSCode or the App tomorrow, you need an immediate answer to "where was I". The board
+already carries the active issue (via claim → in-progress); what is missing is the "mine" view
+that gathers state + WIP note + freshness, across repos and surfaces (ADR-0006 §2).
 
-## Le geste
+## The gesture
 
-`lyt resume` : mes issues in-progress (assignee = identité git) sur le repo courant (ou
-`--all` multi-repo), avec branche, DoD cochée/restante, **note WIP** (ISS-0112) et
-fraîcheur origin. Propose l'action de reprise (`git switch`, `lyt pull-notes` si des notes
-traînent sur `main`). Lecture seule ; `--json`.
+`lyt resume`: my in-progress issues (assignee = git identity) in the current repo (or `--all`
+across repos), with branch, DoD ticked/remaining, the **WIP note** (ISS-0112) and origin
+freshness. Suggests the resume action (`git switch`, `lyt pull-notes` when notes are stranded on
+`main`). Read-only; `--json`.
 
 ## Definition of done
 
-- [ ] Liste mes in-progress + branche + DoD + note WIP + fraîcheur — *verify: auto*
-- [ ] Détecte des notes non rapatriées et suggère `pull-notes` — *verify: auto*
-- [ ] `--all` multi-repo ; `--json` — *verify: auto*
-- [ ] Tests : in-progress simple, multi-repo, notes en attente, rien à reprendre — *verify: auto*
+- [ ] Lists my in-progress issues + branch + DoD + WIP note + freshness — *verify: auto*
+- [ ] Detects unrepatriated notes and suggests `pull-notes` — *verify: auto*
+- [ ] `--all` across repos; `--json` — *verify: auto*
+- [ ] Tests: simple in-progress, multi-repo, notes pending, nothing to resume — *verify: auto*
 
 ## Notes
 
-- S'appuie sur l'existant : claim (assignee), pull-notes (ISS-0096), board --remote
-  (ISS-0043). Ne duplique pas la vue lead. Réf : ADR-0006 §2. Dépend d'ISS-0112 (note WIP).
+- Builds on what exists: claim (assignee), pull-notes (ISS-0096), board --remote (ISS-0043).
+  Does not duplicate the lead view. Ref: ADR-0006 §2. Depends on ISS-0112 (WIP note).

@@ -1,6 +1,6 @@
 ---
 id: ISS-0101
-title: "DoD à mode de vérification — `verify: auto | human` par item"
+title: "Definition of Done with a verification mode — `verify: auto | human` per item"
 type: feat
 priority: P1-high
 effort: M
@@ -17,35 +17,35 @@ schema_version: 2
 assignee: Claude
 started_at: 2026-08-09
 ---
-# ISS-0101 — Chaque item de DoD déclare comment on le vérifie
+# ISS-0101 — Every DoD item declares how it is verified
 
-## Contexte
+## Context
 
-En boucle autonome, une case de DoD cochée par l'agent lui-même vaut zéro : « la
-confiance de l'implémenteur remplace l'état réel » (session-start). Il faut savoir, par
-item, s'il est vérifiable par une machine (gate) ou seulement par un humain (checklist).
-C'est la source unique qui découpe le review packet (ADR-0004 §4).
+In an autonomous loop, a DoD box ticked by the agent itself is worth nothing: "the
+implementer's confidence replaces the actual state" (session-start). We need to know, per
+item, whether it is verifiable by a machine (a gate) or only by a human (a checklist).
+That is the single source the review packet is split along (ADR-0004 §4).
 
-## Le geste
+## The gesture
 
-Convention dans le corps d'issue : un item de DoD peut porter un suffixe `— verify: auto`
-ou `— verify: human`. Le CLM de comptage (cf ISS-0069) reconnaît le marqueur et classe
-chaque item en `auto-✓ / auto-✗ / human-only`. Un item sans marqueur = `auto` par défaut
-mais **signalé** par `lyt lint`/`doctor` (« item non qualifié »). Une issue dont *tous*
-les items sont `verify: human` est marquée **non éligible au loop**.
+A convention in the issue body: a DoD item may carry a `— verify: auto` or `— verify: human`
+suffix. The checklist counter (cf. ISS-0069) recognises the marker and classifies each item as
+`auto-✓ / auto-✗ / human-only`. An unmarked item defaults to `auto` but is **flagged** by
+`lyt lint` / `doctor` ("unqualified item"). An issue whose items are *all* `verify: human` is
+marked **not loop-eligible**.
 
 ## Definition of done
 
-- [x] Parsing du marqueur `verify:` sur les items de DoD, tolérant à la casse/espaces — *verify: auto*
-- [x] `lyt show ISS-X` affiche le décompte auto/human et le flag « loop-inéligible » — *verify: auto*
-- [x] `lyt lint` avertit sur tout item de DoD non qualifié — *verify: auto*
-- [ ] Doc de la convention dans le template d'issue + rules — *verify: human*
+- [x] Parse the `verify:` marker on DoD items, tolerant of case and spacing — *verify: auto*
+- [x] `lyt show ISS-X` displays the auto/human count and the "loop-ineligible" flag — *verify: auto*
+- [x] `lyt lint` warns on every unqualified DoD item — *verify: auto*
+- [ ] Document the convention in the issue template + rules — *verify: human*
 
 ## Notes
 
-- Fondation de l'épic — `lyt next` (ISS-0099) et le review packet (ISS-0103) en dépendent.
-- Réutilise le comptage de checklist existant ; attention aux blocs de code (cf ISS-0069).
-- Réf : ADR-0004 §4.
+- Foundation of the epic — `lyt next` (ISS-0099) and the review packet (ISS-0103) depend on it.
+- Reuses the existing checklist counting; mind fenced code blocks (cf. ISS-0069).
+- Ref: ADR-0004 §4.
 
 ## Audit — 2026-08-10
 

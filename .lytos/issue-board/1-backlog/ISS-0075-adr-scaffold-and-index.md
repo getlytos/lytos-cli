@@ -1,6 +1,6 @@
 ---
 id: ISS-0075
-title: "Scaffolder `adr/` dans `lyt init` avec INDEX.md et template"
+title: "Scaffold `adr/` in `lyt init` with an INDEX.md and a template"
 type: feat
 priority: P2-normal
 effort: S
@@ -16,60 +16,60 @@ updated: 2026-05-25
 schema_version: 2
 ---
 
-# ISS-0075 — Scaffolder `adr/` dans `lyt init` avec INDEX.md et template
+# ISS-0075 — Scaffold `adr/` in `lyt init` with an INDEX.md and a template
 
 ## Context
 
-Le dossier `.lytos/adr/` est devenu un artefact first-class de la méthode (cf. [`ADR-0001`](../../adr/ADR-0001-frontmatter-schema-v2.md) — frontmatter schema v2). Pourtant `lyt init` n'en crée aucune trace : un utilisateur qui adopte Lytos aujourd'hui ne récupère ni le dossier, ni un template, ni un index, et doit réinventer la convention. C'est une dérive entre la méthode pratiquée et la méthode scaffoldée.
+The `.lytos/adr/` folder has become a first-class artifact of the method (cf. [`ADR-0001`](../../adr/ADR-0001-frontmatter-schema-v2.md) — frontmatter schema v2). Yet `lyt init` creates no trace of it: someone adopting Lytos today gets neither the folder, nor a template, nor an index, and has to reinvent the convention. That is a drift between the method as practised and the method as scaffolded.
 
-À ça s'ajoute un problème de chargement contextuel : sans index, un agent doit soit tout lire à chaque session (coûteux, noyé dans le bruit), soit ignorer les ADRs (perdant la mémoire des décisions). Le pattern `memory/MEMORY.md` qui indexe `cortex/*` existe déjà — on l'applique aux ADRs.
+On top of that sits a context-loading problem: with no index, an agent must either read everything every session (expensive, drowned in noise) or ignore the ADRs entirely (losing the memory of past decisions). The `memory/MEMORY.md` pattern that indexes `cortex/*` already exists — apply it to ADRs.
 
 ## Proposed solution
 
-Ajouter au scaffold `method/adr/` trois fichiers :
+Add three files to the `method/adr/` scaffold:
 
-- **`README.md`** — 1 page : "qu'est-ce qu'un ADR, quand en écrire un, comment l'indexer". Court, opinionated.
-- **`ADR-template.md`** — structure standard : Context / Decision / Backward compatibility / Consequences / Status. Aligne avec `ADR-0001` existant.
-- **`INDEX.md`** — table `Code | Title | Status | When to load`. Chargée systématiquement par les agents au démarrage. Un ADR individuel n'est lu que si son scope matche le task courant.
+- **`README.md`** — one page: "what an ADR is, when to write one, how to index it". Short, opinionated.
+- **`ADR-template.md`** — the standard structure: Context / Decision / Backward compatibility / Consequences / Status. Aligned with the existing `ADR-0001`.
+- **`INDEX.md`** — a `Code | Title | Status | When to load` table. Loaded systematically by agents at startup. An individual ADR is read only when its scope matches the current task.
 
-Mettre à jour `method/skills/session-start.md` pour préciser : "lire `adr/INDEX.md` au démarrage ; charger un ADR individuel uniquement si son `When to load` matche le task".
+Update `method/skills/session-start.md` to state: "read `adr/INDEX.md` at startup; load an individual ADR only when its `When to load` matches the task".
 
 ## Definition of done
 
-- [ ] `method/adr/` existe avec `README.md` + `ADR-template.md` + `INDEX.md`
-- [ ] `lyt init` crée `.lytos/adr/` avec ces 3 fichiers
-- [ ] Test d'intégration `tests/commands/init.test.ts` vérifie la présence des 3 fichiers post-init
-- [ ] `method/skills/session-start.md` documente la règle "lire INDEX, charger ADRs à la demande"
-- [ ] `lyt lint` n'émet aucune erreur si `adr/` est absent (rétrocompat — projets v1 pas cassés)
-- [ ] Documentation à jour dans `method/` (référence à la convention ADR)
+- [ ] `method/adr/` exists with `README.md` + `ADR-template.md` + `INDEX.md`
+- [ ] `lyt init` creates `.lytos/adr/` with those 3 files
+- [ ] Integration test `tests/commands/init.test.ts` asserts the 3 files exist post-init
+- [ ] `method/skills/session-start.md` documents the "read the INDEX, load ADRs on demand" rule
+- [ ] `lyt lint` emits no error when `adr/` is absent (backward compatible — v1 projects are not broken)
+- [ ] Documentation updated in `method/` (reference to the ADR convention)
 
 ## Checklist
 
 ### Scaffold (method/)
-- [ ] Créer `method/adr/README.md`
-- [ ] Créer `method/adr/ADR-template.md`
-- [ ] Créer `method/adr/INDEX.md` (table vide + en-tête)
+- [ ] Create `method/adr/README.md`
+- [ ] Create `method/adr/ADR-template.md`
+- [ ] Create `method/adr/INDEX.md` (empty table + header)
 
 ### CLI (init logic)
-- [ ] Vérifier `src/lib/scaffold.ts` : les nouveaux fichiers doivent être copiés par `lyt init`
-- [ ] Étendre `tests/commands/init.test.ts` : assert sur la présence post-init
+- [ ] Check `src/lib/scaffold.ts`: the new files must be copied by `lyt init`
+- [ ] Extend `tests/commands/init.test.ts`: assert they exist post-init
 
 ### Session-start skill
-- [ ] Ajouter une sous-section "ADRs : index obligatoire, lecture sélective" dans `method/skills/session-start.md`
+- [ ] Add an "ADRs: index mandatory, selective reading" subsection to `method/skills/session-start.md`
 
-### Linter — rétrocompat
-- [ ] Vérifier que `lyt lint` reste silencieux si `adr/` est absent (pas de warning soft pour les projets v1)
+### Linter — backward compatibility
+- [ ] Verify `lyt lint` stays silent when `adr/` is absent (no soft warning for v1 projects)
 
 ## Relevant files
 
-- `method/adr/` (nouveau)
-- `src/lib/scaffold.ts` (logique de copie init)
+- `method/adr/` (new)
+- `src/lib/scaffold.ts` (init copy logic)
 - `tests/commands/init.test.ts`
 - `method/skills/session-start.md`
 
 ## Notes
 
-- **Cohérence pattern** : mêmes principes que `memory/MEMORY.md` qui indexe `cortex/*` — l'agent lit l'index toujours, le contenu à la demande.
-- **Rétrocompatibilité** : projets existants sans `adr/` ne doivent rien casser. C'est purement additif.
-- **Hors scope** : commande `lyt adr new <slug>` qui crée un ADR + met à jour l'index automatiquement. Peut faire l'objet d'une issue future si la discipline manuelle de l'index s'avère insuffisante (signal : ADRs apparaissent sans entrée d'index).
-- **Cross-repo** : `lytos-app` n'a pas besoin de bouger. Le `.lytos/adr/` est consommé par les agents (Claude Code, Cursor, ...), pas par l'App qui ne projette que le board.
+- **Pattern consistency**: same principle as `memory/MEMORY.md` indexing `cortex/*` — the agent always reads the index, the content on demand.
+- **Backward compatibility**: existing projects without `adr/` must not break. This is purely additive.
+- **Out of scope**: a `lyt adr new <slug>` command that creates an ADR and updates the index automatically. Worth a future issue if manual index discipline proves insufficient (signal: ADRs appearing with no index entry).
+- **Cross-repo**: `lytos-app` does not need to move. `.lytos/adr/` is consumed by agents (Claude Code, Cursor, …), not by the App, which only projects the board.

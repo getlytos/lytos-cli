@@ -1,6 +1,6 @@
 ---
 id: ISS-0106
-title: "Propager la décision loop-B (ADR-0004) dans lytos-method"
+title: "Propagate the loop-B decision (ADR-0004) into lytos-method"
 type: chore
 priority: P2-normal
 effort: S
@@ -15,38 +15,36 @@ created: 2026-08-09
 updated: 2026-08-09
 schema_version: 2
 ---
-# ISS-0106 — Faire redescendre la méthode dans le repo méthode
+# ISS-0106 — Push the method back down into the method repo
 
-## Contexte
+## Context
 
-ADR-0004 est une décision de *méthode*, mais elle a été enregistrée dans `lytos-cli`
-(là où vivent déjà ADR-0001→0003, et parce que `lytos-method` est un stub sans
-convention ADR). Elle doit redescendre dans `lytos-method`, comme le font déjà ISS-0067
-et ISS-0092 pour d'autres décisions.
+ADR-0004 is a *method* decision, but it was recorded in `lytos-cli` (where ADR-0001→0003 already
+live, and because `lytos-method` is a stub with no ADR convention). It has to come back down into
+`lytos-method`, as ISS-0067 and ISS-0092 already do for other decisions.
 
-## Le geste
+## The gesture
 
-Porter dans `lytos-method` les décisions **ADR-0004** (loop-B), **ADR-0005**
-(standards exécutables), **ADR-0006** (continuité multi-surface/multi-user), **ADR-0007**
-(gates proportionnels au risque + niveaux de doc + Definition of Ready) **et ADR-0008**
-(contrat de capacité humaine : compréhension, compétence, opérabilité) : les deux
-gates réels + interdiction de self-close, le
-park-on-ambiguity, la DoD à mode de vérification, la checklist de review comme objet de
-première classe. **Et surtout, ériger en principe Lytos de premier plan** (manifest /
-LYTOS.md) : **« Lytos ne dicte pas la stack, il en garantit le respect »** — le projet
-choisit (langages, libs, design system, provider IA) ; le kit enregistre, les gates
-vérifient la conformité. Décider au passage si `lytos-method` se dote enfin d'un dossier
-`adr/` (et alors y copier ADR-0004/0005) ou si LYTOS.md/rules suffisent.
+Carry into `lytos-method` the decisions **ADR-0004** (loop-B), **ADR-0005** (executable
+standards), **ADR-0006** (multi-surface / multi-user continuity), **ADR-0007** (risk-proportional
+gates + documentation levels + Definition of Ready) **and ADR-0008** (the human capability
+contract: comprehension, competence, operability): the two real gates plus the ban on
+self-closing, park-on-ambiguity, the DoD verification mode, the review checklist as a
+first-class object. **And above all, raise to a front-rank Lytos principle** (manifest /
+LYTOS.md): **"Lytos does not dictate the stack, it guarantees the stack is respected"** — the
+project chooses (languages, libraries, design system, AI provider); the kit records, the gates
+verify conformance. Decide along the way whether `lytos-method` finally gets an `adr/` folder
+(and then copy ADR-0004/0005 into it) or whether LYTOS.md and the rules are enough.
 
 ## Definition of done
 
-- [ ] Contrat loop-B (ADR-0004) + standards (ADR-0005) + continuité (ADR-0006) + gates proportionnels (ADR-0007) + capacité humaine (ADR-0008) reflétés dans LYTOS.md / rules — *verify: human*
-- [ ] La capacité humaine (ADR-0008) érigée en 5ᵉ question de gouvernance dans le manifest — *verify: human*
-- [ ] Principe « Lytos ne dicte pas la stack, il en garantit le respect » énoncé dans le manifest — *verify: human*
-- [ ] Décision « adr/ dans method ? » tranchée et appliquée — *verify: human*
-- [ ] Cohérence croisée cli ↔ method vérifiée (pas de contradiction) — *verify: human*
+- [ ] Loop-B contract (ADR-0004) + standards (ADR-0005) + continuity (ADR-0006) + proportional gates (ADR-0007) + human capability (ADR-0008) reflected in LYTOS.md / rules — *verify: human*
+- [ ] Human capability (ADR-0008) raised to the 5th governance question in the manifest — *verify: human*
+- [ ] The principle "Lytos does not dictate the stack, it guarantees the stack is respected" stated in the manifest — *verify: human*
+- [ ] The "adr/ in method?" decision settled and applied — *verify: human*
+- [ ] Cross-consistency cli ↔ method verified (no contradiction) — *verify: human*
 
 ## Notes
 
-- Ne pas dupliquer aveuglément : `lytos-method` est encore un stub (manifest vide).
-- Réf : ADR-0004 (section Consequences → Propagation). Suit le pattern ISS-0067/0092.
+- Do not duplicate blindly: `lytos-method` is still a stub (empty manifest).
+- Ref: ADR-0004 (Consequences → Propagation). Follows the ISS-0067/0092 pattern.

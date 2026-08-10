@@ -1,6 +1,6 @@
 ---
 id: ISS-0121
-title: "Loop-C — ingestion d'incident prod→issue + champ MTTR"
+title: "Loop-C — prod incident → issue ingestion + MTTR field"
 type: feat
 priority: P2-normal
 effort: L
@@ -15,33 +15,33 @@ created: 2026-08-09
 updated: 2026-08-09
 schema_version: 2
 ---
-# ISS-0121 — Fermer le cycle : spec → deploy → incident → spec
+# ISS-0121 — Close the cycle: spec → deploy → incident → spec
 
-## Contexte
+## Context
 
-Le trou factuel confirmé par les deux panels : il n'existe aucun état après `5-done`, la
-boucle feedback prod→issue est en icebox (ISS-0078), aucun MTTR. La réponse IA-native n'est
-pas de re-taper le code à la main pour « le comprendre » — c'est d'appliquer à l'incident
-les mêmes mécanismes qui tiennent l'amont (ADR-0008 §3).
+The factual hole both panels confirmed: there is no state after `5-done`, the prod→issue feedback
+loop sits in the icebox (ISS-0078), and there is no MTTR. The AI-native answer is not to retype
+the code by hand "to understand it" — it is to apply to the incident the same mechanisms that
+hold the upstream together (ADR-0008 §3).
 
-## Le geste
+## The gesture
 
-Un **loop-C** symétrique du loop-B, mais entrant : un signal prod (alerte/SLO/erreur
-structurée) est trié par un agent en **issue candidate** — blast radius → `risk`, hypothèse
-de cause reliée au commit fautif via `Refs`, DoD de correction avec ≥1 item
-machine-vérifiable. L'humain garde le gate amont (accepter dans le sprint). Plus un **champ
-MTTR agrégé** (`incident_detected → fix_merged → deployed`), suivi par sprint comme le coût.
+A **loop-C**, symmetric to loop-B but inbound: a production signal (alert/SLO/structured error)
+is triaged by an agent into a **candidate issue** — blast radius → `risk`, a cause hypothesis
+linked to the offending commit via `Refs`, a fix DoD with ≥1 machine-verifiable item. The human
+keeps the upstream gate (accepting it into the sprint). Plus an **aggregated MTTR field**
+(`incident_detected → fix_merged → deployed`), tracked per sprint like cost.
 
 ## Definition of done
 
-- [ ] Triage d'un signal prod en issue candidate (risk, Refs, DoD) — *verify: auto*
-- [ ] Gate humain amont conservé (pas d'auto-acceptation) — *verify: auto*
-- [ ] Champ MTTR horodaté + agrégé au sprint — *verify: auto*
-- [ ] Tests du triage et de l'agrégation MTTR — *verify: auto*
-- [ ] Runbook L4 (opérer le loop-C) rejoué en CI — *verify: doc L4*
-- [ ] Le triage produit-il des issues réellement actionnables — *verify: human*
+- [ ] Triage of a prod signal into a candidate issue (risk, Refs, DoD) — *verify: auto*
+- [ ] Upstream human gate preserved (no auto-acceptance) — *verify: auto*
+- [ ] Timestamped MTTR field + sprint aggregation — *verify: auto*
+- [ ] Tests for triage and MTTR aggregation — *verify: auto*
+- [ ] L4 runbook (operating loop-C) replayed in CI — *verify: doc L4*
+- [ ] Does the triage produce genuinely actionable issues — *verify: human*
 
 ## Notes
 
-- Réf : ADR-0008 §3 ; sort ISS-0078 de l'icebox. Côté surface, recoupe l'App (direction 2).
-- Permet la condition de falsifiabilité MTTR A/B (auteur humain vs agent chargé du contexte).
+- Ref: ADR-0008 §3; lifts ISS-0078 out of the icebox. On the surface side, overlaps the App (direction 2).
+- Enables the MTTR A/B falsifiability condition (human author vs context-loaded agent).

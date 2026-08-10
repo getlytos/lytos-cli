@@ -1,6 +1,6 @@
 ---
 id: ISS-0085
-title: "lyt migrate-frontmatter : reporter le compte `written` réel + warn sur skip silencieux"
+title: "lyt migrate-frontmatter: report the real `written` count + warn on silent skips"
 type: fix
 priority: P3-low
 effort: S
@@ -16,18 +16,18 @@ updated: 2026-06-14
 schema_version: 2
 ---
 
-# ISS-0085 — migrate-frontmatter : rapport `written` réel + skip non silencieux
+# ISS-0085 — migrate-frontmatter: a real `written` report, and no silent skip
 
 ## Context
 
-Review Sprint #03 (ISS-0077). `printReport()` affiche `Migrated ${plan.toMigrate}` au lieu du `written` réel. Si un fichier est compté dans le plan (`parseFrontmatter` l'accepte) mais que `insertFields()` renvoie `null`, `applyMigration` fait `continue` **sans log** → le rapport surévalue le nombre d'écritures et le skip est silencieux (viole « no silent failures »). Atteignable quand la fence ouvrante a un espace en fin (`--- \n`, accepté par `parseFrontmatter` `/^---\s*\n/` mais rejeté par `insertFields` `/^---\r?\n/`) ou une ligne vide en tête. Très faible probabilité sur les fichiers générés par Lytos (toujours `---\n`), mais réel.
+Sprint #03 review (ISS-0077). `printReport()` prints `Migrated ${plan.toMigrate}` instead of the real `written` count. If a file is counted in the plan (`parseFrontmatter` accepts it) but `insertFields()` returns `null`, `applyMigration` does a `continue` **without logging** → the report overstates how many files were written and the skip is silent (violating "no silent failures"). Reachable when the opening fence has a trailing space (`--- \n`, accepted by `parseFrontmatter`'s `/^---\s*\n/` but rejected by `insertFields`'s `/^---\r?\n/`) or a leading blank line. Very unlikely on Lytos-generated files (always `---\n`), but real.
 
 ## Proposed solution
 
-Reporter `written` en mode `--apply`, et avertir explicitement quand `written < toMigrate` (lister les fichiers sautés + la raison).
+Report `written` in `--apply` mode, and warn explicitly when `written < toMigrate` (list the skipped files and the reason).
 
 ## Definition of done
 
-- [ ] Le rapport `--apply` affiche le nombre réellement écrit.
-- [ ] Un skip (`insertFields` null) émet un warning explicite, jamais silencieux.
-- [ ] Test : fichier avec fence à espace → skip rapporté.
+- [ ] The `--apply` report shows the number actually written.
+- [ ] A skip (`insertFields` null) emits an explicit warning, never silence.
+- [ ] Test: a file with a spaced fence → the skip is reported.

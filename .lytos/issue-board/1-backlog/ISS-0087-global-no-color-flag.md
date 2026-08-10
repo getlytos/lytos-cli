@@ -1,6 +1,6 @@
 ---
 id: ISS-0087
-title: "Support `--no-color` sur toutes les commandes (cli-rules.md)"
+title: "Support `--no-color` on every command (cli-rules.md)"
 type: feat
 priority: P3-low
 effort: S
@@ -16,18 +16,18 @@ updated: 2026-06-14
 schema_version: 2
 ---
 
-# ISS-0087 — Support `--no-color` global
+# ISS-0087 — Global `--no-color` support
 
 ## Context
 
-Review Sprint #03 (ISS-0076). `cli-rules.md` liste `--no-color` à côté de `NO_COLOR`, mais le flag n'est pas accepté par les commandes (`--no-color` → unknown option, exit 1) ; seule la variable d'env `NO_COLOR` est respectée. Gap transverse, pas spécifique à `absorb`.
+Sprint #03 review (ISS-0076). `cli-rules.md` lists `--no-color` next to `NO_COLOR`, but the flag is not accepted by the commands (`--no-color` → unknown option, exit 1); only the `NO_COLOR` environment variable is honoured. A cross-cutting gap, not specific to `absorb`.
 
 ## Proposed solution
 
-Ajouter une option globale `--no-color` (commander `.option`) qui force la désactivation des couleurs, alignée sur le respect existant de `NO_COLOR`.
+Add a global `--no-color` option (commander `.option`) that forces colors off, aligned with the existing `NO_COLOR` handling.
 
 ## Definition of done
 
-- [ ] `lyt <cmd> --no-color` désactive les couleurs sur toutes les commandes.
-- [ ] Comportement cohérent avec `NO_COLOR`.
+- [ ] `lyt <cmd> --no-color` disables colors on every command.
+- [ ] Behaviour consistent with `NO_COLOR`.
 - [ ] Test.

@@ -1,6 +1,6 @@
 ---
 id: ISS-0108
-title: "Skill d'injection vérité-terrain (Context7-like) + vérification"
+title: "Ground-truth injection skill (Context7-like) + verification"
 type: feat
 priority: P1-high
 effort: M
@@ -15,31 +15,30 @@ created: 2026-08-09
 updated: 2026-08-09
 schema_version: 2
 ---
-# ISS-0108 — On ne demande pas la « dernière API », on la donne
+# ISS-0108 — You don't ask for the "latest API", you supply it
 
-## Contexte
+## Context
 
-Un agent hallucine ou déprécie une API depuis sa mémoire (cutoff). On ne corrige pas ça
-par une consigne : on **met la vraie doc de la version épinglée dans le contexte** et on
-exige la citation. C'est de la récupération, pas de la mémoire (ADR-0005 §3).
+An agent hallucinates or deprecates an API from its own memory (training cutoff). You do not fix
+that with an instruction: you **put the real documentation of the pinned version into the
+context** and require a citation. That is retrieval, not memory (ADR-0005 §3).
 
-## Le geste
+## The gesture
 
-Un skill qui, au moment du travail, résout les versions depuis le lockfile (contrat de
-stack, ISS-0107), injecte la doc **de ces versions** (source MCP type Context7 ou docs
-vendorisées) et demande à l'agent de **citer** l'API utilisée. Couplage obligatoire :
-injection **+** typecheck/tests (qui attrapent l'API inventée) **+** vérif des citations
-par le relecteur. Sources **allow-listées et figées** — une doc live est un vecteur
-d'injection de prompt.
+A skill that, at work time, resolves versions from the lockfile (the stack contract, ISS-0107),
+injects the documentation **for those versions** (a Context7-style MCP source or vendored docs)
+and requires the agent to **cite** the API it used. The pairing is mandatory: injection **plus**
+typecheck/tests (which catch an invented API) **plus** citation verification by the reviewer.
+Sources are **allow-listed and pinned** — live documentation is a prompt-injection vector.
 
 ## Definition of done
 
-- [ ] Résolution des versions depuis le lockfile + sélection des docs — *verify: auto*
-- [ ] Sources allow-listées/épinglées ; refus d'une source hors liste — *verify: auto*
-- [ ] Exigence de citation d'API traçable dans le review packet — *verify: auto*
-- [ ] Doc : brancher un provider de docs (Context7 / vendor) — *verify: human*
+- [ ] Version resolution from the lockfile + documentation selection — *verify: auto*
+- [ ] Allow-listed and pinned sources; a source outside the list is refused — *verify: auto*
+- [ ] API citation requirement traceable in the review packet — *verify: auto*
+- [ ] Docs: wiring a documentation provider (Context7 / vendored) — *verify: human*
 
 ## Notes
 
-- L'injection ne garantit rien seule — toujours + gate. Réf : ADR-0005 §3.
-- Dépend du contrat de stack (ISS-0107).
+- Injection alone guarantees nothing — always injection + gate. Ref: ADR-0005 §3.
+- Depends on the stack contract (ISS-0107).

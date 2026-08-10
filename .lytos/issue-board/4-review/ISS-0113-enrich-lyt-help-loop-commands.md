@@ -1,6 +1,6 @@
 ---
 id: ISS-0113
-title: Enrichir `lyt help` avec les primitives du loop
+title: Enrich `lyt help` with the loop primitives
 type: chore
 priority: P2-normal
 effort: XS
@@ -17,27 +17,26 @@ schema_version: 2
 assignee: Claude
 started_at: 2026-08-09
 ---
-# ISS-0113 — Le help doit refléter les commandes livrées
+# ISS-0113 — The help must reflect the commands that shipped
 
-## Contexte
+## Context
 
-Le sprint #04 a livré `lyt next`, `lyt park`/`unpark`, `lyt budget` — mais le bloc
-d'exemples de `lyt --help` ne les mentionnait pas. Un help incomplet, c'est une commande
-invisible.
+Sprint #04 shipped `lyt next`, `lyt park`/`unpark` and `lyt budget` — but the examples block of
+`lyt --help` never mentioned them. An incomplete help is an invisible command.
 
-## Le geste
+## The gesture
 
-Ajouter un groupe « Loop primitives (ADR-0004) » aux exemples de `lyt --help`, en
-rappelant que le CLI expose les primitives et que le wrapper/App orchestrent.
+Add a "Loop primitives (ADR-0004)" group to the `lyt --help` examples, restating that the CLI
+exposes the primitives and the wrapper/App orchestrate them.
 
 ## Definition of done
 
-- [x] Les 4 commandes du sprint #04 figurent dans `lyt --help` — *verify: auto*
-- [ ] Relecture : le groupement et le wording sont clairs — *verify: human*
+- [x] The 4 commands from sprint #04 appear in `lyt --help` — *verify: auto*
+- [ ] Review: the grouping and the wording are clear — *verify: human*
 
 ## Notes
 
-- Réf : ADR-0004. Suivi terrain : penser à re-synchroniser le help à chaque commande.
+- Ref: ADR-0004. Field lesson: remember to re-sync the help with every new command.
 
 ## Audit — 2026-08-10
 

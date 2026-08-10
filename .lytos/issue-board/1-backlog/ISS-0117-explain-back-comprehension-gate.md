@@ -1,6 +1,6 @@
 ---
 id: ISS-0117
-title: "Explain-back — preuve de transfert avant close (verify: human-comprehension)"
+title: "Explain-back — proof of transfer before close (verify: human-comprehension)"
 type: feat
 priority: P1-high
 effort: M
@@ -15,32 +15,32 @@ created: 2026-08-09
 updated: 2026-08-09
 schema_version: 2
 ---
-# ISS-0117 — Un tampon prouve un clic ; un explain-back prouve un modèle mental
+# ISS-0117 — A rubber stamp proves a click; an explain-back proves a mental model
 
-## Contexte
+## Context
 
-La critique la plus forte des deux panels : la review « au gate » se dégrade en tampon, et
-rien ne garantit qu'un humain *tient* le système. La parade validée par l'attaque ET la
-défense : sur `risk: high`/core, l'humain reconstitue **de mémoire, sans le diff**,
-l'invariant central et le mode de défaillance principal (ADR-0008 §1).
+The sharpest criticism from both panels: review "at the gate" degrades into rubber-stamping, and
+nothing guarantees a human still *holds* the system. The counter validated by attack AND defence:
+on `risk: high` or core changes, the human reconstructs **from memory, without the diff**, the
+central invariant and the main failure mode (ADR-0008 §1).
 
-## Le geste
+## The gesture
 
-Nouveau mode `verify: human-comprehension` (étend ISS-0101). Sur `risk: high`, `lyt close`
-exige un explain-back enregistré dans le sign-off (invariant + failure mode, dérivés des
-artefacts). Barre de récupérabilité falsifiable : un agent **frais, zéro contexte**, avec
-seulement les artefacts in-repo, peut faire un changement comportemental correct, gates
-verts, sans lire la session d'origine.
+A new `verify: human-comprehension` mode (extends ISS-0101). On `risk: high`, `lyt close`
+requires an explain-back recorded in the sign-off (invariant + failure mode, derived from the
+artifacts). A falsifiable recoverability bar: a **fresh, zero-context** agent, with only the
+in-repo artifacts, can make a correct behavioural change with green gates, without reading the
+original session.
 
 ## Definition of done
 
-- [ ] Mode `verify: human-comprehension` parsé et classé (ISS-0101) — *verify: auto*
-- [ ] `lyt close` exige l'explain-back sur `risk: high`, refuse sinon — *verify: auto*
-- [ ] Sign-off enregistre invariant + failure mode + auteur + date — *verify: auto*
-- [ ] Tests : présence/absence sur high vs low — *verify: auto*
-- [ ] L'explain-back demandé est-il réellement une preuve de compréhension — *verify: human-comprehension*
-- [ ] Doc de la convention — *verify: doc L1*
+- [ ] `verify: human-comprehension` mode parsed and classified (ISS-0101) — *verify: auto*
+- [ ] `lyt close` requires the explain-back on `risk: high`, refuses otherwise — *verify: auto*
+- [ ] Sign-off records invariant + failure mode + author + date — *verify: auto*
+- [ ] Tests: present/absent on high vs low — *verify: auto*
+- [ ] Is the explain-back asked for genuinely proof of comprehension — *verify: human-comprehension*
+- [ ] Convention documented — *verify: doc L1*
 
 ## Notes
 
-- Réf : ADR-0008 §1. N'est pas de l'authorship manuel (les deux panels l'ont rejeté).
+- Ref: ADR-0008 §1. This is not manual authorship (both panels rejected that).

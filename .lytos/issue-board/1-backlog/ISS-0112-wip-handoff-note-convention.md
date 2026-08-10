@@ -1,6 +1,6 @@
 ---
 id: ISS-0112
-title: "Convention de note de handoff WIP — matérialiser « où j'en suis » dans l'issue"
+title: "WIP handoff note convention — put \"where I am\" in the issue"
 type: feat
 priority: P1-high
 effort: S
@@ -15,30 +15,29 @@ created: 2026-08-09
 updated: 2026-08-09
 schema_version: 2
 ---
-# ISS-0112 — Le contexte portable est l'issue, pas le chat
+# ISS-0112 — The portable context is the issue, not the chat
 
-## Contexte
+## Context
 
-Le chat de l'agent ne traverse pas les surfaces (Claude Code web → VSCode → App = runtimes
-différents). Ce qui reprend demain, c'est **le repo** : status, DoD cochée, branche… et il
-manque « où j'en étais / prochaine étape » (ADR-0006 §2). Il faut le matérialiser dans
-l'issue avant de terminer, sinon il est perdu — c'est la posture anti-vibecoding.
+An agent's chat does not cross surfaces (Claude Code web → VSCode → App are different runtimes).
+What resumes tomorrow is **the repo**: status, ticked DoD, branch… and what is missing is "where
+I was / what's next" (ADR-0006 §2). It has to be materialised in the issue before finishing,
+otherwise it is lost — that is the anti-vibecoding stance.
 
-## Le geste
+## The gesture
 
-Une section normée `## WIP handoff` dans le corps d'issue (dernier état, prochaine étape,
-pièges connus), que l'agent **écrit avant de terminer une session** et que le suivant lit
-en premier. Le CLI la reconnaît : `lyt show ISS-X` l'affiche en tête si présente ; à jour
-via une date. Intégré au skill `session-start` (geste de fin de tâche : note WIP +
-checkpoint).
+A normed `## WIP handoff` section in the issue body (last state, next step, known traps), which
+the agent **writes before ending a session** and the next one reads first. The CLI recognises it:
+`lyt show ISS-X` surfaces it at the top when present, dated so staleness is visible. Wired into
+the `session-start` skill (end-of-task gesture: WIP note + checkpoint).
 
 ## Definition of done
 
-- [ ] Convention `## WIP handoff` documentée (template d'issue + rules) — *verify: human*
-- [ ] `lyt show ISS-X` remonte la note en tête si présente — *verify: auto*
-- [ ] `session-start` : « écrire la note WIP » ajouté au geste de fin de tâche — *verify: human*
-- [ ] La note est-elle réellement suffisante pour reprendre à froid — *verify: human*
+- [ ] `## WIP handoff` convention documented (issue template + rules) — *verify: human*
+- [ ] `lyt show ISS-X` surfaces the note at the top when present — *verify: auto*
+- [ ] `session-start`: "write the WIP note" added to the end-of-task gesture — *verify: human*
+- [ ] Is the note actually sufficient to resume cold — *verify: human*
 
 ## Notes
 
-- Lue par `lyt resume` (ISS-0111). Réf : ADR-0006 §2. Le repo est la mémoire, le chat est jetable.
+- Read by `lyt resume` (ISS-0111). Ref: ADR-0006 §2. The repo is the memory, the chat is disposable.

@@ -1,6 +1,6 @@
 ---
 id: ISS-0084
-title: "Aligner ADR-0003 sur l'implémentation de `lyt absorb` (merge vs overwrite, --apply, active-issue)"
+title: "Align ADR-0003 with the `lyt absorb` implementation (merge vs overwrite, --apply, active-issue)"
 type: docs
 priority: P2-normal
 effort: S
@@ -16,25 +16,25 @@ updated: 2026-06-14
 schema_version: 2
 ---
 
-# ISS-0084 — Aligner ADR-0003 sur l'implémentation de `lyt absorb`
+# ISS-0084 — Align ADR-0003 with the `lyt absorb` implementation
 
 ## Context
 
-Découvert lors de la review de Sprint #03 (ISS-0076). ADR-0003 §2 décrit une sémantique « overwrite / SET » et affirme que `lyt absorb` réécrit les champs dérivés du journal, mais le code ne *merge* que les clés **présentes** du delta (`updatedFm[key] = value`) — il ne nettoie jamais les champs que le journal courant cesse de produire. Vérifié : réduire le journal à une seule ligne implementer laisse `ai_reviewer` / `cost_usd` / `skills_used` périmés dans le frontmatter. Inoffensif dans le workflow append-only / per-session documenté, mais l'ADR (le **contrat d'audit**) affirme littéralement « overwrite ».
+Found during the Sprint #03 review (ISS-0076). ADR-0003 §2 describes "overwrite / SET" semantics and states that `lyt absorb` rewrites the fields derived from the journal, but the code only *merges* the keys **present** in the delta (`updatedFm[key] = value`) — it never clears fields the current journal has stopped producing. Verified: reducing the journal to a single implementer line leaves stale `ai_reviewer` / `cost_usd` / `skills_used` in the frontmatter. Harmless in the documented append-only / per-session workflow, but the ADR — the **audit contract** — literally says "overwrite".
 
-Deux dérives connexes :
-- L'ADR documente `lyt absorb [issue-id] [--dry-run] [--json]`, mais le flag livré est `--apply` (dry-run par défaut, plus sûr) — `--dry-run` est rejeté (exit 1).
-- La résolution active-issue §2 conflate l'attribution par-ligne du journal et la résolution au niveau commande (arg explicite → `ISS-####` dans la branche → unique `3-in-progress/` → erreur).
+Two related drifts:
+- The ADR documents `lyt absorb [issue-id] [--dry-run] [--json]`, but the shipped flag is `--apply` (dry-run by default, safer) — `--dry-run` is rejected (exit 1).
+- The §2 active-issue resolution conflates the journal's per-line attribution with command-level resolution (explicit arg → `ISS-####` in the branch → the single `3-in-progress/` issue → error).
 
 ## Proposed solution
 
-- **Option A** (si on garde le wording) : nettoyer l'ensemble des champs « command-owned » avant d'appliquer le delta → vrai overwrite.
-- **Option B** : assouplir le wording ADR en « merges present fields ».
-- Dans les deux cas : corriger la signature documentée (`--apply`), préciser la résolution active-issue.
+- **Option A** (keep the wording): clear every "command-owned" field before applying the delta → a true overwrite.
+- **Option B**: soften the ADR wording to "merges present fields".
+- Either way: fix the documented signature (`--apply`) and clarify the active-issue resolution.
 
 ## Definition of done
 
-- [ ] ADR-0003 §2 et le code de `lyt absorb` sont cohérents sur la sémantique (décision tranchée + implémentée).
-- [ ] Signature documentée = signature livrée (`--apply`, dry-run par défaut).
-- [ ] Wording de la résolution active-issue précisé.
-- [ ] Test couvrant la sémantique retenue (champ périmé nettoyé OU explicitement conservé).
+- [ ] ADR-0003 §2 and the `lyt absorb` code agree on the semantics (decision made and implemented).
+- [ ] Documented signature = shipped signature (`--apply`, dry-run by default).
+- [ ] Active-issue resolution wording clarified.
+- [ ] Test covering the chosen semantics (stale field cleared OR explicitly kept).

@@ -1,6 +1,6 @@
 ---
 id: ISS-0115
-title: Definition of Ready — le gate d'entrée, jumeau de la DoD
+title: Definition of Ready — the entry gate, twin of the DoD
 type: feat
 priority: P1-high
 effort: M
@@ -17,33 +17,32 @@ schema_version: 2
 assignee: Claude
 started_at: 2026-08-09
 ---
-# ISS-0115 — Attraper l'ambiguïté avant de dépenser des tokens
+# ISS-0115 — Catch ambiguity before spending tokens on it
 
-## Contexte
+## Context
 
-Le park-on-ambiguity (ADR-0004 §3) est **réactif** : on s'arrête *après* avoir heurté
-l'ambiguïté. Un gate de « prêt » déplace ça à gauche : une issue sous-spécifiée n'entre
-pas dans le loop (ADR-0007 §3). C'est ce qui transforme « 40 % des parks = ambiguous-spec »
-en prévention.
+Park-on-ambiguity (ADR-0004 §3) is **reactive**: we stop *after* hitting the ambiguity. A
+"ready" gate shifts that left — an under-specified issue never enters the loop (ADR-0007 §3).
+That is what turns "40% of parks are ambiguous-spec" into prevention.
 
-## Le geste
+## The gesture
 
-Une issue est **ready** si : scope clair, contraintes énoncées, **hors-scope explicite**,
-DoD testable (ADR-0004 §4), `risk` renseigné. Section `## Ready` normée dans le template.
-`lyt next` **refuse** une issue non-ready (nouvelle raison d'inéligibilité `not-ready`) ;
-`lyt lint` la signale. Complète la loop-éligibilité existante (DoD machine-vérifiable).
+An issue is **ready** when: the scope is clear, the constraints are stated, **out-of-scope is
+explicit**, the DoD is testable (ADR-0004 §4), and `risk` is set. A normed `## Ready` section in
+the template. `lyt next` **refuses** a non-ready issue (new ineligibility reason `not-ready`);
+`lyt lint` flags it. Complements the existing loop-eligibility rule (machine-verifiable DoD).
 
 ## Definition of done
 
-- [ ] Critères de Ready définis + section `## Ready` au template (projet + method/), doc L1 — *verify: human*
-- [x] `lyt next` : une issue non-ready n'est pas éligible (raison `not-ready`) — *verify: auto*
-- [x] `lyt lint` signale les issues du sprint non-ready — *verify: auto*
-- [x] Tests : ready complet / champ manquant / hors-scope absent — *verify: auto*
-- [ ] Les critères sont-ils suffisants sans être bureaucratiques — *verify: human*
+- [ ] Ready criteria defined + `## Ready` section in the template (project + method/), doc L1 — *verify: human*
+- [x] `lyt next`: a non-ready issue is not eligible (reason `not-ready`) — *verify: auto*
+- [x] `lyt lint` flags non-ready sprint issues — *verify: auto*
+- [x] Tests: fully ready / missing field / no out-of-scope — *verify: auto*
+- [ ] Are the criteria sufficient without being bureaucratic — *verify: human*
 
 ## Notes
 
-- Jumeau amont de la DoD. Étend `lyt next` (ISS-0099). Réf : ADR-0007 §3.
+- The upstream twin of the DoD. Extends `lyt next` (ISS-0099). Ref: ADR-0007 §3.
 
 ## Audit — 2026-08-10
 

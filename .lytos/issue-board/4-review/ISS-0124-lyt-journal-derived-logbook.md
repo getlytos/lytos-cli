@@ -1,6 +1,6 @@
 ---
 id: ISS-0124
-title: `lyt journal` — le journal de bord dérivé (changelog du pourquoi)
+title: "`lyt journal` — the derived logbook (a changelog of the why)"
 type: feat
 priority: P2-normal
 effort: M
@@ -17,45 +17,45 @@ schema_version: 2
 assignee: Claude
 started_at: 2026-08-10
 ---
-# ISS-0124 — Le récit du projet, dérivé au lieu d'écrit
+# ISS-0124 — The project's narrative, derived instead of written
 
-## Contexte
+## Context
 
-Il manque, entre le changelog (le *quoi*) et l'ADR (le *verdict*), un **journal de bord
-lisible** : le récit chronologique du *pourquoi* et du *comment*, qui renvoie aux issues
-pour le détail. Point clé : ce contenu **existe déjà** dans les issues fermées (contexte,
-verdict `review`, raisonnement rejeté, correctifs). Donc rien à écrire — c'est une **vue
-dérivée**, comme `BOARD.md` (ADR-0002) : ça ne peut pas pourrir, zéro cérémonie.
+Between the changelog (the *what*) and the ADR (the *verdict*), a **readable logbook** is
+missing: the chronological narrative of the *why* and the *how*, pointing back to the issues for
+detail. Key point: that content **already exists** in closed issues (context, `review` verdict,
+rejected reasoning, fixes). So there is nothing to write — it is a **derived view**, like
+`BOARD.md` (ADR-0002): it cannot rot, zero ceremony.
 
-Trois lecteurs, trois portes : le **stakeholder** (changelog du pourquoi), le **nouveau**
-qui onboard (sommaire chronologique), l'**apprenant** (matière de compagnonnage — le why
-et les impasses). C'est la face « transmission » d'ADR-0008, en forme passive.
+Three readers, three doors: the **stakeholder** (a changelog of the why), the **newcomer**
+onboarding (a chronological summary), the **learner** (companionship material — the why and the
+dead ends). This is the "transmission" face of ADR-0008, in passive form.
 
-## Le geste
+## The gesture
 
-`lyt journal` recompose un `JOURNAL.md` (dérivé, régénéré — précédent `BOARD.md`/ADR-0002)
-à partir des issues **`5-done` + archive**, chronologique. Groupé **par sprint** (section =
-objectif du sprint depuis `sprint.md`), chaque issue = une ligne : *pourquoi* (1 phrase de
-contexte), **verdict** (`review: go|no-go`), et **lien vers la fiche** pour le détail. Si
-présents : le raisonnement rejeté (ISS-0123) et le lien incident→fix (loop-C, ISS-0121)
-enrichissent l'entrée. `--json` pour que l'**App** le rende (timeline + drill-down, direction 2).
+`lyt journal` recomposes a `JOURNAL.md` (derived, regenerated — the `BOARD.md`/ADR-0002
+precedent) from **`5-done` + archive** issues, chronologically. Grouped **by sprint** (section =
+the sprint objective from `sprint.md`), each issue is one line: the *why* (one sentence of
+context), the **verdict** (`review: go|no-go`), and a **link to the fiche** for detail. When
+present, the rejected reasoning (ISS-0123) and the incident→fix link (loop-C, ISS-0121) enrich
+the entry. `--json` so the **App** can render it (timeline + drill-down, direction 2).
 
 ## Definition of done
 
-- [x] `lyt journal` génère un récit chronologique groupé par sprint depuis 5-done + archive — *verify: auto*
-- [x] Chaque entrée : pourquoi (1 phrase) + verdict `review` + lien vers la fiche — *verify: auto*
-- [x] `--json` consommable par l'App — *verify: auto*
-- [x] Statut dérivé/gitignore tranché selon le précédent ADR-0002 — *verify: auto*
-- [x] Tests : board mixte, sprint sans verdict, issue archivée — *verify: auto*
-- [ ] Le récit est-il réellement lisible par un non-technique — *verify: human*
-- [ ] Doc de la commande + du format, doc L1 — *verify: human*
+- [x] `lyt journal` generates a chronological narrative grouped by sprint from 5-done + archive — *verify: auto*
+- [x] Each entry: the why (one sentence) + `review` verdict + link to the fiche — *verify: auto*
+- [x] `--json` consumable by the App — *verify: auto*
+- [x] Derived/gitignore status settled per the ADR-0002 precedent — *verify: auto*
+- [x] Tests: mixed board, sprint with no verdict, archived issue — *verify: auto*
+- [ ] Is the narrative genuinely readable by a non-technical reader — *verify: human*
+- [ ] Documentation of the command and its format, doc L1 — *verify: human*
 
 ## Notes
 
-- Miroir de la discipline d'écriture des issues (garbage-in) : forcing function assumée.
-- Granularité à confirmer : par sprint qui déplie ses issues *(défaut retenu)* vs une entrée plate par issue.
-- Rendu App = direction 2 (`lytos-app`) : « histoire du projet » / onboarding / portail client.
-- Aucun outil concurrent ne peut auto-générer le *pourquoi* — il n'est capturé structurellement que par Lytos (mémoire technique versionnée, manifest app).
+- Mirrors the discipline of issue writing (garbage-in): an accepted forcing function.
+- Granularity to confirm: per sprint unfolding its issues *(chosen default)* vs a flat entry per issue.
+- App rendering = direction 2 (`lytos-app`): "project history" / onboarding / client portal.
+- No competing tool can auto-generate the *why* — it is only captured structurally by Lytos (versioned technical memory, app manifest).
 
 ## Audit — 2026-08-10
 

@@ -1,6 +1,6 @@
 ---
 id: ISS-0114
-title: Matrice risque → gates — la rigueur proportionnelle
+title: Risk-to-gate matrix — proportional rigor
 type: feat
 priority: P1-high
 effort: M
@@ -17,35 +17,35 @@ schema_version: 2
 assignee: Claude
 started_at: 2026-08-09
 ---
-# ISS-0114 — La rigueur suit le rayon de souffle, pas l'inverse
+# ISS-0114 — Rigor follows the blast radius, not the other way round
 
-## Contexte
+## Context
 
-Appliquer tous les gates à tout, c'est la sur-ingénierie qu'on prétend éviter (audit
-sécu sur une typo). On a déjà le champ `risk: low|medium|high` (ADR-0001) et on l'ignore.
-Le chaînon manquant : une matrice **risque → gates obligatoires** (ADR-0007 §1).
+Applying every gate to everything is the over-engineering we claim to avoid (a security audit on
+a typo). The `risk: low|medium|high` field already exists (ADR-0001) and we ignore it. The
+missing link: a **risk → mandatory gates** matrix (ADR-0007 §1).
 
-## Le geste
+## The gesture
 
-Le kit (ISS-0107) porte une matrice qui, pour un `risk` donné, dit quels gates sont
-**obligatoires**. Défauts conservateurs (ADR-0007) : `low` = tests+type+lint+secrets+repro+doc L0 ;
-`medium` ajoute audit deps + perf + chemins négatifs + DS/a11y + doc L1/L3 ; `high` ajoute
-E2E + compat/migrations + revue sécu/archi + doc L2. `risk` absent → traité `medium`. Un
-projet peut **resserrer**, jamais desserrer sous `low`. `lyt` résout, pour une issue, la
-liste des gates dus et signale ceux manquants.
+The kit (ISS-0107) carries a matrix that, for a given `risk`, says which gates are **mandatory**.
+Conservative defaults (ADR-0007): `low` = tests+type+lint+secrets+repro+doc L0; `medium` adds
+deps audit + perf + negative paths + DS/a11y + doc L1/L3; `high` adds E2E + compat/migrations +
+security/architecture review + doc L2. A missing `risk` is treated as `medium`. A project may
+**tighten**, never loosen below `low`. `lyt` resolves, for an issue, the list of gates due and
+flags the missing ones.
 
 ## Definition of done
 
-- [x] Matrice risque→gates dans le kit, format documenté — *verify: auto*
-- [x] Résolution : pour une issue, la liste des gates obligatoires selon `risk` — *verify: auto*
-- [x] `risk` absent = `medium` ; un projet ne peut que resserrer — *verify: auto*
-- [x] Tests par niveau de risque — *verify: auto*
-- [ ] Doc L1 du mécanisme — *verify: human*
-- [ ] Le tiering par défaut est-il sain pour de vrais projets — *verify: human*
+- [x] Risk→gate matrix in the kit, documented format — *verify: auto*
+- [x] Resolution: for an issue, the list of mandatory gates according to `risk` — *verify: auto*
+- [x] Missing `risk` = `medium`; a project can only tighten — *verify: auto*
+- [x] Tests per risk level — *verify: auto*
+- [ ] L1 documentation of the mechanism — *verify: human*
+- [ ] Is the default tiering sane for real projects — *verify: human*
 
 ## Notes
 
-- Cœur d'ADR-0007. Rien n'est « toujours on » : c'est l'anti-sur-ingénierie. Dépend du kit (ISS-0107).
+- The heart of ADR-0007. Nothing is "always on": that is the anti-over-engineering stance. Depends on the kit (ISS-0107).
 
 ## Audit — 2026-08-10
 

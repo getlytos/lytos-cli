@@ -1,6 +1,6 @@
 ---
 id: ISS-0107
-title: Quality kit versionné — Pilier Standards exécutable
+title: Versioned quality kit — the Standards pillar made executable
 type: feat
 priority: P1-high
 effort: L
@@ -17,42 +17,41 @@ schema_version: 2
 assignee: Claude
 started_at: 2026-08-09
 ---
-# ISS-0107 — Rendre le Pilier 3 (Standards) exécutable
+# ISS-0107 — Make Pillar 3 (Standards) executable
 
-## Contexte
+## Context
 
-ADR-0004 dit qu'il faut *gater* la qualité, pas la demander. ADR-0005 dit *avec quoi*.
-Aujourd'hui `rules/` est de la prose : « préfère KISS » ne fait rien. Il faut **lier
-chaque règle à un vérificateur**, et regrouper ça dans un kit versionné qui voyage avec
-le repo (multi-projet → on ne mémorise pas quelle config).
+ADR-0004 says quality must be *gated*, not asked for. ADR-0005 says *with what*. Today `rules/`
+is prose: "prefer KISS" does nothing. Each rule must be **bound to a checker**, and the whole
+grouped into a versioned kit that travels with the repo (multi-project → nobody memorises which
+config belongs where).
 
-## Le geste
+## The gesture
 
-Un kit `.lytos/quality/` par projet : **contrat de stack** (versions épinglées + deps
-allow-listées + `no-new-dependency-without-ADR` + source des docs), **configs de gates**
-(lint/type/format/archi/complexité + les dimensions repliées d'ADR-0007 : secrets,
-reproductibilité du build, audit de deps, budget perf/taille en régression, observabilité
-/« fail with context », compat/migrations, doc L0/L3), **rubrique du relecteur** (prompt
-versionné). Chaque dimension est **sélectionnée par la matrice risque** (ISS-0114), pas
-appliquée uniformément. Les items `verify: auto` de la DoD (ISS-0101) **pointent** vers
-une entrée du kit. Les règles
-non gatables sont marquées `reviewer-judged` ou `human-checked` — jamais « appliquée » en
-silence. Signaux anti-sur-ingénierie inclus : taille de diff vs `effort`, complexité,
-nb de nouvelles abstractions.
+One `.lytos/quality/` kit per project: a **stack contract** (pinned versions + allow-listed deps
++ `no-new-dependency-without-ADR` + the docs source), **gate configuration**
+(lint/type/format/architecture/complexity, plus the dimensions folded in from ADR-0007: secrets,
+build reproducibility, dependency audit, perf/size regression budget, observability /
+"fail with context", compatibility/migrations, doc L0/L3), and the **reviewer rubric** (a
+versioned prompt). Each dimension is **selected by the risk matrix** (ISS-0114), not applied
+uniformly. The DoD's `verify: auto` items (ISS-0101) **point** at a kit entry. Rules that cannot
+be gated are marked `reviewer-judged` or `human-checked` — never silently "applied".
+Anti-over-engineering signals included: diff size vs declared `effort`, complexity, number of new
+abstractions.
 
 ## Definition of done
 
-- [x] Structure `.lytos/quality/` + schéma du contrat de stack — *verify: auto*
-- [x] Dimensions repliées d'ADR-0007 présentes comme checkers (secrets, repro, audit deps, perf, observabilité, compat, doc L0/L3) — *verify: auto*
-- [x] `lyt doctor` vérifie la présence/cohérence du kit — *verify: auto*
-- [x] Convention : un item `verify: auto` référence une entrée de kit résoluble — *verify: auto*
-- [ ] Règles non gatables explicitement classées reviewer/human — *verify: human*
-- [ ] Doc : comment ajouter une règle exécutable au kit — *verify: human*
+- [x] `.lytos/quality/` structure + stack contract schema — *verify: auto*
+- [x] ADR-0007's folded-in dimensions present as checkers (secrets, repro, deps audit, perf, observability, compat, doc L0/L3) — *verify: auto*
+- [x] `lyt doctor` checks the kit's presence and coherence — *verify: auto*
+- [x] Convention: a `verify: auto` item references a resolvable kit entry — *verify: auto*
+- [ ] Non-gatable rules explicitly classified reviewer/human — *verify: human*
+- [ ] Docs: how to add an executable rule to the kit — *verify: human*
 
 ## Notes
 
-- Réf : ADR-0005 §1-2. Consommé par les gates d'ADR-0004, ne les pilote pas.
-- Propagation méthode suivie par ISS-0106.
+- Ref: ADR-0005 §1-2. Consumed by ADR-0004's gates; it does not drive them.
+- Method propagation tracked by ISS-0106.
 
 ## Audit — 2026-08-10
 

@@ -1,6 +1,6 @@
 ---
 id: ISS-0118
-title: "Métrique d'exposition au jugement — la dette de compétence au bilan"
+title: "Judgment-exposure metric — competence debt on the balance sheet"
 type: feat
 priority: P1-high
 effort: M
@@ -15,30 +15,30 @@ created: 2026-08-09
 updated: 2026-08-09
 schema_version: 2
 ---
-# ISS-0118 — Provisionner la dette, pas la découvrir à la faillite
+# ISS-0118 — Provision the debt instead of discovering it at bankruptcy
 
-## Contexte
+## Context
 
-Le seul grief que ni l'attaque ni la défense n'ont dissous : la compétence est traitée
-comme une entrée constante, jamais comme une variable que le système érode. Lytos audit
-tout sauf la trajectoire de compétence de l'équipe (ADR-0008 §2). C'est la 5ᵉ question de
-gouvernance manquante : *quelle compétence l'équipe accumule-t-elle encore ?*
+The one grievance neither attack nor defence dissolved: competence is treated as a constant
+input, never as a variable the system erodes. Lytos audits everything except the team's
+competence trajectory (ADR-0008 §2). This is the missing 5th governance question: *what
+competence is the team still accumulating?*
 
-## Le geste
+## The gesture
 
-Une métrique d'exposition au jugement par personne, dérivée du substrat schema v2 : diffs
-revus-puis-corrigés, parks résolus à la main, taux d'accord avec le reviewer adverse, part
-de code écrite à la main. Agrégée dans le rapport de sprint (ISS-0105). **Alerte** si elle
-tombe pour toute l'équipe pendant que la vélocité monte — le sceptique qui gagne, vu venir.
+A per-person judgment-exposure metric, derived from the schema v2 substrate: diffs reviewed then
+corrected, parks resolved by hand, agreement rate with the adversarial reviewer, share of code
+written by hand. Aggregated into the sprint report (ISS-0105). **Alert** when it falls team-wide
+while velocity rises — the sceptic's winning scenario, seen coming.
 
 ## Definition of done
 
-- [ ] Métrique par personne calculée depuis les champs schema v2 — *verify: auto*
-- [ ] Agrégée + tendance dans le rapport de sprint — *verify: auto*
-- [ ] Alerte sur chute team-wide — *verify: auto*
-- [ ] Tests d'agrégation et de seuil d'alerte — *verify: auto*
-- [ ] Les proxys choisis reflètent-ils vraiment le jugement — *verify: human*
+- [ ] Per-person metric computed from the schema v2 fields — *verify: auto*
+- [ ] Aggregated + trended in the sprint report — *verify: auto*
+- [ ] Alert on a team-wide fall — *verify: auto*
+- [ ] Aggregation and alert-threshold tests — *verify: auto*
+- [ ] Do the chosen proxies really reflect judgment — *verify: human*
 
 ## Notes
 
-- Réf : ADR-0008 §2. Indicateur avancé des conditions de falsifiabilité (cohorte à 3 ans).
+- Ref: ADR-0008 §2. A leading indicator for the falsifiability conditions (the 3-year cohort).

@@ -1,6 +1,6 @@
 ---
 id: ISS-0110
-title: "`lyt checkpoint` — filet de sécurité au changement de surface"
+title: "`lyt checkpoint` — a safety net when switching surfaces"
 type: feat
 priority: P1-high
 effort: M
@@ -15,30 +15,30 @@ created: 2026-08-09
 updated: 2026-08-09
 schema_version: 2
 ---
-# ISS-0110 — Rien de non-poussé n'est perdu
+# ISS-0110 — Nothing unpushed is ever lost
 
-## Contexte
+## Context
 
-Le conteneur d'une surface (mobile/cloud) est éphémère : un push oublié perd le travail en
-cours au changement de surface. Aujourd'hui la règle cloud/mobile demande « commit +
-push » à la main — de la discipline, pas un filet. La continuité, c'est **le dernier état
-poussé** (ADR-0006 §1/4) ; il faut un geste assisté pour le garantir.
+A surface's container (mobile, cloud) is ephemeral: one forgotten push loses the work in progress
+when you switch surfaces. Today the cloud/mobile rule asks for a manual "commit + push" — that is
+discipline, not a net. Continuity *is* **the last pushed state** (ADR-0006 §1/4); it needs an
+assisted gesture to be guaranteed.
 
-## Le geste
+## The gesture
 
-`lyt checkpoint [-m msg]` : commit du WIP (`.lytos/` + code de la branche courante) sur un
-ref durable et **push** avec retry/backoff. Respecte le git flow — jamais sur `main`,
-toujours la branche de travail. Idempotent (rien à committer → no-op propre). Option d'un
-**hook de fin de session** (SessionEnd) qui l'appelle automatiquement. `--json`.
+`lyt checkpoint [-m msg]`: commit the WIP (`.lytos/` + the current branch's code) to a durable
+ref and **push** with retry/backoff. Respects the git flow — never on `main`, always the working
+branch. Idempotent (nothing to commit → a clean no-op). Optionally a **session-end hook**
+(SessionEnd) that calls it automatically. `--json`.
 
 ## Definition of done
 
-- [ ] Commit WIP + push branche avec retry, jamais sur `main` — *verify: auto*
-- [ ] Idempotent : aucun changement = no-op sans erreur — *verify: auto*
-- [ ] Hook de fin de session optionnel documenté + exemple — *verify: human*
-- [ ] Tests : WIP présent/absent, échec réseau (retry), refus si branche = main — *verify: auto*
+- [ ] WIP commit + branch push with retry, never on `main` — *verify: auto*
+- [ ] Idempotent: no changes = no-op without error — *verify: auto*
+- [ ] Optional session-end hook documented + example — *verify: human*
+- [ ] Tests: WIP present/absent, network failure (retry), refusal when branch = main — *verify: auto*
 
 ## Notes
 
-- Le filet, pas la magie : pas de sync de FS live (ADR-0006 §1). Réf : ADR-0006 §4.
-- Complète la règle cloud/mobile du CLAUDE.md (la rend assistée plutôt que manuelle).
+- A net, not magic: no live filesystem sync (ADR-0006 §1). Ref: ADR-0006 §4.
+- Complements the cloud/mobile rule in CLAUDE.md (makes it assisted rather than manual).

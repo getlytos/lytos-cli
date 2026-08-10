@@ -1,6 +1,6 @@
 ---
 id: ISS-0119
-title: "Mode learning — inverser le routage + rotation + diffs-pièges relecteur"
+title: "Learning mode — invert the routing + rotation + reviewer trap diffs"
 type: feat
 priority: P2-normal
 effort: M
@@ -15,31 +15,30 @@ created: 2026-08-09
 updated: 2026-08-09
 schema_version: 2
 ---
-# ISS-0119 — Former le jugement, pas seulement le router
+# ISS-0119 — Train judgment, do not merely route it
 
-## Contexte
+## Context
 
-La défense a concédé le vrai risque : router systématiquement l'écriture vers la machine
-prive juniors *et* seniors de la pratique qui forme et entretient le jugement. La compétence
-terminale (évaluer une sortie faillible) est enseignable — encore faut-il l'organiser
-(ADR-0008 §2).
+The defence conceded the real risk: systematically routing the writing to the machine deprives
+juniors *and* seniors of the practice that forms and maintains judgment. The terminal skill —
+evaluating a fallible output — is teachable, but it has to be organised (ADR-0008 §2).
 
-## Le geste
+## The gesture
 
-Un axe `learning: on` (par personne/issue) qui **inverse le routage** : l'humain écrit,
-l'IA passe en reviewer adverse de l'humain — le même appareil (gates, checklist,
-cross-review) sert la formation. Plus : **rotation obligatoire** des relecteurs sur
-`risk: high`, et **diffs-pièges calibrés** (défaut connu) injectés dans le flux de revue —
-un eval pour le relecteur humain, pas seulement pour le modèle : on mesure si le nez tient.
+A `learning: on` axis (per person/issue) that **inverts the routing**: the human writes, the AI
+becomes the human's adversarial reviewer — the same apparatus (gates, checklist, cross-review)
+serves training. Plus: **mandatory rotation** of reviewers on `risk: high`, and **calibrated trap
+diffs** (a known defect) injected into the review flow — an eval for the human reviewer, not just
+for the model: it measures whether the nose still works.
 
 ## Definition of done
 
-- [ ] `learning: on` inverse implémenteur/reviewer pour l'issue — *verify: auto*
-- [ ] Rotation des relecteurs appliquée/vérifiée sur `risk: high` — *verify: auto*
-- [ ] Injection d'un diff-piège + score de détection du relecteur — *verify: auto*
-- [ ] Tests des trois mécanismes — *verify: auto*
-- [ ] Le dispositif forme-t-il réellement (pilote humain) — *verify: human*
+- [ ] `learning: on` inverts implementer/reviewer for the issue — *verify: auto*
+- [ ] Reviewer rotation applied and verified on `risk: high` — *verify: auto*
+- [ ] Trap-diff injection + reviewer detection score — *verify: auto*
+- [ ] Tests for the three mechanisms — *verify: auto*
+- [ ] Does the apparatus actually train (human pilot) — *verify: human*
 
 ## Notes
 
-- Réf : ADR-0008 §2. Réutilise les rôles implémenteur/reviewer existants (ADR-0004 §5).
+- Ref: ADR-0008 §2. Reuses the existing implementer/reviewer roles (ADR-0004 §5).
