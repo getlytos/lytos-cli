@@ -1,18 +1,18 @@
 ---
 id: ISS-0103
-title: "`lyt report ISS-X` — génération du review packet"
+title: `lyt report ISS-X` — génération du review packet
 type: feat
 priority: P1-high
 effort: L
 complexity: heavy
 domain: [cli, dx]
-skill: ""
+skill: 
 skills_aux: []
-status: 1-backlog
+status: 2-sprint
 branch: claude/claude-loops-lytos-wtkc94
 depends: [ISS-0100, ISS-0101]
 created: 2026-08-09
-updated: 2026-08-09
+updated: 2026-08-10
 schema_version: 2
 ---
 # ISS-0103 — L'interface autopilote → pilote

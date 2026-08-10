@@ -1,18 +1,18 @@
 ---
 id: ISS-0124
-title: "`lyt journal` — le journal de bord dérivé (changelog du pourquoi)"
+title: `lyt journal` — le journal de bord dérivé (changelog du pourquoi)
 type: feat
 priority: P2-normal
 effort: M
 complexity: standard
 domain: [cli, docs, app]
-skill: ""
+skill: 
 skills_aux: []
-status: 1-backlog
+status: 2-sprint
 branch: claude/claude-loops-lytos-wtkc94
 depends: []
 created: 2026-08-09
-updated: 2026-08-09
+updated: 2026-08-10
 schema_version: 2
 ---
 # ISS-0124 — Le récit du projet, dérivé au lieu d'écrit

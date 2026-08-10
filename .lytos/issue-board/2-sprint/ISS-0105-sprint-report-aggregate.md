@@ -1,18 +1,18 @@
 ---
 id: ISS-0105
-title: "Rapport de sprint — agrégat des review packets"
+title: Rapport de sprint — agrégat des review packets
 type: feat
 priority: P2-normal
 effort: M
 complexity: standard
 domain: [cli, dx]
-skill: ""
+skill: 
 skills_aux: []
-status: 1-backlog
+status: 2-sprint
 branch: claude/claude-loops-lytos-wtkc94
 depends: [ISS-0103]
 created: 2026-08-09
-updated: 2026-08-09
+updated: 2026-08-10
 schema_version: 2
 ---
 # ISS-0105 — La vue d'ensemble du run de loop

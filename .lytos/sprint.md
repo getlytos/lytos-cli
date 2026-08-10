@@ -1,20 +1,20 @@
-# Sprint #05 — Standards exécutables & proportionnalité (ADR-0005 + ADR-0007)
+# Sprint #06 — Les surfaces de lecture dérivées (le gate humain)
 
-> **Objective**: Intégrer **en priorité** le socle standards. Le quality kit (ISS-0107) rend les gates réels ; la matrice risque→gates (ISS-0114) les rend proportionnels (rien n'est « toujours on ») ; la Definition of Ready (ISS-0115) déplace l'ambiguïté à gauche. C'est le cœur d'ADR-0005/0007 — la rigueur qui assure du bon code quelle que soit la stack, sans sur-ingénierie.
+> **Objective**: Donner à l'humain de quoi *gouverner* ce que le loop produit. Trois vues **dérivées** des issues, même famille (elles lisent le frontmatter + assemblent un récit) : le **review packet** par issue (ISS-0103), le **rapport de sprint** agrégé (ISS-0105), le **journal de bord** du projet (ISS-0124). Le socle (#04 rail + #05 standards) produit la matière ; ce sprint la rend lisible et gouvernable.
 > **Start**: 2026-08-09
-> **Target end**: 2026-08-20 *(sprint un peu plus large : deux issues heavy)*
+> **Target end**: 2026-08-20
 
 ---
 
 ## Why this sprint
 
-Après le rail (#04), le loop peut sélectionner, garer et s'arrêter — mais rien ne garantit encore que le code rendu est **bon**. Ce sprint pose les gates et leur proportionnalité.
+Le loop sait sélectionner, garer, gater, s'arrêter — mais l'humain au gate ne peut gouverner que ce qu'il *voit*. Ces trois surfaces sont l'interface autopilote→pilote.
 
-- **ISS-0107** (quality kit) est la **fondation** : le kit versionné qui héberge le contrat de stack, les configs de gates (+ dimensions repliées d'ADR-0007 : secrets, repro, audit deps, perf, observabilité, compat, doc L0/L3) et la rubrique du relecteur. Tout le reste en dépend.
-- **ISS-0114** (matrice risque→gates) est le **keystone anti-sur-ingénierie** : le champ `risk` sélectionne les gates dus — audit sécu sur `high`, pas sur une typo.
-- **ISS-0115** (Definition of Ready) est le **jumeau amont de la DoD** : une issue non-ready n'entre pas dans le loop. Prévention, pas post-mortem.
+- **ISS-0103** (review packet) est le cœur : diff + preuves de gates + parks + checklist human + verdict + audit, en layout **doute-first** (le vert relégué en fin). Consomme tout ce qu'on a bâti (DoD `verify:`, `park`, `gates`).
+- **ISS-0105** (rapport de sprint) agrège les packets : done/parked, budget, couverture — la vue d'ensemble.
+- **ISS-0124** (`lyt journal`) est le récit du *pourquoi*, dérivé et chronologique — trois lecteurs (stakeholder, onboarding, apprenant).
 
-Rappel : le kit est **stack-agnostique** — chaque dimension est universelle, branchée sur un outil par-stack (comme la conformité DS). C'est ça, « bon quelle que soit la stack ».
+Elles partagent une base commune (lecture de frontmatter + assemblage) — d'où le regroupement.
 
 ---
 
@@ -22,25 +22,21 @@ Rappel : le kit est **stack-agnostique** — chaque dimension est universelle, b
 
 | Issue | Title | Effort | Depends | Status |
 |-------|-------|--------|---------|--------|
-| ISS-0107 | Quality kit versionné — Pilier Standards exécutable | L | — | 4-review ✅ |
-| ISS-0114 | Matrice risque → gates (proportionnalité) | M | ISS-0107 | 4-review ✅ |
-| ISS-0115 | Definition of Ready — le gate d'entrée | M | — | 4-review ✅ |
-
-> **État au 2026-08-09** : les 3 issues sont implémentées (code + tests), 303 tests verts, en `4-review`. Livrées : `lyt` reconnaît le quality kit (`.lytos/quality/`, dogfoodé), `lyt gates ISS-X` résout la matrice risque→gates, `lyt next`/`lyt lint` appliquent la Definition of Ready. Les items `verify: human` / `doc L1` restent à confirmer par le relecteur.
-
----
+| ISS-0103 | `lyt report ISS-X` — review packet (doute-first) | L | ISS-0100, ISS-0101 | sprint |
+| ISS-0105 | Rapport de sprint — agrégat des packets | M | ISS-0103 | sprint |
+| ISS-0124 | `lyt journal` — journal de bord dérivé | M | — | sprint |
 
 ## Suggested order
 
-1. **ISS-0107** d'abord — fondation ; les gates n'existent nulle part ailleurs.
-2. **ISS-0114** après le kit — la matrice sélectionne dans les configs du kit.
-3. **ISS-0115** en parallèle — indépendant ; étend `lyt next` (livré au #04).
+1. **ISS-0103** d'abord — le cœur ; 0105 en dépend, et il pose la base de lecture partagée.
+2. **ISS-0105** après 0103 — agrège les packets.
+3. **ISS-0124** en parallèle — indépendant.
 
 ## Dependency graph
 
 ```
-ISS-0107 (quality kit) ── ISS-0114 (risk → gate matrix)
-ISS-0115 (Definition of Ready) ── indépendant
+ISS-0103 (review packet) ── ISS-0105 (sprint report)
+ISS-0124 (journal) ── indépendant
 ```
 
 ---
@@ -88,6 +84,9 @@ Côté surface-handoff UX (VSCode, App « continue where you left off ») : dire
 ---
 
 ## Previous sprints
+
+### Sprint #05 — Standards & proportionnalité (2026-08-09) ✅ Livré (en review)
+ISS-0107 (quality kit dogfoodé), ISS-0114 (`lyt gates`, matrice risque→gates), ISS-0115 (Definition of Ready via `lyt next`/`lyt lint`). 303 tests verts, en `4-review`.
 
 ### Sprint #04 — Poser le rail (2026-08-09) ✅ Livré (en review)
 ISS-0099 (`lyt next`), ISS-0100 (`parked` + `lyt park`), ISS-0101 (DoD `verify:`), ISS-0102 (`lyt budget`). Code + tests (282 verts), en `4-review` en attente de `close`.
