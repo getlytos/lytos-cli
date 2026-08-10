@@ -142,6 +142,56 @@ cross-referenced issues, never one issue straddling both. The overview is the jo
 
 ---
 
+## An Issue Has Two Gates: Ready and Done
+
+An issue is guarded on both ends. **Definition of Ready** is the entry gate — it stops
+under-specified work from consuming tokens. **Definition of Done** is the exit gate — it says
+what "finished" means, and *who is allowed to say so*.
+
+### Ready — the entry gate
+
+A `## Ready` section states four things: **scope** (one line), **constraints**, **out of scope**
+(explicit — this is the one people skip and the one that saves the most), and a `risk:` value in
+the frontmatter. `npx lyt lint` flags sprint issues that aren't ready, and `npx lyt next` refuses
+to hand one to an agent (reason `not-ready`).
+
+Keep it proportional: on an XS task, Ready is two lines, not a form. The point is to catch
+ambiguity before it becomes a wasted session — not to add ceremony. An agent that hits ambiguity
+mid-work will park the issue (`npx lyt park ISS-XXXX --reason ambiguous-spec`) rather than guess;
+a high rate of `ambiguous-spec` parks is a signal that specification upstream is too thin, not
+that the agent is weak.
+
+### Done — the exit gate, and who verifies each item
+
+Every Definition-of-Done item declares **how it is verified**:
+
+| Marker | Meaning | Who can tick it |
+|--------|---------|-----------------|
+| `— verify: auto` | A machine gate: a test, a typecheck, a lint, a build, a behaviour visible in the diff | The implementer, and any auditor who can re-run it |
+| `— verify: human` | A judgment: wording, taste, product intent, "is this readable by a non-technical reader?" | **Only the accountable human** |
+
+An item with no marker defaults to `auto` and is flagged by `npx lyt lint` as unqualified —
+write the marker rather than letting the default decide for you.
+
+Three consequences that matter in practice:
+
+1. **Tick as you go.** A cross-model audit reads the unchecked list as the truth. Batching ticks
+   at end-of-task silently misses items and burns audit rounds.
+2. **An all-`human` DoD is not agent work.** There is no machine gate to prove anything, so
+   `npx lyt next` will not hand it to a loop. Do it by hand.
+3. **An AI auditor may never tick a `verify: human` item, and must never return `NO_GO` because
+   one is empty.** Doing so makes every such issue unpassable — no model may tick it, so it would
+   bounce between `3-in-progress` and `4-review` forever. The correct verdict is
+   `GO_PENDING_HUMAN`: machine gates green, human judgment handed back, issue stays in
+   `4-review/`.
+
+The one thing that marker does **not** do is excuse missing work. If a DoD item promises a
+deliverable that simply does not exist — documentation never written, a test case never added —
+that is a real defect and a real `NO_GO`, whichever marker it carries. The marker says *who
+verifies* the work, not *whether it was done*.
+
+---
+
 ## How to Apply These Rules
 
 1. Agents load this file **before each task**
