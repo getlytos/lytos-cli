@@ -60,30 +60,41 @@ function cells(line: string): string[] {
   return m[1].split("|").map((c) => c.trim());
 }
 
+/** True for the gate catalog's header row: id | kind | tiers | tool. */
+function isGateHeader(cells: string[]): boolean {
+  if (cells.length < 4) return false;
+  const [id, kind, tiers, tool] = cells.map((c) => c.toLowerCase());
+  return id === "id" && kind === "kind" && tiers === "tiers" && tool === "tool";
+}
+
 /**
  * Parse the gate catalog from `.lytos/quality/kit.md`.
- * Recognizes any markdown table with a header row whose cells are
- * id / kind / tiers / tool (in any case).
+ *
+ * Only a table introduced by the exact `id | kind | tiers | tool` header is a
+ * catalog. The file is documentation as much as data — anchoring on the header
+ * is what lets a project add explanatory tables to its kit without them being
+ * read as gates.
  */
 export function parseGates(content: string): QualityGate[] {
   const lines = content.split(/\r?\n/);
   const gates: QualityGate[] = [];
   let inTable = false;
+  let previousRow: string[] = [];
 
   for (const line of lines) {
     if (!TABLE_ROW.test(line)) {
       inTable = false;
+      previousRow = [];
       continue;
     }
     if (SEPARATOR_ROW.test(line)) {
-      inTable = true; // header seen, data rows follow
+      inTable = isGateHeader(previousRow);
       continue;
     }
     const c = cells(line);
-    if (c.length < 4) continue;
-    // Header row: skip it (the separator flips inTable on).
-    if (c[0].toLowerCase() === "id" && c[1].toLowerCase() === "kind") continue;
+    previousRow = c;
     if (!inTable) continue;
+    if (c.length < 4) continue;
 
     const [id, kindRaw, tiersRaw, tool] = c;
     if (!id) continue;
@@ -155,6 +166,56 @@ export function gatesForRisk(kit: QualityKit, risk: RiskTier): QualityGate[] {
 }
 
 /**
+ * The ADR-0007 floor: the gates mandatory at `low`, therefore mandatory everywhere.
+ *
+ * A project tunes its kit freely ABOVE this line — dropping `ds-conformance` from a
+ * project with no UI is the proportionality the matrix exists for. It may not go
+ * below it: "a project may only tighten — never loosen below `low`" (ISS-0114).
+ * Mirrors the `low` rows of `method/quality/kit.md`.
+ */
+const BASELINE_LOW: readonly string[] = [
+  "tests-unit",
+  "typecheck",
+  "lint",
+  "secrets-scan",
+  "build-reproducible",
+  "doc-L0",
+];
+
+/** Kind strength — a baseline gate may not be downgraded to a softer kind. */
+const KIND_STRENGTH: Record<GateKind, number> = { gate: 3, reviewer: 2, human: 1 };
+
+/**
+ * Ways a project kit loosens the ADR-0007 floor (empty = the contract holds).
+ *
+ * Without this, `gatesForRisk` returns whatever tiers a project wrote and the
+ * "tighten-only" contract lives in prose alone.
+ */
+export function baselineViolations(kit: QualityKit): string[] {
+  const violations: string[] = [];
+  const byId = new Map(kit.gates.map((g) => [g.id, g]));
+
+  for (const id of BASELINE_LOW) {
+    const gate = byId.get(id);
+    if (!gate) {
+      violations.push(`baseline gate "${id}" is missing — mandatory at every risk tier`);
+      continue;
+    }
+    const dropped = TIER_VALUES.filter((t) => !gate.tiers.includes(t));
+    if (dropped.length > 0) {
+      violations.push(
+        `baseline gate "${id}" no longer applies at ${dropped.join(", ")} — a project may tighten the floor, never loosen it`,
+      );
+    }
+    if (KIND_STRENGTH[gate.kind] < KIND_STRENGTH.gate) {
+      violations.push(`baseline gate "${id}" was downgraded to "${gate.kind}" — it must stay a machine gate`);
+    }
+  }
+
+  return violations;
+}
+
+/**
  * The risk tier of an issue (ADR-0007 §1): the `risk` frontmatter field, or
  * `medium` as the safe default when absent or invalid.
  */
@@ -168,7 +229,11 @@ export function riskOf(risk: FrontmatterValue | undefined): RiskTier {
  * gate ids that do NOT resolve to a kit entry (so `lyt doctor` can flag them).
  */
 export function unresolvedGateRefs(content: string, kit: QualityKit): string[] {
-  const ids = new Set(kit.gates.map((g) => g.id));
+  // Both sides are lowercased: the reference is matched case-insensitively, so
+  // the catalog must be too. The shipped kit ships `doc-L0` and `doc-L3` —
+  // comparing a lowercased ref against a raw id makes those two permanently
+  // unresolvable and every DoD item pinning them a false positive.
+  const ids = new Set(kit.gates.map((g) => g.id.toLowerCase()));
   const refs = new Set<string>();
   const re = /verify:\s*auto:([a-z0-9][a-z0-9-]*)/gi;
   let m: RegExpExecArray | null;

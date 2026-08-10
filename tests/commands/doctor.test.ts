@@ -39,10 +39,22 @@ function createValidLytos(cwd: string): void {
     mkdirSync(lyt(dir), { recursive: true });
   }
 
-  // A healthy project carries a quality kit (ADR-0005/0007, ISS-0107).
+  // A healthy project carries a quality kit (ADR-0005/0007, ISS-0107), and its
+  // kit holds the six `low` floor gates that `lyt init` ships — removing one is
+  // the loosening the risk matrix forbids (ISS-0114).
   writeFileSync(
     lyt("quality/kit.md"),
-    "# Quality kit\n\n| id | kind | tiers | tool |\n|----|------|-------|------|\n| tests-unit | gate | low,medium,high | npm test |\n"
+    `# Quality kit
+
+| id | kind | tiers | tool |
+|----|------|-------|------|
+| tests-unit | gate | low,medium,high | npm test |
+| typecheck | gate | low,medium,high | tsc --noEmit |
+| lint | gate | low,medium,high | eslint |
+| secrets-scan | gate | low,medium,high | gitleaks detect |
+| build-reproducible | gate | low,medium,high | lockfile committed |
+| doc-L0 | gate | low,medium,high | public API documented |
+`
   );
 
   writeFileSync(lyt("manifest.md"), `# Manifest — test
@@ -404,6 +416,34 @@ schema_version: 2
     );
     expect(schemaFindings).toHaveLength(1);
     expect(schemaFindings[0].file).toContain("ISS-0001-v1.md");
+  });
+
+  it("warns when a kit loosens below the risk floor (ISS-0114)", () => {
+    fixture = createEmptyFixture();
+    createValidLytos(fixture.cwd);
+    // Drop `secrets-scan` and demote `lint` out of the low tier — both are
+    // loosenings the tighten-only contract forbids.
+    writeFileSync(
+      resolve(fixture.cwd, ".lytos/quality/kit.md"),
+      `# Quality kit
+
+| id | kind | tiers | tool |
+|----|------|-------|------|
+| tests-unit | gate | low,medium,high | npm test |
+| typecheck | gate | low,medium,high | tsc --noEmit |
+| lint | gate | medium,high | eslint |
+| build-reproducible | gate | low,medium,high | lockfile committed |
+| doc-L0 | gate | low,medium,high | public API documented |
+`
+    );
+
+    const data = JSON.parse(run("doctor --json", fixture.cwd).stdout);
+    const findings = data.findings.filter((f: { message: string }) =>
+      f.message.includes("Loosened below the risk baseline")
+    );
+    expect(findings).toHaveLength(2);
+    expect(findings.some((f: { message: string }) => f.message.includes('"secrets-scan" is missing'))).toBe(true);
+    expect(findings.some((f: { message: string }) => f.message.includes('"lint" no longer applies at low'))).toBe(true);
   });
 
   it("warns when a git repo lacks the lytos-issue merge driver (ISS-0093)", () => {

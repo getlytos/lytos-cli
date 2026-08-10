@@ -3,11 +3,14 @@
  */
 
 import { describe, it, expect } from "vitest";
+import { readFileSync } from "fs";
+import { join } from "path";
 import {
   parseGates,
   parseStack,
   validateKit,
   gatesForRisk,
+  baselineViolations,
   unresolvedGateRefs,
   type QualityKit,
 } from "../../src/lib/quality.js";
@@ -33,6 +36,20 @@ describe("parseGates", () => {
 
   it("ignores prose that is not a table", () => {
     expect(parseGates("# Title\n\nno table here\n")).toEqual([]);
+  });
+
+  it("ignores a documentation table that is not the gate catalog", () => {
+    const withProse = `${KIT_MD}
+## The three kinds
+
+| \`kind\` | What it means | Who runs it | Prevents |
+|--------|---------------|-------------|----------|
+| \`gate\` | A command exits non-zero | CI | drift |
+| \`human\` | Needs taste | The human | rubber-stamping |
+`;
+    expect(parseGates(withProse).map((g) => g.id)).toEqual([
+      "tests-unit", "deps-audit", "over-engineering", "screen-reader",
+    ]);
   });
 });
 
@@ -92,5 +109,61 @@ describe("unresolvedGateRefs", () => {
 
   it("returns nothing when all refs resolve", () => {
     expect(unresolvedGateRefs("- [ ] x — verify: auto:deps-audit", kit)).toEqual([]);
+  });
+});
+
+describe("baselineViolations", () => {
+  const kit = (md: string): QualityKit => ({ gates: parseGates(md), stack: null });
+  const FLOOR = `| id | kind | tiers | tool |
+|----|------|-------|------|
+| tests-unit | gate | low,medium,high | npm test |
+| typecheck | gate | low,medium,high | tsc |
+| lint | gate | low,medium,high | eslint |
+| secrets-scan | gate | low,medium,high | gitleaks |
+| build-reproducible | gate | low,medium,high | lockfile |
+| doc-L0 | gate | low,medium,high | api docs |
+`;
+
+  it("accepts the kit shipped by lyt init", () => {
+    const shipped = kit(readFileSync(join(process.cwd(), "method/quality/kit.md"), "utf-8"));
+    expect(baselineViolations(shipped)).toEqual([]);
+    // The file also carries prose tables. parseGates reads any 4-column table,
+    // so a documentation table must never be mistaken for a gate catalog.
+    expect(validateKit(shipped)).toEqual([]);
+    // Every shipped gate must be referenceable from a DoD item. `doc-L0` and
+    // `doc-L3` carry an uppercase letter, so this also pins the case handling.
+    const refs = shipped.gates.map((g) => `- [ ] x — verify: auto:${g.id}`).join("\n");
+    expect(unresolvedGateRefs(refs, shipped)).toEqual([]);
+  });
+
+  it("accepts tightening above the floor", () => {
+    const tightened = `${FLOOR}| e2e | gate | low,medium,high | playwright |\n| custom | reviewer | high | rubric:x |\n`;
+    expect(baselineViolations(kit(tightened))).toEqual([]);
+  });
+
+  it("allows dropping a non-floor gate — proportionality is the point", () => {
+    const noUi = `${FLOOR}| deps-audit | gate | medium,high | npm audit |\n`;
+    expect(baselineViolations(kit(noUi))).toEqual([]);
+  });
+
+  it("flags a removed floor gate", () => {
+    const missing = FLOOR.split("\n").filter((l) => !l.startsWith("| secrets-scan")).join("\n");
+    const problems = baselineViolations(kit(missing));
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain('baseline gate "secrets-scan" is missing');
+  });
+
+  it("flags a floor gate narrowed to the upper tiers", () => {
+    const narrowed = FLOOR.replace("| lint | gate | low,medium,high |", "| lint | gate | medium,high |");
+    const problems = baselineViolations(kit(narrowed));
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain('baseline gate "lint" no longer applies at low');
+  });
+
+  it("flags a floor gate downgraded to a softer kind", () => {
+    const softened = FLOOR.replace("| typecheck | gate |", "| typecheck | human |");
+    const problems = baselineViolations(kit(softened));
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain('downgraded to "human"');
   });
 });

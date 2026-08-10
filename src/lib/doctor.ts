@@ -14,7 +14,7 @@ import { existsSync, readFileSync, readdirSync, statSync } from "fs";
 import { join, relative } from "path";
 import { parseFrontmatter } from "./frontmatter.js";
 import { checkMergeDriver, GITATTRIBUTES_LINE, MERGE_DRIVER_COMMAND, MERGE_DRIVER_NAME } from "./merge-driver.js";
-import { loadKit, validateKit, unresolvedGateRefs } from "./quality.js";
+import { loadKit, validateKit, baselineViolations, unresolvedGateRefs } from "./quality.js";
 
 export type DiagnosticSeverity = "error" | "warning" | "info";
 
@@ -508,6 +508,18 @@ function checkQualityKit(lytosDir: string): DiagnosticFinding[] {
       file: "quality/kit.md",
       message: `Malformed quality kit: ${problem}`,
       fix: "Fix the gate row: | id | gate|reviewer|human | low,medium,high | tool |",
+    });
+  }
+
+  // The tighten-only contract (ISS-0114): a project may tune the kit above the
+  // `low` floor, never below it.
+  for (const violation of baselineViolations(kit)) {
+    findings.push({
+      severity: "warning",
+      category: "quality-kit",
+      file: "quality/kit.md",
+      message: `Loosened below the risk baseline: ${violation}`,
+      fix: "Restore the gate at low,medium,high — tune tiers above the floor instead, or record the exception in an ADR",
     });
   }
 
