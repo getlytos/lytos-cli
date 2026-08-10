@@ -8,12 +8,14 @@ complexity: heavy
 domain: [cli, dx]
 skill: 
 skills_aux: []
-status: 2-sprint
+status: 4-review
 branch: claude/claude-loops-lytos-wtkc94
 depends: [ISS-0100, ISS-0101]
 created: 2026-08-09
 updated: 2026-08-10
 schema_version: 2
+assignee: Claude
+started_at: 2026-08-10
 ---
 # ISS-0103 — L'interface autopilote → pilote
 
@@ -33,10 +35,10 @@ relecteur + items human-only **au-dessus** du bloc vert. Sortie markdown + `--js
 
 ## Definition of done
 
-- [ ] Packet complet : diff, gates, parks, checklist, verdict, audit — *verify: auto*
+- [x] Packet complet : diff, gates, parks, checklist, verdict, audit — *verify: auto*
 - [ ] Layout « doute d'abord » : vert relégué en fin de rapport — *verify: human*
-- [ ] `--json` pour consommation App ; markdown pour lecture directe — *verify: auto*
-- [ ] Tests de structure (sections présentes, ordre respecté) — *verify: auto*
+- [x] `--json` pour consommation App ; markdown pour lecture directe — *verify: auto*
+- [x] Tests de structure (sections présentes, ordre respecté) — *verify: auto*
 
 ## Notes
 
