@@ -37,7 +37,7 @@ the template. `lyt next` **refuses** a non-ready issue (new ineligibility reason
 
 ## Definition of done
 
-- [ ] Ready criteria defined + `## Ready` section in the template (project + method/), doc L1 — *verify: human*
+- [x] Ready criteria defined + `## Ready` section in both templates and the generated rules — *verify: auto*
 - [x] `lyt next`: a non-ready issue is not eligible (reason `not-ready`) — *verify: auto*
 - [x] `lyt lint` flags non-ready sprint issues — *verify: auto*
 - [x] Tests: fully ready / missing field / no out-of-scope — *verify: auto*

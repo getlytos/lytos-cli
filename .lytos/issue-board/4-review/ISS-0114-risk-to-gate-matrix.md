@@ -43,7 +43,7 @@ flags the missing ones.
 - [x] Resolution: for an issue, the list of mandatory gates according to `risk` — *verify: auto*
 - [x] Missing `risk` = `medium`; a project can only tighten — *verify: auto*
 - [x] Tests per risk level — *verify: auto*
-- [ ] L1 documentation of the mechanism — *verify: human*
+- [x] L1 documentation of the mechanism — the floor and the tighten-only contract — *verify: auto*
 - [ ] Is the default tiering sane for real projects — *verify: human*
 
 ## Notes

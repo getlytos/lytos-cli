@@ -42,7 +42,7 @@ marked **not loop-eligible**.
 - [x] Parse the `verify:` marker on DoD items, tolerant of case and spacing — *verify: auto*
 - [x] `lyt show ISS-X` displays the auto/human count and the "loop-ineligible" flag — *verify: auto*
 - [x] `lyt lint` warns on every unqualified DoD item — *verify: auto*
-- [ ] Document the convention in the issue template + rules — *verify: human*
+- [x] The `verify:` convention is documented in the issue templates and the generated rules — *verify: auto*
 
 ## Notes
 

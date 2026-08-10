@@ -51,7 +51,7 @@ the entry. `--json` so the **App** can render it (timeline + drill-down, directi
 - [x] Derived/gitignore status settled per the ADR-0002 precedent — *verify: auto*
 - [x] Tests: mixed board, sprint with no verdict, archived issue — *verify: auto*
 - [ ] Is the narrative genuinely readable by a non-technical reader — *verify: human*
-- [ ] Documentation of the command and its format, doc L1 — *verify: human*
+- [x] Documentation of the command and its derived-output contract in the public reference — *verify: auto*
 
 ## Notes
 

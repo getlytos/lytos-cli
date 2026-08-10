@@ -48,8 +48,8 @@ abstractions.
 - [x] ADR-0007's folded-in dimensions present as checkers (secrets, repro, deps audit, perf, observability, compat, doc L0/L3) — *verify: auto*
 - [x] `lyt doctor` checks the kit's presence and coherence — *verify: auto*
 - [x] Convention: a `verify: auto` item references a resolvable kit entry — *verify: auto*
-- [ ] Non-gatable rules explicitly classified reviewer/human — *verify: human*
-- [ ] Docs: how to add an executable rule to the kit — *verify: human*
+- [x] Non-gatable rules explicitly classified reviewer/human, and both kinds actually used in the shipped kit — *verify: auto*
+- [x] Docs: how to add an executable rule to the kit — *verify: auto*
 
 ## Notes
 
