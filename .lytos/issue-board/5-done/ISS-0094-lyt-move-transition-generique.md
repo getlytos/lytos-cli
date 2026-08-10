@@ -8,12 +8,13 @@ complexity: light
 domain: [cli, dx]
 skill: 
 skills_aux: []
-status: 4-review
+status: 5-done
 branch: feat/1.4.0-retour-terrain
 depends: []
 created: 2026-08-04
-updated: 2026-08-04
+updated: 2026-08-10
 schema_version: 2
+completed_at: 2026-08-10
 ---
 # ISS-0094 — Un verbe pour chaque transition, pas seulement les extrémités
 
@@ -34,3 +35,16 @@ pour ne pas contourner leurs garde-fous.
 - [x] Transitions libres entre étapes sans verbe dédié, refus documenté sinon
 - [x] `--json`, et le même contrôle d'origine que start (`--force`)
 - [x] Tests par transition, y compris les refus
+
+## Audit — 2026-08-10
+
+**Verdict:** GO
+
+### Checks
+- [x] Tests pass (313)
+- [x] Issue checklist complete
+- [x] Rules respected
+- [x] Documentation aligned
+
+### Notes
+`src/commands/move.ts` keeps lifecycle guardrails by rejecting the two reserved stages, preserves the origin freshness check and has focused transition/refusal coverage.
