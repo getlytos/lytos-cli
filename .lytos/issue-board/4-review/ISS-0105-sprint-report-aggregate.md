@@ -8,12 +8,14 @@ complexity: standard
 domain: [cli, dx]
 skill: 
 skills_aux: []
-status: 2-sprint
+status: 4-review
 branch: claude/claude-loops-lytos-wtkc94
 depends: [ISS-0103]
 created: 2026-08-09
 updated: 2026-08-10
 schema_version: 2
+assignee: Claude
+started_at: 2026-08-10
 ---
 # ISS-0105 — La vue d'ensemble du run de loop
 
@@ -32,9 +34,9 @@ des checklists humaines encore à trancher. Markdown + `--json`.
 
 ## Definition of done
 
-- [ ] Agrégat done/parked (+ raisons), budget, couverture, checklists en attente — *verify: auto*
-- [ ] `--json` + markdown — *verify: auto*
-- [ ] Tests d'agrégation (sprint mixte done/parked/over-budget) — *verify: auto*
+- [x] Agrégat done/parked (+ raisons), budget, couverture, checklists en attente — *verify: auto*
+- [x] `--json` + markdown — *verify: auto*
+- [x] Tests d'agrégation (sprint mixte done/parked/over-budget) — *verify: auto*
 
 ## Notes
 

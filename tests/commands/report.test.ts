@@ -84,3 +84,41 @@ describe("lyt report", () => {
     expect(md.indexOf("À trancher")).toBeLessThan(md.indexOf("Evidence (green)"));
   });
 });
+
+function createSprintFixture(cwd: string): void {
+  const lyt = (p: string) => resolve(cwd, ".lytos", p);
+  for (const dir of ["issue-board/2-sprint", "issue-board/parked", "issue-board/3-in-progress", "issue-board/4-review"]) {
+    mkdirSync(lyt(dir), { recursive: true });
+  }
+  writeFileSync(lyt("sprint.md"), "# Sprint\n\nbudget_usd: 10\n");
+  writeFileSync(
+    lyt("issue-board/2-sprint/ISS-0001.md"),
+    `---\nid: ISS-0001\nstatus: 2-sprint\ncost_usd: 15\n---\n\n## Definition of done\n\n- [x] a — verify: auto\n- [ ] b — verify: human\n`
+  );
+  writeFileSync(
+    lyt("issue-board/parked/ISS-0002.md"),
+    `---\nid: ISS-0002\nstatus: parked\npark_reason: ambiguous-spec\n---\n\n# ISS-0002\n`
+  );
+}
+
+describe("lyt report --sprint", () => {
+  it("aggregates counts, parked reasons, coverage and budget", () => {
+    fixture = createEmptyFixture();
+    createSprintFixture(fixture.cwd);
+    const r = JSON.parse(run("report --sprint --json", fixture.cwd).stdout);
+    expect(r.counts["2-sprint"]).toBe(1);
+    expect(r.counts.parked).toBe(1);
+    expect(r.parkedByReason["ambiguous-spec"]).toBe(1);
+    expect(r.pendingHumanChecklists).toBe(1);
+    expect(r.coverage).toEqual({ done: 1, total: 1, pct: 100 });
+    expect(r.budget.overBudget).toBe(true); // 15 > 10
+  });
+
+  it("renders parked/pending before the totals", () => {
+    fixture = createEmptyFixture();
+    createSprintFixture(fixture.cwd);
+    const md = run("report --sprint", fixture.cwd).stdout;
+    expect(md.indexOf("À trancher")).toBeLessThan(md.indexOf("Evidence (green)"));
+    expect(md).toContain("ambiguous-spec");
+  });
+});

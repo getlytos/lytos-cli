@@ -12,8 +12,12 @@
  */
 
 import { execFileSync } from "child_process";
+import { existsSync, readFileSync, readdirSync } from "fs";
+import { join } from "path";
 import { analyzeDod, type DodItem } from "./dod.js";
 import { loadKit, gatesForRisk, riskOf, type QualityGate } from "./quality.js";
+import { computeBudget, readSprintCeiling, type BudgetReport } from "./budget.js";
+import { parseFrontmatter } from "./frontmatter.js";
 import type { IssueLocation } from "./issue-ops.js";
 import type { FrontmatterValue } from "./frontmatter.js";
 
@@ -175,5 +179,81 @@ export function renderPacket(p: ReviewPacket): string {
   out.push(`- implementer: ${a.model || "—"} · reviewer: ${a.reviewer || "—"} · assignee: ${a.assignee || "—"}`);
   out.push(`- cost: ${a.costUsd || "—"} USD · tokens: ${a.tokensIn || "—"} in / ${a.tokensOut || "—"} out`);
 
+  return out.join("\n") + "\n";
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Sprint report (ADR-0004 §7, ISS-0105) — the aggregate of packets.
+// ─────────────────────────────────────────────────────────────────
+
+const PIPELINE = ["2-sprint", "3-in-progress", "4-review"];
+
+export interface SprintReport {
+  counts: Record<string, number>;
+  parkedByReason: Record<string, number>;
+  pendingHumanChecklists: number;
+  coverage: { done: number; total: number; pct: number };
+  budget: BudgetReport;
+}
+
+/** Aggregate the in-flight pipeline + parked into a sprint-level view. */
+export function buildSprintReport(lytosDir: string): SprintReport {
+  const boardDir = join(lytosDir, "issue-board");
+  const counts: Record<string, number> = { "2-sprint": 0, "3-in-progress": 0, "4-review": 0, parked: 0 };
+  const parkedByReason: Record<string, number> = {};
+  let pendingHuman = 0;
+  let done = 0;
+  let total = 0;
+
+  for (const dir of [...PIPELINE, "parked"]) {
+    const dirPath = join(boardDir, dir);
+    if (!existsSync(dirPath)) continue;
+    for (const file of readdirSync(dirPath).filter((f) => f.startsWith("ISS-") && f.endsWith(".md"))) {
+      const content = readFileSync(join(dirPath, file), "utf-8");
+      const fm = parseFrontmatter(content);
+      counts[dir] = (counts[dir] ?? 0) + 1;
+      if (dir === "parked" && fm) {
+        const reason = str(fm.park_reason) || "unspecified";
+        parkedByReason[reason] = (parkedByReason[reason] ?? 0) + 1;
+      }
+      const dod = analyzeDod(content);
+      pendingHuman += dod.items.filter((i) => i.verify === "human" && !i.done).length;
+      done += dod.autoDone;
+      total += dod.machine;
+    }
+  }
+
+  const ceiling = readSprintCeiling(lytosDir);
+  const budget = computeBudget(lytosDir, { maxUsd: ceiling.maxUsd, maxIssues: ceiling.maxIssues });
+
+  return {
+    counts,
+    parkedByReason,
+    pendingHumanChecklists: pendingHuman,
+    coverage: { done, total, pct: total > 0 ? Math.round((done / total) * 100) : 0 },
+    budget,
+  };
+}
+
+/** Render the sprint report as markdown — parked/pending first, then the totals. */
+export function renderSprintReport(r: SprintReport): string {
+  const out: string[] = [];
+  out.push("# Sprint report");
+  out.push("");
+  out.push("## ⚠ À trancher");
+  const parkedEntries = Object.entries(r.parkedByReason);
+  if (parkedEntries.length > 0) {
+    out.push(`- **Parked** (${r.counts.parked}):`);
+    for (const [reason, n] of parkedEntries) out.push(`  - ${reason}: ${n}`);
+  }
+  out.push(`- **Human checklists pending**: ${r.pendingHumanChecklists}`);
+  if (r.budget.overBudget) for (const b of r.budget.breaches) out.push(`- **Over budget**: ${b}`);
+  out.push("");
+  out.push("## Flow");
+  out.push(`- sprint ${r.counts["2-sprint"]} · in-progress ${r.counts["3-in-progress"]} · review ${r.counts["4-review"]} · parked ${r.counts.parked}`);
+  out.push("");
+  out.push("## Evidence (green)");
+  out.push(`- Machine DoD coverage: ${r.coverage.done}/${r.coverage.total} (${r.coverage.pct}%)`);
+  out.push(`- Budget: $${r.budget.costUsd.toFixed(2)} over ${r.budget.issues} issue(s)${r.budget.hasCeiling ? "" : " (no ceiling set)"}`);
   return out.join("\n") + "\n";
 }
