@@ -4,6 +4,35 @@
 
 ---
 
+## Language — everything in the repo is English
+
+This is a public repository. Anything a stranger can read is written in **English**, without
+exception:
+
+| Artifact | Language |
+|----------|----------|
+| Source code, identifiers, comments | English |
+| Commit messages, branch names, PR titles and bodies | English |
+| Issue fiches — title, body, Definition of Done, audit blocks | English |
+| ADRs, sprint files, memory, rules, skills | English |
+| CLI output, `--help` text, error messages | English |
+| README and every file shipped by `lyt init` | English |
+
+The working conversation between a human and an agent may happen in any language — French,
+usually. That changes nothing about what gets written to disk: **the language of the discussion
+is not the language of the artifact.** An agent asked a question in French answers in French and
+commits in English.
+
+The one deliberate exception is the marketing site (`lytos-website`), which ships French content
+by design.
+
+Why it is a rule and not a preference: a public repo is read by people who were not in the
+conversation. A French issue fiche in an English codebase is a wall for every outside
+contributor, and for every AI session that lands on it cold — which is the whole audience this
+method is built for.
+
+---
+
 ## Commands
 
 | Rule | Detail |
