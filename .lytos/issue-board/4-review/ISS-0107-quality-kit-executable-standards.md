@@ -16,7 +16,7 @@ updated: 2026-08-12
 schema_version: 2
 assignee: Claude
 started_at: 2026-08-09
-review: no-go
+review: pending
 review_at: 2026-08-12
 reviewer: fredericgalline
 ---

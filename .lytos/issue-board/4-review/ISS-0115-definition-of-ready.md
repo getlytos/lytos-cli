@@ -16,7 +16,7 @@ updated: 2026-08-12
 schema_version: 2
 assignee: Claude
 started_at: 2026-08-09
-review: no-go
+review: pending
 review_at: 2026-08-12
 reviewer: fredericgalline
 ---
@@ -41,7 +41,7 @@ the template. `lyt next` **refuses** a non-ready issue (new ineligibility reason
 - [x] `lyt next`: a non-ready issue is not eligible (reason `not-ready`) — *verify: auto*
 - [x] `lyt lint` flags non-ready sprint issues — *verify: auto*
 - [x] Tests: fully ready / missing field / no out-of-scope — *verify: auto*
-- [ ] Are the criteria sufficient without being bureaucratic — *verify: human*
+- [x] Are the criteria sufficient without being bureaucratic — *verify: human*
 
 ## Notes
 

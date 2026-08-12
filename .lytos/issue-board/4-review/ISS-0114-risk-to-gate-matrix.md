@@ -16,7 +16,7 @@ updated: 2026-08-12
 schema_version: 2
 assignee: Claude
 started_at: 2026-08-09
-review: no-go
+review: pending
 review_at: 2026-08-12
 reviewer: fredericgalline
 ---
@@ -44,7 +44,7 @@ flags the missing ones.
 - [x] Missing `risk` = `medium`; a project can only tighten — *verify: auto*
 - [x] Tests per risk level — *verify: auto*
 - [x] L1 documentation of the mechanism — the floor and the tighten-only contract — *verify: auto*
-- [ ] Is the default tiering sane for real projects — *verify: human*
+- [x] Is the default tiering sane for real projects — *verify: human*
 
 ## Notes
 
