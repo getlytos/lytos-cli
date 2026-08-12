@@ -8,16 +8,16 @@ complexity: standard
 domain: [cli, method]
 skill: 
 skills_aux: []
-status: 4-review
+status: 3-in-progress
 branch: claude/claude-loops-lytos-wtkc94
 depends: []
 created: 2026-08-09
-updated: 2026-08-10
+updated: 2026-08-12
 schema_version: 2
 assignee: Claude
 started_at: 2026-08-09
-review: go-pending-human
-review_at: 2026-08-10
+review: no-go
+review_at: 2026-08-12
 reviewer: fredericgalline
 ---
 # ISS-0115 — Catch ambiguity before spending tokens on it
@@ -88,3 +88,44 @@ first-class.
 
 Remaining, and genuinely yours: whether these criteria are sufficient without being bureaucratic.
 The concrete way to answer it — would you accept filling this in on an XS task?
+
+## Audit — 2026-08-12
+
+**Verdict:** NO_GO
+
+### Checks
+- [x] Tests pass (338)
+- [ ] Machine-verifiable DoD items (`verify: auto`) complete
+- [ ] Rules respected
+- [ ] Documentation aligned
+
+### Notes
+[CRITICAL] `src/lib/ready.ts:44` searches the entire issue body for `out of scope`; it does not require the declaration to be in `## Ready`. An unrelated Context or Notes sentence therefore makes an otherwise under-specified sprint issue eligible for `lyt next`, contradicting the entry-gate contract.
+
+### To fix before next review
+- [x] Parse the `## Ready` section and require the out-of-scope declaration within that section.
+- [x] Add a regression where the phrase appears outside Ready and the issue remains `not-ready`.
+
+## Response to audit — 2026-08-12
+
+**Accepted.** `analyzeReady` now extracts the `## Ready` section and tests the out-of-scope
+pattern against that body alone. The heading match is `^ready\b`, so `## Ready` and
+`## Ready — the entry gate` both count; an issue with no such section fails the criterion, which
+is the correct reading of the entry gate rather than a regression.
+
+Two regressions pin it: the phrase under `## Notes` leaves the issue `no-out-of-scope`, and a
+`## Ready` section that declares a scope but no boundary fails too — the second is the one that
+matters, since a Ready section people fill out halfway is likelier than a stray mention.
+
+**The fixture was carrying the defect.** `tests/commands/next.test.ts` built every fixture issue
+with a bare `Out of scope: none.` paragraph and no Ready section, so two `lyt next` tests failed
+on the corrected code. They were asserting the old contract, not the intended one — updated to
+declare the boundary where it binds. Worth recording as the second case this week where a machine
+gate was green because the test encoded the defect (see ISS-0107, defect 2).
+
+Board effect, measured after the change: one sprint issue changes state — **ISS-0067**, already
+flagged in `sprint.md` as a #03 leftover, is now correctly reported `not-ready: risk-unset,
+no-out-of-scope` by both `lyt lint` and `lyt next`. No other issue on the board was relying on a
+stray mention.
+
+Tests 338 → 347 across both fixes; typecheck and eslint clean.

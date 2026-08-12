@@ -20,7 +20,9 @@ const HUMAN_DOD = "## Definition of done\n\n- [ ] Looks right — verify: human\
 
 function issue(id: string, opts: { status: string; priority?: string; depends?: string; dod?: string; risk?: string }): string {
   const risk = opts.risk ? `risk: ${opts.risk}\n` : "";
-  const body = `${opts.dod ?? "## Context\n\nno dod\n"}\n\nOut of scope: none.\n`;
+  // The out-of-scope must sit in `## Ready` to count (ISS-0115 audit, 2026-08-12) —
+  // a loose mention anywhere in the fiche no longer makes an issue ready.
+  const body = `## Ready\n\n- **Out of scope** — none.\n\n${opts.dod ?? "## Context\n\nno dod\n"}\n`;
   return `---\nid: ${id}\ntitle: "${id} title"\ntype: feat\npriority: ${opts.priority ?? "P2-normal"}\neffort: S\n${risk}status: ${opts.status}\ndepends: [${opts.depends ?? ""}]\ncreated: 2026-08-01\n---\n\n# ${id}\n\n${body}`;
 }
 
