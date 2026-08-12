@@ -156,6 +156,10 @@ export function validateKit(kit: QualityKit): string[] {
     for (const t of g.tiers) {
       if (!TIER_VALUES.includes(t)) problems.push(`gate ${g.id}: invalid tier "${t}" (low|medium|high)`);
     }
+    // "A rule with no `tool` binding is not a rule — it is a wish" (method/quality/kit.md).
+    // A `gate` binds to a command; `reviewer`/`human` bind to a `rubric:`/`checklist:` pointer.
+    // Either way the column must say *what* decides the rule, or the row only looks enforced.
+    if (!g.tool.trim()) problems.push(`gate ${g.id}: no tool binding (a gate with no checker is a wish)`);
   }
   return problems;
 }

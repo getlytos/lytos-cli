@@ -14,6 +14,7 @@ import {
   unresolvedGateRefs,
   type QualityKit,
 } from "../../src/lib/quality.js";
+import { analyzeDod } from "../../src/lib/dod.js";
 
 const KIT_MD = `# Quality kit
 
@@ -83,6 +84,14 @@ describe("validateKit", () => {
     expect(problems.some((p) => p.includes("no risk tiers"))).toBe(true);
     expect(problems.some((p) => p.includes("duplicate gate id"))).toBe(true);
   });
+
+  it("flags a gate with no tool binding — a rule with no checker is a wish", () => {
+    const noTool = `| id | kind | tiers | tool |
+|----|------|-------|------|
+| kiss | gate | low |  |
+`;
+    expect(validateKit(kit(noTool)).some((p) => p.includes("no tool binding"))).toBe(true);
+  });
 });
 
 describe("gatesForRisk", () => {
@@ -110,6 +119,14 @@ describe("unresolvedGateRefs", () => {
   it("returns nothing when all refs resolve", () => {
     expect(unresolvedGateRefs("- [ ] x — verify: auto:deps-audit", kit)).toEqual([]);
   });
+
+  it("agrees with the DoD parser on the same item — one syntax, two readers", () => {
+    // The divergence this guards against: the ref resolver read `auto:<id>` while
+    // the DoD parser classified the very same item as unqualified.
+    const item = "- [ ] Dependency audit clean — verify: auto:deps-audit";
+    expect(unresolvedGateRefs(item, kit)).toEqual([]);
+    expect(analyzeDod(`## Definition of done\n\n${item}\n`).auto).toBe(1);
+  });
 });
 
 describe("baselineViolations", () => {
@@ -134,6 +151,15 @@ describe("baselineViolations", () => {
     // `doc-L3` carry an uppercase letter, so this also pins the case handling.
     const refs = shipped.gates.map((g) => `- [ ] x — verify: auto:${g.id}`).join("\n");
     expect(unresolvedGateRefs(refs, shipped)).toEqual([]);
+  });
+
+  it("accepts this project's own kit — the copy `lyt doctor` actually reads", () => {
+    // ISS-0107 audit, 2026-08-12: the dogfood kit had dropped `secrets-scan`, so the
+    // repo that ships the baseline was itself below it. Only `method/quality/kit.md`
+    // was covered — nothing tested the copy this project runs on.
+    const dogfood = kit(readFileSync(join(process.cwd(), ".lytos/quality/kit.md"), "utf-8"));
+    expect(baselineViolations(dogfood)).toEqual([]);
+    expect(validateKit(dogfood)).toEqual([]);
   });
 
   it("accepts tightening above the floor", () => {

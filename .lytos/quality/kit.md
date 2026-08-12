@@ -9,7 +9,8 @@ risk matrix (ADR-0007) selects from here.*
 | tests-unit | gate | low,medium,high | npm test |
 | typecheck | gate | low,medium,high | npm run typecheck |
 | lint | gate | low,medium,high | npm run lint |
-| format | gate | low,medium,high | npm run format -- --check |
+| secrets-scan | gate | low,medium,high | npm run secrets:scan |
+| format | gate | low,medium,high | npm run format:check |
 | build-reproducible | gate | low,medium,high | package-lock.json committed; CI runs the same |
 | doc-L0 | gate | low,medium,high | every command/lib has a header doc comment |
 | deps-audit | gate | medium,high | npm audit --audit-level=high |

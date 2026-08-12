@@ -9,6 +9,14 @@
  *   - [ ] Tests written and green — *verify: auto*
  *   - [ ] The rendering looks right — verify: human
  *
+ * An `auto` item may additionally pin the quality-kit gate that verifies it
+ * (ADR-0005/0007, ISS-0107) — the form the kit documents:
+ *
+ *   - [ ] Secrets scan clean — verify: auto:secrets-scan
+ *
+ * The item is `auto` either way; the id names *which* gate proves it, and
+ * `lyt doctor` flags a reference the catalog cannot resolve.
+ *
  * An item with no marker defaults to `auto` for eligibility purposes but is
  * flagged by `lyt lint` so the author qualifies it explicitly.
  *
@@ -49,7 +57,13 @@ export interface DodAnalysis {
 
 // Trailing `verify: auto|human`, tolerant of the em/en dash, hyphen, parens,
 // asterisks or underscores used to set it off. Anchored to end of the item.
-const VERIFY_RE = /[\s—–\-(*_]*verify\s*:\s*(auto|human)[\s*_)]*$/i;
+//
+// `auto` may pin a quality-kit gate (`auto:<id>`); the id charset matches
+// `unresolvedGateRefs` (quality.ts), which resolves the same reference against
+// the catalog. Only `auto` takes an id — `human:<something>` is not a documented
+// form, so it deliberately fails to match and the item is reported unqualified by
+// `lyt lint` rather than silently accepted.
+const VERIFY_RE = /[\s—–\-(*_]*verify\s*:\s*(?:(human)|(auto)(?::([a-z0-9][a-z0-9-]*))?)[\s*_)]*$/i;
 
 /**
  * Split a raw checklist-item text into its display text and verify mode.
@@ -57,9 +71,10 @@ const VERIFY_RE = /[\s—–\-(*_]*verify\s*:\s*(auto|human)[\s*_)]*$/i;
 export function parseVerifyMode(raw: string): { text: string; verify: VerifyMode | null } {
   const match = raw.match(VERIFY_RE);
   if (match && match.index !== undefined) {
+    // Exactly one alternative matched: `human`, or `auto` (+ optional gate id).
     return {
       text: raw.slice(0, match.index).trim(),
-      verify: match[1].toLowerCase() as VerifyMode,
+      verify: (match[1] ?? match[2]).toLowerCase() as VerifyMode,
     };
   }
   return { text: raw.trim(), verify: null };

@@ -37,6 +37,27 @@ describe("parseVerifyMode", () => {
       verify: null,
     });
   });
+
+  it("reads an auto marker that pins a quality-kit gate, and strips the whole marker", () => {
+    expect(parseVerifyMode("Secrets scan clean — verify: auto:secrets-scan")).toEqual({
+      text: "Secrets scan clean",
+      verify: "auto",
+    });
+  });
+
+  it("accepts a mixed-case gate id — the shipped kit ships doc-L0 and doc-L3", () => {
+    expect(parseVerifyMode("Public API documented — *verify: auto:doc-L0*")).toEqual({
+      text: "Public API documented",
+      verify: "auto",
+    });
+  });
+
+  it("refuses a malformed pin rather than accepting it silently", () => {
+    // No match ⇒ the item is unqualified, which `lyt lint` already reports.
+    // Only `auto` takes an id: `human:<x>` is not a documented form.
+    expect(parseVerifyMode("Item — verify: auto:").verify).toBeNull();
+    expect(parseVerifyMode("Item — verify: human:checklist-a11y").verify).toBeNull();
+  });
 });
 
 describe("extractDodItems", () => {
@@ -69,6 +90,13 @@ describe("analyzeDod", () => {
     const a = analyzeDod(issue("- [ ] Looks right — verify: human\n- [ ] Tone ok — verify: human"));
     expect(a.machine).toBe(0);
     expect(a.loopEligible).toBe(false);
+  });
+
+  it("counts a gate-pinned item as explicit auto, so lint stops flagging it", () => {
+    const a = analyzeDod(issue("- [ ] Secrets scan clean — verify: auto:secrets-scan"));
+    expect(a.auto).toBe(1);
+    expect(a.unqualified).toBe(0); // the counter linter.ts reads
+    expect(a.loopEligible).toBe(true);
   });
 
   it("reports no DoD when the section is empty", () => {
