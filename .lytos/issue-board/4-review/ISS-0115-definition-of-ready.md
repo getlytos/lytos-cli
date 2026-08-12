@@ -8,7 +8,7 @@ complexity: standard
 domain: [cli, method]
 skill: 
 skills_aux: []
-status: 3-in-progress
+status: 4-review
 branch: claude/claude-loops-lytos-wtkc94
 depends: []
 created: 2026-08-09
