@@ -1,6 +1,6 @@
 ---
 id: ISS-0131
-title: "The journal should read what was done, not why we started — a closing summary + durable sprint records"
+title: "A logbook a non-developer can follow — the functional summary written before close"
 type: feat
 priority: P2-normal
 effort: M
@@ -17,131 +17,143 @@ schema_version: 2
 risk: medium
 ---
 
-# ISS-0131 — A logbook derived from the problem statement is not a changelog
+# ISS-0131 — The reader was specified from the start and has never been served
 
-## Context — the mismatch, found by naming the reader
+## Context
 
-`lyt journal` (ISS-0124) derives each entry's one-line "why" from the fiche's `## Context`
-section. That was the right instinct — a derived view cannot rot (ADR-0002 precedent) — but it
-reads the wrong text.
+ISS-0124's Definition of Done carries this line:
 
-**`## Context` is written before the work.** It states the problem we set out to solve. The reader
-this view exists for — stated 2026-08-12: *a lead dev joining the project, reading the progression
-top-down, clicking through to a fiche when they want the detail* — is asking the opposite
-question: **what was actually done, and how did it end?** Nothing in the fiche answers that in one
-sentence. The outcome is spread across the response-to-audit sections, the DoD ticks and the
-verdict field.
+> `- [ ] Is the narrative genuinely readable by a non-technical reader — verify: human`
 
-The gap is structural, not cosmetic: no amount of fixing the derivation makes a problem statement
-into an outcome.
+It is **the only unticked item on that fiche**. The requirement was written before the command
+was built and the implementation never reached it — the work landed, the tests went green, and the
+one criterion that says *who this is for* stayed open.
 
-**And the summary's job is narrower than "explain the change".** It exists to let the reader make
-one decision, issue by issue: *"ok, I understood what they added"* — move on — or *"I did not
-understand"* — open the fiche, read the DoD, run the tests. It is a **routing signal**, not an
-explanation. That reframing sets the acceptance test, and it is unusual: the summary succeeds when
-the reader can **tell which of the two they are in**. A summary that leaves someone unsure whether
-they understood is the failure case, and it is worse than a summary that is plainly too short —
-the too-short one routes correctly, to the fiche.
+What `lyt journal` renders today is derived from each fiche's `## Context` — the problem we set
+out to solve, written **before** the work. It never says what happened, how it ended, or what got
+in the way. And it is written in the vocabulary of whoever was implementing.
 
-Two smaller facts from the same investigation:
+**The reader** (stated 2026-08-12): *a service head who is not a developer and wants to understand
+where the project stands*. The register is **meeting minutes**, or a working notebook: what did we
+do, why, what went wrong, how was it solved, what was hard. Not a changelog, not a technical
+record.
 
-- **`review: go|no-go` is rendered as the entry's outcome**, and most closed fiches carry `—`
-  (no verdict at all). For an onboarding reader, `_(—)_` is noise and `_(no-go)_` on a finished
-  issue is actively misleading.
-- **Sprint sections cannot be built today.** `.lytos/sprint.md` holds the current sprint only,
-  no fiche carries a `sprint` field, and the file is overwritten each sprint — so nothing links
-  an issue to a sprint, and sprints #01–#05 exist nowhere as data. ISS-0124 withdrew the promise
-  rather than fake it; restoring it belongs here.
+Three entries at the right register, from the week of 2026-08-12 — this is the spec:
+
+> **ISS-0107** — On a relié chaque critère de « tâche terminée » au contrôle automatique qui le
+> vérifie : plus de case cochée à la main sans preuve derrière. La revue a aussi révélé qu'une
+> vérification importante manquait — celle qui empêche un mot de passe de se retrouver dans le
+> code — elle a été remise en place.
+
+> **ISS-0115** — Une tâche ne peut plus démarrer tant qu'on n'a pas écrit ce qu'elle *ne* couvre
+> *pas*. Ça évite de lancer un travail mal cadré et de s'en apercevoir trop tard.
+
+> **ISS-0124** — Le journal affichait des résumés coupés au milieu d'une phrase, donc illisibles.
+> Réparé.
+
+(Written in French here because they quote the field conversation. The rendered journal follows
+the repo's language rule; see out-of-scope on ISS-0126.)
+
+**One tension, resolved.** The ask contains two readers: a personal notebook (allusive — you are
+writing to yourself) and a report for someone who was not there (explicit). The external reader
+wins, because it is the stricter constraint: if the service head understands, so will the person
+who was there. The reverse does not hold.
 
 ## Ready
 
-- **Scope** — write durable narrative metadata at the close boundary, and have `lyt journal`
-  prefer it: a one-to-three-sentence **closing summary** per issue, and a **sprint stamp** backed
-  by durable sprint records so the journal can title a section with the sprint objective.
-- **Constraints** — **the human gate must not get heavier.** ISS-0127 established that the human
-  gate is the bottleneck; a `close` that asks the human to *write* prose makes it worse. The agent
-  drafts at handoff, the human validates at close. Backward compatible: an issue with no summary
-  falls back to today's derived Context, so the 23 already-closed fiches keep rendering and
-  nothing regresses. The summary is content, so it must be machine-checkable for *presence*, never
-  for quality.
-- **Out of scope** — the language of historic entries (the untranslated tail of **ISS-0126**: the
-  journal renders French titles because the fiches are French; that is a content decision, not a
-  code path). Rewriting the App's rendering of the journal. Backfilling summaries onto the 23
-  closed fiches — the fallback covers them; a backfill is a separate call.
-- `risk: medium` — it adds a write path on `close`, a frontmatter/section convention every project
-  inherits, and it touches the command the human uses to sign off.
+- **Scope** — one functional summary per issue, drafted by the AI after the review verdict and
+  validated by the human at close; `lyt journal` renders it, with the fields that let a reader
+  situate an entry: clickable issue id, date, sprint, who did the work.
+- **Constraints** — **no vocabulary that is not visible from outside the product.** The human gate
+  must not get heavier (ISS-0127): the AI drafts, the human validates — reading, not writing.
+  Backward compatible: an issue with no summary falls back to today's derived Context, so the 23
+  already-closed fiches keep rendering. Length is proportional to the change — a small fix earns a
+  line, a change people will feel earns a short paragraph. Never a fixed sentence count.
+- **Out of scope** — the language of historic entries (untranslated tail of **ISS-0126**; a
+  content decision, not a code path). Backfilling summaries onto closed fiches — the fallback
+  covers them. Serving as a retrieval index for agents: **explicit non-goal**, see the notes.
+- `risk: medium` — a write path on `close`, a convention every project inherits, and it touches
+  the command the human signs off with.
 
 ## The gesture
 
-**1. A closing summary, drafted at handoff and validated at close.** The agent writes it when it
-moves the issue to `4-review` — the work is fresh, and it is the only moment where "what changed
-versus what we planned" is cheap to state. `lyt close` surfaces it for the human to accept or edit.
+**1. Drafted after the verdict, before close.** Not at the `4-review` handoff: at that point the
+review has not happened, and half the story — what the audit found, what was hard — does not exist
+yet. The sources are the fiche's Context (already functional: it states the problem in usage
+terms), the audit block, and the response to it.
 
-**Its length is proportional to the change, not fixed.** A typo fix earns one line; a change to a
-contract every project inherits earns a short paragraph. This is ADR-0007's proportionality
-applied to prose, and the fiche already carries the two fields that say which case you are in —
-`effort` and `risk`. Do not mandate a sentence count; mandate that the length match the change,
-and let the reviewer judge it.
+**2. The register, enforced by naming the reader in the drafting instruction.** The agent is told
+who it is writing for, and that difficulties belong in the text: *"this took two attempts because
+the first approach broke X"* is exactly the kind of line a service head wants and a changelog never
+carries.
 
-**Its shape follows from the routing job**: what changed, and whether it changes anything *for the
-reader* — a contract, a command, a convention they rely on. Not a narrative of how the work went.
-The exit ramp is the link that is already there: whoever answers "I did not understand" opens the
-fiche, which holds the DoD and its pinned gates (`verify: auto:<id>`, working since ISS-0107), so
-"go run the tests" is one click away without the journal having to carry it.
+What the entry answers, in order: **what did we do**, **why**, and where it applies — **what went
+wrong and how it was solved**, **what was difficult**.
 
-Where it lives is part of the decision: a `## Summary` section reads better and has room for a
-sentence about a deviation; a frontmatter field is easier to validate and to feed `--json`. The
-fiche body is the likelier answer given the frontmatter is already crowded — settle it in the
-issue, do not leave it implicit.
+What it must not contain: file names, function names, regexes, command flags, test counts, the
+`GO`/`NO_GO` vocabulary. If a sentence cannot be understood without knowing the codebase, it
+belongs in the fiche.
 
-**2. `lyt journal` prefers the summary, falls back to the derived Context.** One line of
-precedence, and the whole history keeps working.
+**The one trap specific to this repo:** Lytos is a tool whose *function* is quality machinery, so
+"a quality check was not actually checking anything" is a **functional** fact here, where it would
+be plumbing anywhere else. The line is not "no technical content" — it is **"nothing that is not
+visible from outside the product"**.
 
-**3. Reconsider the verdict column.** `review: go|no-go` is an *audit* outcome and reads as noise
-in a changelog. Either drop it from the rendered entry, or replace it with something an outside
-reader can use. This is a rendering decision with an ISS-0124 DoD item attached to it — decide it
-explicitly rather than inherit it.
+**3. The fields that situate an entry.** Clickable issue id, the **date of the entry itself** (today
+the date only exists as the `## YYYY-MM` section heading — nine issues in a month are
+indistinguishable), the sprint, and the `assignee`. That last one is not decoration: the board runs
+11 issues done by `Claude` against 4 by a human, and for this reader "who did this" is real
+information about how the project is being built.
 
-**4. Durable sprint records, then the sprint stamp.** Sprint files become records
-(`.lytos/sprints/<n>.md`) instead of one overwritten `sprint.md`; `lyt close` stamps `sprint:` on
-the issue; `lyt journal` titles the section with that sprint's objective, falling back to
-`YYYY-MM` for anything unstamped. Lever 4 is separable — if levers 1–3 grow, split it out rather
-than let this issue sprawl.
+**4. The verdict column goes.** `_(go)_` / `_(—)_` means nothing to this reader, and most fiches
+carry `—` anyway. It is replaced by a plain sentence when the review found something worth
+reporting — *"the review caught three problems before it shipped, they were fixed"* — and by
+nothing when it did not. An ISS-0124 DoD item is attached to that column; update it in step.
+
+**5. Durable sprint records, then the sprint stamp.** Sprint files become records
+(`.lytos/sprints/<n>.md`) instead of one overwritten `sprint.md`, `close` stamps `sprint:`, and the
+journal titles its sections with the sprint objective, falling back to `YYYY-MM`. **Separable** —
+if steps 1–4 grow, split this out rather than let the issue sprawl.
 
 ## Definition of done
 
-- [ ] A closing summary is drafted when an issue moves to `4-review`, and `lyt close` presents it for validation — verify: auto
+- [ ] A functional summary is drafted after the review verdict and presented at `lyt close` for validation — verify: auto
 - [ ] Its location (body section vs frontmatter field) is decided and documented in the template and the rules — verify: auto
 - [ ] `lyt journal` renders the summary when present and falls back to the derived Context when absent — verify: auto
+- [ ] Each entry shows its own date, a clickable issue id, the sprint when known, and the assignee — verify: auto
+- [ ] The verdict column is replaced, and ISS-0124's DoD item updated to match — verify: auto
 - [ ] An issue closed without a summary still renders, and `lyt lint` flags the absence — verify: auto
-- [ ] The verdict column decision is implemented and the ISS-0124 DoD item updated to match — verify: auto
-- [ ] Sprint records are durable, `close` stamps `sprint:`, and the journal titles sections with the sprint objective — verify: auto
-- [ ] Unstamped issues still group by `YYYY-MM`; the 23 pre-existing closed fiches render unchanged — verify: auto
+- [ ] Sprint records are durable, `close` stamps `sprint:`, sections carry the sprint objective — verify: auto
+- [ ] The 23 pre-existing closed fiches render unchanged — verify: auto
 - [ ] Tests: summary present / absent, sprint stamped / unstamped, an issue closed before this change — verify: auto
-- [ ] Summary length varies with the change rather than a fixed template — a trivial fix and a contract change do not produce the same size — verify: human
+- [ ] Summary length varies with the change — a trivial fix and a change people will feel do not produce the same size — verify: human
 - [ ] `lyt close` is not measurably heavier for the human — verify: human
-- [ ] Read the rendered journal cold, issue by issue: on each entry, can you tell whether you understood it or need to open the fiche? Entries that leave you unsure are the defect — verify: human
+- [ ] **Give the rendered journal to someone who does not code and ask them what the project has been doing.** If they cannot answer, the item fails — this is ISS-0124's open criterion, and it is the one that decides the issue — verify: human
 
 ## Notes
 
-- Field origin: Frédéric, 2026-08-12 — *"un résumé de ce qui est fait, le plus récent en haut, qui
-  renvoie sur les issues; si quelqu'un intègre le projet et veut savoir ce qui a été fait, il lit
-  la progression et clique pour aller voir l'issue"*. The `lyt close` timing is his; the shift of
-  the drafting to the `4-review` handoff is the one amendment, and its reason is ISS-0127.
-- The plumbing exists: `lyt close` already writes `completed_at` to the frontmatter, so this adds a
-  field to an existing write path rather than a new mechanism.
-- **The trade-off to hold in view:** ISS-0124's premise is that a derived view *cannot rot*. A
-  written summary can be skipped or written lazily — that is a real regression in kind, accepted
-  deliberately because no derivation can produce an outcome from a problem statement. The fallback
-  is what keeps it honest: the view degrades to today's behaviour instead of breaking.
-- **Boundary with ISS-0117 (explain-back).** Different reader, different moment: ISS-0117 has the
-  *accountable human* reconstruct the invariant and the failure mode from memory, at the gate, on
-  `risk: high` — it proves they still hold the system. This summary addresses a *downstream*
-  reader weeks later and proves nothing; it only routes them. The two are not in conflict, but on
-  a `risk: high` issue both would be written on the same fiche within minutes of each other.
-  Settle which feeds which — the explain-back is the richer text and could well be the source the
-  summary is cut from — rather than discovering the duplication during implementation.
-- Watch the failure mode this creates: a summary drafted by the agent and rubber-stamped by a tired
-  human is worse than no summary, because it *looks* like a record. If the human validation turns
-  out to be a formality in practice, the honest move is to label the entry as agent-written in the
-  rendered output rather than pretend it was reviewed.
+- Field origin: Frédéric, 2026-08-12, across the design conversation. His words for the target:
+  *"le chef de service qui n'est pas un développeur et qui veut comprendre l'avancement du projet
+  doit comprendre"*, and for the register: *"comme un compte rendu de réunion... un petit carnet
+  pour noter ses pensées"*.
+- **The human validation is load-bearing, not ceremonial.** An agent that has just spent two hours
+  inside the code drifts back to jargon by default — everything it has just read is technical.
+  Nothing in a schema prevents that. The person reading at `close` *is* the check, which is why
+  step 1 puts the draft in front of them rather than writing it silently.
+- **Boundary with the ADRs.** The ADR holds the decision and its reasoning; the journal says what
+  happened, when, and points at the ADR. The journal never re-explains a decision — otherwise two
+  accounts of the same choice drift apart within a year.
+- **Boundary with ISS-0117 (explain-back).** Different reader, different purpose: ISS-0117 has the
+  accountable human reconstruct the invariant and failure mode at the gate, on `risk: high`, to
+  prove they still hold the system. This summary proves nothing and addresses someone who was not
+  there. On a `risk: high` issue both are written on the same fiche minutes apart — settle which
+  feeds which, rather than discovering the duplication mid-implementation.
+- **Options examined and rejected** (recorded so they are not re-proposed — the ISS-0123 reflex):
+  *composing the summary from the issue's commits* (`Refs: ISS-XXXX` makes the join reliable, 183
+  of the last 200 commits carry it) — rejected because a commit message addresses someone about to
+  read a diff, and using it as the source drags back exactly the register we are removing;
+  *two exits per entry, fiche + commits* — rejected, routing a non-technical reader to a diff is
+  meaningless; *designing the journal as a retrieval index for agents* — rejected as a design
+  driver, because an agent searching for "where did we touch the frontmatter parser" wants the
+  technical noun this journal will not contain. The index role is served by the link: the journal
+  points, the fiche holds the detail.
