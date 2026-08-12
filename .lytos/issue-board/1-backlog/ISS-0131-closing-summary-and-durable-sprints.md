@@ -35,6 +35,14 @@ verdict field.
 The gap is structural, not cosmetic: no amount of fixing the derivation makes a problem statement
 into an outcome.
 
+**And the summary's job is narrower than "explain the change".** It exists to let the reader make
+one decision, issue by issue: *"ok, I understood what they added"* — move on — or *"I did not
+understand"* — open the fiche, read the DoD, run the tests. It is a **routing signal**, not an
+explanation. That reframing sets the acceptance test, and it is unusual: the summary succeeds when
+the reader can **tell which of the two they are in**. A summary that leaves someone unsure whether
+they understood is the failure case, and it is worse than a summary that is plainly too short —
+the too-short one routes correctly, to the fiche.
+
 Two smaller facts from the same investigation:
 
 - **`review: go|no-go` is rendered as the entry's outcome**, and most closed fiches carry `—`
@@ -67,8 +75,19 @@ Two smaller facts from the same investigation:
 
 **1. A closing summary, drafted at handoff and validated at close.** The agent writes it when it
 moves the issue to `4-review` — the work is fresh, and it is the only moment where "what changed
-versus what we planned" is cheap to state. `lyt close` surfaces it for the human to accept or
-edit. One to three sentences, past tense, outcome-first.
+versus what we planned" is cheap to state. `lyt close` surfaces it for the human to accept or edit.
+
+**Its length is proportional to the change, not fixed.** A typo fix earns one line; a change to a
+contract every project inherits earns a short paragraph. This is ADR-0007's proportionality
+applied to prose, and the fiche already carries the two fields that say which case you are in —
+`effort` and `risk`. Do not mandate a sentence count; mandate that the length match the change,
+and let the reviewer judge it.
+
+**Its shape follows from the routing job**: what changed, and whether it changes anything *for the
+reader* — a contract, a command, a convention they rely on. Not a narrative of how the work went.
+The exit ramp is the link that is already there: whoever answers "I did not understand" opens the
+fiche, which holds the DoD and its pinned gates (`verify: auto:<id>`, working since ISS-0107), so
+"go run the tests" is one click away without the journal having to carry it.
 
 Where it lives is part of the decision: a `## Summary` section reads better and has room for a
 sentence about a deviation; a frontmatter field is easier to validate and to feed `--json`. The
@@ -99,8 +118,9 @@ than let this issue sprawl.
 - [ ] Sprint records are durable, `close` stamps `sprint:`, and the journal titles sections with the sprint objective — verify: auto
 - [ ] Unstamped issues still group by `YYYY-MM`; the 23 pre-existing closed fiches render unchanged — verify: auto
 - [ ] Tests: summary present / absent, sprint stamped / unstamped, an issue closed before this change — verify: auto
+- [ ] Summary length varies with the change rather than a fixed template — a trivial fix and a contract change do not produce the same size — verify: human
 - [ ] `lyt close` is not measurably heavier for the human — verify: human
-- [ ] Read the rendered journal as a lead dev joining the project: does it answer "what has been done" — verify: human
+- [ ] Read the rendered journal cold, issue by issue: on each entry, can you tell whether you understood it or need to open the fiche? Entries that leave you unsure are the defect — verify: human
 
 ## Notes
 
@@ -114,6 +134,13 @@ than let this issue sprawl.
   written summary can be skipped or written lazily — that is a real regression in kind, accepted
   deliberately because no derivation can produce an outcome from a problem statement. The fallback
   is what keeps it honest: the view degrades to today's behaviour instead of breaking.
+- **Boundary with ISS-0117 (explain-back).** Different reader, different moment: ISS-0117 has the
+  *accountable human* reconstruct the invariant and the failure mode from memory, at the gate, on
+  `risk: high` — it proves they still hold the system. This summary addresses a *downstream*
+  reader weeks later and proves nothing; it only routes them. The two are not in conflict, but on
+  a `risk: high` issue both would be written on the same fiche within minutes of each other.
+  Settle which feeds which — the explain-back is the richer text and could well be the source the
+  summary is cut from — rather than discovering the duplication during implementation.
 - Watch the failure mode this creates: a summary drafted by the agent and rubber-stamped by a tired
   human is worse than no summary, because it *looks* like a record. If the human validation turns
   out to be a formality in practice, the honest move is to label the entry as agent-written in the
