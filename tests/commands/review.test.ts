@@ -178,6 +178,90 @@ updated: 2026-04-22
     expect(result.stdout).toContain("+export const value = 2;");
   });
 
+  it("scopes the diff to the commits referencing the issue, not the shared branch (ISS-0133)", () => {
+    fixture = createEmptyBoardFixture();
+
+    git(["init", "-b", "main"], fixture.cwd);
+    git(["config", "user.name", "Lytos Test"], fixture.cwd);
+    git(["config", "user.email", "test@example.com"], fixture.cwd);
+    mkdirSync(join(fixture.cwd, "src"), { recursive: true });
+    writeFileSync(join(fixture.cwd, "src", "seed.ts"), "export const seed = 0;\n", "utf-8");
+    git(["add", "."], fixture.cwd);
+    git(["commit", "-m", "chore: seed repo"], fixture.cwd);
+
+    // One branch, two issues — the cloud-session shape CLAUDE.md documents.
+    git(["checkout", "-b", "claude/shared-session"], fixture.cwd);
+    writeFileSync(join(fixture.cwd, "src", "alpha.ts"), "export const alpha = 1;\n", "utf-8");
+    git(["add", "."], fixture.cwd);
+    git(["commit", "-m", "feat: alpha", "-m", "Refs: ISS-9301"], fixture.cwd);
+    writeFileSync(join(fixture.cwd, "src", "beta.ts"), "export const beta = 2;\n", "utf-8");
+    git(["add", "."], fixture.cwd);
+    git(["commit", "-m", "feat: beta", "-m", "Refs: ISS-9302"], fixture.cwd);
+    git(["checkout", "main"], fixture.cwd);
+
+    const fiche = (id: string) => `---
+id: ${id}
+title: "Sample issue ${id}"
+type: feat
+priority: P2-normal
+effort: S
+status: 4-review
+branch: "claude/shared-session"
+depends: []
+created: 2026-08-12
+updated: 2026-08-12
+---
+
+# ${id} — Sample issue
+`;
+    const board = join(fixture.cwd, ".lytos", "issue-board", "4-review");
+    writeFileSync(join(board, "ISS-9301-alpha.md"), fiche("ISS-9301"), "utf-8");
+    writeFileSync(join(board, "ISS-9302-beta.md"), fiche("ISS-9302"), "utf-8");
+
+    const alpha = run("review ISS-9301", fixture.cwd);
+    expect(alpha.exitCode).toBe(0);
+    expect(alpha.stdout).toContain("only the commits that reference ISS-9301");
+    expect(alpha.stdout).toContain("export const alpha = 1;");
+    // The defect this guards: beta shipped on the same branch, and a branch-range
+    // diff put it in front of ISS-9301's auditor, who then reported it here.
+    expect(alpha.stdout).not.toContain("export const beta = 2;");
+
+    const beta = run("review ISS-9302", fixture.cwd);
+    expect(beta.stdout).toContain("export const beta = 2;");
+    expect(beta.stdout).not.toContain("export const alpha = 1;");
+  });
+
+  it("falls back to the branch diff and says the scoping is unreliable (ISS-0133)", () => {
+    fixture = createEmptyBoardFixture();
+
+    git(["init", "-b", "main"], fixture.cwd);
+    git(["config", "user.name", "Lytos Test"], fixture.cwd);
+    git(["config", "user.email", "test@example.com"], fixture.cwd);
+    mkdirSync(join(fixture.cwd, "src"), { recursive: true });
+    writeFileSync(join(fixture.cwd, "src", "sample.ts"), "export const value = 1;\n", "utf-8");
+    git(["add", "."], fixture.cwd);
+    git(["commit", "-m", "chore: seed repo"], fixture.cwd);
+    git(["checkout", "-b", "feat/ISS-9303-sample"], fixture.cwd);
+    writeFileSync(join(fixture.cwd, "src", "sample.ts"), "export const value = 2;\n", "utf-8");
+    git(["add", "."], fixture.cwd);
+    // No `Refs:` trailer — an issue predating the convention.
+    git(["commit", "-m", "feat: update sample"], fixture.cwd);
+    git(["checkout", "main"], fixture.cwd);
+
+    writeFileSync(
+      join(fixture.cwd, ".lytos", "issue-board", "4-review", "ISS-9303-sample.md"),
+      `---\nid: ISS-9303\ntitle: "Sample"\ntype: feat\npriority: P2-normal\neffort: S\nstatus: 4-review\nbranch: "feat/ISS-9303-sample"\ndepends: []\ncreated: 2026-08-12\nupdated: 2026-08-12\n---\n\n# ISS-9303 — Sample\n`,
+      "utf-8"
+    );
+
+    const result = run("review ISS-9303", fixture.cwd);
+    expect(result.exitCode).toBe(0);
+    // Degrades to the old behaviour, but never silently: an auditor handed an
+    // unscoped diff must know it is unscoped.
+    expect(result.stdout).toContain("Scoping unreliable");
+    expect(result.stdout).toContain("+export const value = 2;");
+  });
+
   it("exits 2 when the issue ID is not in 4-review/", () => {
     fixture = createEmptyBoardFixture();
 

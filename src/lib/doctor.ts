@@ -603,6 +603,15 @@ function collectArchivedIssueIds(boardDir: string): Set<string> {
 }
 
 /**
+ * Directories under `.lytos/` that hold generated, transient artefacts rather
+ * than authored documents. `review/` holds cross-model audit prompts, rebuilt
+ * by `lyt review --export`: they embed a snapshot of the board and its links, so
+ * reading them as live documents reports links that were valid when the snapshot
+ * was taken and have since moved (ISS-0133).
+ */
+const GENERATED_DIRS = new Set(["review"]);
+
+/**
  * Recursively collect all .md files in a directory.
  */
 function collectMarkdownFiles(dir: string): string[] {
@@ -615,6 +624,7 @@ function collectMarkdownFiles(dir: string): string[] {
     const stat = statSync(fullPath);
 
     if (stat.isDirectory()) {
+      if (GENERATED_DIRS.has(entry)) continue;
       results.push(...collectMarkdownFiles(fullPath));
     } else if (entry.endsWith(".md")) {
       results.push(fullPath);

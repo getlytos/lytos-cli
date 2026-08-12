@@ -149,6 +149,34 @@ function tryGitDiff(cwd: string, diffRef: string): string {
   }
 }
 
+/**
+ * The commits that reference this issue, patches included.
+ *
+ * `branch:` says where the work lives; it stopped saying *what this issue
+ * changed* the day cloud sessions started putting a whole sprint on one branch
+ * (an exception CLAUDE.md documents). Four fiches declaring the same branch got
+ * four identical 7113-line diffs, and an auditor reported one issue's defect on
+ * another — the misattribution ISS-0133 exists to stop.
+ *
+ * `Refs: ISS-XXXX` is the join that survives: it is a project rule, and it is on
+ * 183 of the last 200 commits. Searched across all refs on purpose — a fiche
+ * routinely declares one branch while its fixes land on another.
+ *
+ * Returns "" when nothing references the issue, which is the caller's signal to
+ * fall back rather than hand an auditor an empty diff.
+ */
+function tryScopedDiff(cwd: string, issueId: string): string {
+  try {
+    return execFileSync(
+      "git",
+      ["log", "--all", "--no-merges", "--reverse", `--grep=Refs: ${issueId}`, "-p"],
+      { cwd, encoding: "utf-8", maxBuffer: 20 * 1024 * 1024 }
+    ).trim();
+  } catch {
+    return "";
+  }
+}
+
 export interface BuildPromptOptions {
   /** Project root that contains .lytos/ */
   cwd: string;
@@ -169,7 +197,10 @@ export function buildPrompt(opts: BuildPromptOptions): string {
   const issueBody = safeRead(opts.issueFilePath);
   const declaredBranch = issueBranch(issueBody);
   const diffRef = declaredBranch || "HEAD";
-  const diff = tryGitDiff(opts.cwd, diffRef);
+  // Prefer the issue's own commits; fall back to the branch range, loudly.
+  const scoped = tryScopedDiff(opts.cwd, opts.issueId);
+  const diff = scoped || tryGitDiff(opts.cwd, diffRef);
+  const diffIsScoped = scoped.length > 0;
 
   // The audit must happen where the issue says the work lives — not on
   // whatever tree the auditor's session happens to be open on. A re-review
@@ -248,9 +279,11 @@ ${issueBody}
 
 ## 7 — Implementation diff
 
-${declaredBranch
-  ? `The issue declares branch \`${declaredBranch}\`. The diff below is generated from \`git diff main...${declaredBranch}\`:`
-  : `No branch is declared in the issue frontmatter — the diff below is taken from the current \`HEAD\` (\`git diff main...HEAD\`), i.e. the tree this prompt was exported from:`}
+${diffIsScoped
+  ? `Below are **only the commits that reference ${opts.issueId}** (\`Refs: ${opts.issueId}\`), oldest first, with their messages — not the whole branch. Other issues delivered on the same branch are deliberately absent: findings about them are out of scope for this audit.`
+  : declaredBranch
+    ? `⚠️ **Scoping unreliable.** No commit references \`Refs: ${opts.issueId}\`, so the diff below falls back to the whole branch (\`git diff main...${declaredBranch}\`) and **may contain work belonging to other issues delivered on it**. Attribute findings with care, and state in your Notes that the diff was not scoped to this issue.`
+    : `⚠️ **Scoping unreliable.** No commit references \`Refs: ${opts.issueId}\`, and **No branch is declared** in the issue frontmatter — the diff below is the current \`HEAD\` (\`git diff main...HEAD\`), i.e. the tree this prompt was exported from. It **may contain work belonging to other issues**; state that in your Notes.`}
 
 \`\`\`diff
 ${diff}
