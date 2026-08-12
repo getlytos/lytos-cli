@@ -35,28 +35,51 @@ function str(val: FrontmatterValue | undefined): string {
 }
 
 const HEADING = /^#{1,6}\s+(.*)$/;
-const CONTEXT_HEADING = /^context(e)?$/i;
+// `\b`, not `$`: fiches title their section `## Context — why this exists`, and an
+// exact match sent every one of them to the fallback paragraph.
+const CONTEXT_HEADING = /^context(e)?\b/i;
 
-/** One-sentence "why" — the first prose line of the Context section, else the first body line. */
+/**
+ * One-sentence "why" — the first prose **paragraph** of the Context section, else
+ * the first body paragraph, clipped to its first sentence.
+ *
+ * Paragraph, not line (ISS-0124 audit, 2026-08-12): fiches are hard-wrapped around
+ * 90 columns, so reading a single physical line cut every journal entry at the wrap,
+ * mid-sentence. `clip` never saw a sentence boundary to cut on.
+ */
 function firstWhy(content: string): string {
-  const lines = content.split(/\r?\n/);
+  const paragraphs: { inContext: boolean; text: string }[] = [];
   let inContext = false;
-  let firstBody = "";
   let bodyStarted = false;
-  for (const line of lines) {
-    const h = line.match(HEADING);
-    if (h) {
-      inContext = CONTEXT_HEADING.test(h[1].trim());
+  let current: string[] = [];
+
+  const flush = () => {
+    if (current.length > 0 && bodyStarted) {
+      paragraphs.push({ inContext, text: current.join(" ") });
+    }
+    current = [];
+  };
+
+  for (const line of content.split(/\r?\n/)) {
+    const heading = line.match(HEADING);
+    if (heading) {
+      flush();
+      inContext = CONTEXT_HEADING.test(heading[1].trim());
       bodyStarted = true;
       continue;
     }
     const t = line.trim();
-    if (!t || t.startsWith("---") || t.startsWith("- [")) continue;
-    const clean = t.replace(/[*_`]/g, "");
-    if (inContext) return clip(clean);
-    if (bodyStarted && !firstBody) firstBody = clean;
+    // Blank line, frontmatter fence or checklist item — all end a prose paragraph.
+    if (!t || t.startsWith("---") || t.startsWith("- [")) {
+      flush();
+      continue;
+    }
+    current.push(t.replace(/[*_`]/g, ""));
   }
-  return firstBody ? clip(firstBody) : "";
+  flush();
+
+  const context = paragraphs.find((p) => p.inContext);
+  return clip((context ?? paragraphs[0])?.text ?? "");
 }
 
 function clip(s: string): string {
