@@ -1,0 +1,95 @@
+---
+id: ISS-0132
+title: "Format sweep + wire the two unwired gates into CI — after PR #29 lands"
+type: chore
+priority: P2-normal
+effort: S
+complexity: standard
+domain: [cli, ci]
+skill: ""
+skills_aux: []
+status: 1-backlog
+branch: "chore/ISS-0132-format-sweep-and-ci-wiring"
+depends: [ISS-0107]
+created: 2026-08-12
+updated: 2026-08-12
+schema_version: 2
+risk: low
+---
+
+# ISS-0132 — A gate that is permanently red trains the team to ignore red
+
+## Context
+
+ISS-0107 fixed the `format` gate's binding: it pointed at `npm run format -- --check` while the
+script hardcodes `prettier --write`, so running the gate as prescribed **rewrote 51 files instead
+of checking them**. It now points at a real `format:check` — and correctly **exits 1**. `src/` has
+never been prettier-formatted, because the check had never once run.
+
+The gate now tells the truth. Nobody has decided what to do about the truth.
+
+Two related facts from the same pass:
+
+- **Neither new gate runs in CI.** `.github/workflows/ci.yml` runs `lint`, `typecheck`, `build`
+  and `test` — not `format:check`, and not the `secrets:scan` added by ISS-0107. Fixing the
+  formatting without wiring the check puts the repo back in this state within months.
+- **Timing is the whole decision.** A whole-codebase reformat rewrites the whitespace of every
+  line. There are **2 open PRs**, one of which — #29, "Sprint loop-B" — is **72 files, +4661/−29,
+  touching 21 files in `src/`**. Sweeping before it lands forces that PR through a wall of
+  pure-whitespace conflicts: hours of rebase risk for zero value. Five smaller unmerged `fix/`
+  branches will rebase without pain.
+
+## Ready
+
+- **Scope** — run the formatting sweep as one isolated commit, wire `format:check` and
+  `secrets:scan` into CI, and neutralise the `git blame` damage.
+- **Constraints** — **after PR #29 has landed**, never before. The sweep commit must contain
+  *only* formatting: no logic change may ride along, so the diff stays reviewable by inspection
+  (`npm test` green before and after, same test count).
+- **Out of scope** — changing the Prettier configuration itself (line width, quotes). Formatting
+  `tests/` — the glob is `src/**/*.ts` and widening it is a separate call. Any refactor found
+  while reading the reformatted files: open an issue, do not fold it in.
+- `risk: low` — no behaviour change; failure mode is merge friction, which is what the timing
+  constraint exists to avoid.
+
+## The gesture
+
+1. Wait for **PR #29** to land.
+2. `npm run format` as **one commit that does nothing else**.
+3. Add its SHA to a `.git-blame-ignore-revs` file — GitHub honours it automatically, and locally
+   `git blame --ignore-revs-file` does. Without it, the sweep poisons the blame of the whole
+   codebase.
+4. Add `format:check` and `secrets:scan` as CI steps.
+
+## The alternative, which is legitimate
+
+`format` is **not** part of the ADR-0007 baseline floor (`tests-unit`, `typecheck`, `lint`,
+`secrets-scan`, `build-reproducible`, `doc-L0`). It is an addition this project made *above* the
+floor, so this project may equally remove it.
+
+If Prettier is not something we actually care to enforce here, the honest move is to **delete the
+row from `.lytos/quality/kit.md`** — not to keep a gate that is red forever. A permanently red
+gate is worse than no gate: it teaches everyone that red is survivable, which is the one lesson a
+quality kit must never teach.
+
+Whichever branch is taken, it must be taken. This issue is closed by a decision, not by drift.
+
+## Definition of done
+
+- [ ] PR #29 has landed before the sweep commit exists — verify: auto
+- [ ] `npm run format:check` exits 0 — verify: auto
+- [ ] The sweep is a single commit containing only formatting changes; test count unchanged before and after — verify: auto
+- [ ] `.git-blame-ignore-revs` exists and names the sweep commit — verify: auto
+- [ ] `ci.yml` runs `format:check` and `secrets:scan` — verify: auto
+- [ ] Or, if the alternative is chosen: the `format` row is removed from the kit and the reason recorded here — verify: auto
+- [ ] The other unmerged `fix/` branches rebase cleanly, or the conflicts are resolved — verify: human
+
+## Notes
+
+- Field origin: surfaced 2026-08-12 while running the ISS-0107 gates as prescribed — the "check"
+  rewrote 51 files. See ISS-0107's response to audit for the full account.
+- The deeper defect behind it is recorded in **ISS-0129**: nothing validates that a kit `tool`
+  string is a *verifier*. `npm run format -- --check` was a non-empty string, so ISS-0107's
+  empty-tool check would never have caught it.
+- If #29 drags, do not let this sit. The alternative above is the fallback, and it is not a
+  failure — it is proportionality applied to a gate the project added to itself.
