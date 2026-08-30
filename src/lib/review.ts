@@ -158,11 +158,42 @@ export interface BuildPromptOptions {
   issueId: string;
 }
 
+/**
+ * Every rule file of the project, each under its own heading.
+ *
+ * **Read the folder, never a list of names.** Two names were hardcoded here —
+ * `default-rules.md` and `cli-rules.md`. The second is the rules file of the CLI's
+ * OWN repository, so every other project's rules were invisible to the review that
+ * is supposed to enforce them. A project whose rules mandate, say, a mutation
+ * annotation on every guard was audited against rules that never mentioned it.
+ *
+ * `default-rules.md` stays first: it is the universal baseline, and the others sit
+ * on top of it and win on conflict — the hierarchy the rules README declares.
+ */
+function readRules(lytosDir: string): string {
+  const dir = join(lytosDir, "rules");
+
+  if (!existsSync(dir)) return "";
+
+  const files = readdirSync(dir)
+    .filter((f) => f.endsWith(".md") && f !== "README.md")
+    .sort((a, b) =>
+      a === "default-rules.md" ? -1 : b === "default-rules.md" ? 1 : a.localeCompare(b),
+    );
+
+  return files
+    .map((f) => {
+      const body = safeRead(join(dir, f));
+      return body ? `### ${f}\n\n\`\`\`markdown\n${body}\n\`\`\`\n` : "";
+    })
+    .filter(Boolean)
+    .join("\n");
+}
+
 export function buildPrompt(opts: BuildPromptOptions): string {
   const lytosDir = join(opts.cwd, ".lytos");
   const manifest = safeRead(join(lytosDir, "manifest.md"));
-  const defaultRules = safeRead(join(lytosDir, "rules", "default-rules.md"));
-  const cliRules = safeRead(join(lytosDir, "rules", "cli-rules.md"));
+  const rules = readRules(lytosDir);
   const reviewSkill =
     safeRead(join(lytosDir, "skills", "code-review", "SKILL.md")) ||
     safeRead(join(lytosDir, "skills", "code-review.md"));
@@ -209,18 +240,8 @@ ${manifest || "(manifest.md not found — proceed with general software-engineer
 
 ## 4 — Quality rules in scope
 
-### default-rules.md
+${rules || "(no rules/ folder in this project)"}
 
-\`\`\`markdown
-${defaultRules || "(no default-rules.md in this project)"}
-\`\`\`
-${cliRules ? `
-### cli-rules.md
-
-\`\`\`markdown
-${cliRules}
-\`\`\`
-` : ""}
 ## 5 — Review skill to follow
 
 \`\`\`markdown

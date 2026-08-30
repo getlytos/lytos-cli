@@ -547,7 +547,8 @@ If the manifest is empty or incomplete, read first:
 Read these files in order:
 1. .lytos/manifest.md — the project constitution (identity, stack, principles, AI models)
 2. .lytos/memory/MEMORY.md — the memory summary (then load relevant cortex/ sections)
-3. .lytos/rules/default-rules.md — quality criteria
+3. .lytos/rules/ — **all** of them. default-rules.md is the universal baseline; any other file
+   in that folder is project-specific and wins on conflict
 
 ## To work on a task
 
@@ -580,7 +581,8 @@ If the manifest is empty or incomplete, read first:
 Read these files in order:
 1. .lytos/manifest.md — the project constitution (identity, stack, principles, AI models)
 2. .lytos/memory/MEMORY.md — the memory summary (then load relevant cortex/ sections)
-3. .lytos/rules/default-rules.md — quality criteria
+3. .lytos/rules/ — **all** of them. default-rules.md is the universal baseline; any other file
+   in that folder is project-specific and wins on conflict
 
 ## To work on a task
 
@@ -615,7 +617,8 @@ First session (setup): if the manifest is empty, read @.lytos/LYTOS.md to unders
 Every session, read in order:
 1. @.lytos/manifest.md — the project constitution
 2. @.lytos/memory/MEMORY.md — the memory summary (then relevant cortex/ sections)
-3. @.lytos/rules/default-rules.md — quality criteria
+3. @.lytos/rules/ — all of them. default-rules.md is the universal baseline; any other file in
+   that folder is project-specific and wins on conflict
 
 To work on a task:
 4. @.lytos/issue-board/BOARD.md — board state
@@ -646,7 +649,8 @@ If the manifest is empty or incomplete, read first:
 Read these files in order:
 1. \`.lytos/manifest.md\` — the project constitution (identity, stack, principles, AI models)
 2. \`.lytos/memory/MEMORY.md\` — the memory summary (then load relevant \`cortex/\` sections)
-3. \`.lytos/rules/default-rules.md\` — quality criteria
+3. \`.lytos/rules/\` — all of them. \`default-rules.md\` is the universal baseline; any other file
+   in that folder is project-specific and wins on conflict
 
 ## To work on a task
 
@@ -679,7 +683,8 @@ If the manifest is empty or incomplete, read first:
 Read these files in order:
 1. @.lytos/manifest.md — the project constitution (identity, stack, principles, AI models)
 2. @.lytos/memory/MEMORY.md — the memory summary (then load relevant cortex/ sections)
-3. @.lytos/rules/default-rules.md — quality criteria
+3. @.lytos/rules/ — all of them. default-rules.md is the universal baseline; any other file in
+   that folder is project-specific and wins on conflict
 
 ## To work on a task
 
@@ -705,7 +710,8 @@ First session (setup): if the manifest is empty, read .lytos/LYTOS.md to underst
 Every session, read in order:
 1. .lytos/manifest.md — the project constitution
 2. .lytos/memory/MEMORY.md — the memory summary (then relevant cortex/ sections)
-3. .lytos/rules/default-rules.md — quality criteria
+3. .lytos/rules/ — **all** of them. default-rules.md is the universal baseline; any other file
+   in that folder is project-specific and wins on conflict
 
 To work on a task:
 4. .lytos/issue-board/BOARD.md — board state

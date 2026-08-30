@@ -32,6 +32,12 @@ The rest of this skill uses **GitHub Flow** as the default (main + feature branc
 
 **DORA research consistently shows**: shorter-lived branches and faster integration correlate with higher team performance. When in doubt, prefer simpler workflows.
 
+**Merge cadence is not release cadence, and confusing them costs on both sides.** Wanting to ship in
+batches — a sprint, a release train — is a sound instinct, but it applies to the *tag*, not to the
+merge. Holding merges back to group a delivery manufactures stacks; releasing on every merge moves
+the client estate ten times a day. Merge each issue as soon as it is GO, and decide separately what
+ships together. The `2-sprint` column exists for that second decision.
+
 ---
 
 ## Branch naming convention
@@ -59,6 +65,16 @@ type/ISS-XXXX-descriptive-slug
 - The slug is in kebab-case, in French or English depending on the project
 - No branch without an issue — if the work isn't in an issue, create the issue first
 - No long-lived branches — one branch = one issue = one defined scope
+- **A branch starts from the integration branch, never from another work branch.** Stacking is
+  allowed only when the upper issue carries the lower one in its `depends:` **and** the PR says so
+  in its first line. Without both, branch again from `main`
+
+> **Why stacking costs more than it looks.** Every push to a stacked branch must be propagated
+> upward, so one change re-runs CI on every branch above it, and each propagation is a merge that
+> can conflict. Measured on a real project (30/08/2026): five stacked PRs carried **71 of the
+> month's 100 CI runs**, against 8 for `main` — and the propagation merges silently duplicated an
+> issue file across all five branches. The same five issues merged one at a time would have cost
+> five runs and no propagation at all.
 
 ---
 
@@ -168,6 +184,9 @@ The issue folder represents its status. Move the `.md` file at each step change.
 - **Never** push directly to `main` or `dev`
 - Every change goes through a PR
 - A PR must have at least one review (agent or human)
+- **A reviewed and green PR is merged the same working day.** Lytos has a GO gate: once the issue
+  carries `review: go` and CI is green, the only thing left is to merge. A PR that sits is a stack
+  in the making, and everything opened after it inherits the wait
 - Conflicts are resolved on the work branch, not on `dev`
 - After merge, the branch is deleted
 
@@ -210,6 +229,14 @@ Why this PR exists — link to the issue.
 - [ ] Documentation is up to date
 - [ ] Issue is linked
 - [ ] Branch is up to date with `dev`
+- [ ] **One seam** — the PR does one thing. Past roughly 800 changed lines, either split it or write
+      in the PR body why it does not split
+
+> **Why a size ceiling.** Three independent reviews of one project returned GO **with the same
+> reservation** on batches of 2 049, 2 536 and 2 623 lines: the volume exceeds what a review can
+> hold, and it makes a rollback — or finding which change caused a regression — needlessly
+> expensive. A batch that enforces a 300-line-per-file ceiling by shipping 2 049 lines at once
+> contradicts itself.
 
 ---
 
