@@ -178,6 +178,52 @@ updated: 2026-04-22
     expect(result.stdout).toContain("+export const value = 2;");
   });
 
+  it("carries EVERY rules file into the packet, not just default-rules.md (ISS-0135)", () => {
+    // Two names were hardcoded — `default-rules.md` and `cli-rules.md`, the
+    // latter being the rules file of the CLI's own repository. Every other
+    // project's rules were therefore invisible to the review meant to enforce
+    // them: a project whose rules mandate a mutation annotation on every guard
+    // was audited against rules that never mentioned it.
+    fixture = createEmptyBoardFixture();
+    writeReviewIssue(fixture.cwd, "ISS-9300");
+
+    const rulesDir = join(fixture.cwd, ".lytos", "rules");
+    mkdirSync(rulesDir, { recursive: true });
+    writeFileSync(join(rulesDir, "default-rules.md"), "# Baseline\nMax file size 300 lines.\n", "utf-8");
+    writeFileSync(join(rulesDir, "workflow-rules.md"), "# Delivery\nA GO'd PR merges the same day.\n", "utf-8");
+    writeFileSync(join(rulesDir, "README.md"), "# Not a rule\nThis folder explains itself.\n", "utf-8");
+
+    const result = run("review ISS-9300", fixture.cwd);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("### default-rules.md");
+    expect(result.stdout).toContain("Max file size 300 lines.");
+    expect(result.stdout).toContain("### workflow-rules.md");
+    expect(result.stdout).toContain("A GO'd PR merges the same day.");
+    // The folder's own README is documentation, not a criterion.
+    expect(result.stdout).not.toContain("### README.md");
+  });
+
+  it("puts default-rules.md first, since the others sit on top of it (ISS-0135)", () => {
+    // The rules README declares a cumulative hierarchy where project files win
+    // on conflict. Reading them in alphabetical order would put `default` after
+    // `api` or `cli`, and present the baseline as an override.
+    fixture = createEmptyBoardFixture();
+    writeReviewIssue(fixture.cwd, "ISS-9301");
+
+    const rulesDir = join(fixture.cwd, ".lytos", "rules");
+    mkdirSync(rulesDir, { recursive: true });
+    writeFileSync(join(rulesDir, "api-rules.md"), "# API\nPaginate every list.\n", "utf-8");
+    writeFileSync(join(rulesDir, "default-rules.md"), "# Baseline\nMax file size 300 lines.\n", "utf-8");
+
+    const result = run("review ISS-9301", fixture.cwd);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout.indexOf("### default-rules.md")).toBeLessThan(
+      result.stdout.indexOf("### api-rules.md")
+    );
+  });
+
   it("exits 2 when the issue ID is not in 4-review/", () => {
     fixture = createEmptyBoardFixture();
 
