@@ -88,7 +88,7 @@ So the absence of the auth line is not a comment to write. It is an assertion to
 - [x] `release.yml` and `ci.yml` still run the same gates in the same order — verify: auto
 - [ ] A trusted publisher for `lytos-cli` is declared on npmjs.com, naming `getlytos/lytos-cli` and `release.yml` — verify: human
 - [ ] `NPM_TOKEN` is deleted from the repo secrets once an OIDC publish has succeeded — verify: human
-- [ ] npm reports `1.5.0` as `latest`, published by the workflow and not by hand — verify: auto
+- [ ] The first release published by the workflow succeeds and carries a provenance attestation — verify: auto *(amended, see below)*
 
 ## Notes
 
@@ -123,3 +123,25 @@ The `_authToken` assertion was exercised on the three cases before being trusted
 trusted publisher on npmjs.com, then move the `v1.5.0` tag onto the commit that carries this
 workflow. `NPM_TOKEN` stays in the repo secrets until the first OIDC publish succeeds — deleting
 it earlier would remove the only way back.
+
+## Amendment to the DoD — 2026-08-31
+
+The last machine criterion originally read: *"npm reports `1.5.0` as `latest`, published by the
+workflow and not by hand"*. **It can no longer become true**, and it is amended here in the open
+rather than quietly ticked or quietly dropped.
+
+1.5.0 was published from a developer machine on 2026-08-31, after the credential was found dead
+(see ISS-0139's outcome section). npm refuses to republish an existing version, so the corrected
+workflow would now answer `403` on `v1.5.0`: no re-tag, no re-run, and no dry-run can make that
+sentence true.
+
+The criterion is therefore replaced by the event that actually proves the same thing — *the first
+release the workflow publishes* — tracked as **ISS-0142** (1.5.1). Nothing else about this issue
+changes: the OIDC path is written and its four other machine criteria are green, but **it remains
+unproven until a tag goes through it**. That is precisely the state that cost four months, so the
+issue stays in `3-in-progress` rather than moving to review on the strength of a workflow nobody
+has run.
+
+Also worth recording: the 1.5.0 currently on npm has **no provenance attestation** — a hand
+publish from npm 10.9.8 cannot produce one. 1.5.1 will be the first artifact of this package that
+is cryptographically traceable to this repository.
