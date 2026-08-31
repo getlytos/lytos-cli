@@ -8,7 +8,7 @@ complexity: standard
 domain: [cli, ci]
 skill: 
 skills_aux: []
-status: 3-in-progress
+status: 4-review
 branch: chore/ISS-0132-format-sweep-and-ci-wiring
 depends: [ISS-0107]
 created: 2026-08-12
