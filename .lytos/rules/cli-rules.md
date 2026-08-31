@@ -4,6 +4,35 @@
 
 ---
 
+## Language — everything in the repo is English
+
+This is a public repository. Anything a stranger can read is written in **English**, without
+exception:
+
+| Artifact | Language |
+|----------|----------|
+| Source code, identifiers, comments | English |
+| Commit messages, branch names, PR titles and bodies | English |
+| Issue fiches — title, body, Definition of Done, audit blocks | English |
+| ADRs, sprint files, memory, rules, skills | English |
+| CLI output, `--help` text, error messages | English |
+| README and every file shipped by `lyt init` | English |
+
+The working conversation between a human and an agent may happen in any language — French,
+usually. That changes nothing about what gets written to disk: **the language of the discussion
+is not the language of the artifact.** An agent asked a question in French answers in French and
+commits in English.
+
+The one deliberate exception is the marketing site (`lytos-website`), which ships French content
+by design.
+
+Why it is a rule and not a preference: a public repo is read by people who were not in the
+conversation. A French issue fiche in an English codebase is a wall for every outside
+contributor, and for every AI session that lands on it cold — which is the whole audience this
+method is built for.
+
+---
+
 ## Commands
 
 | Rule | Detail |
@@ -48,6 +77,43 @@
 | 5 | When coding is complete: update frontmatter to `4-review`, move file, run `lyt board`; promote to `5-done` only via explicit `lyt close` validation | Yes — mandatory close phase |
 
 **No exception.** Even for "small" tasks. If the agent starts coding on main or without updating the board, the human must stop it.
+
+---
+
+## Definition of done — verification mode (ADR-0004 §4)
+
+On schema v2 issues, **every Definition-of-Done item declares how it is verified**:
+
+| Marker | Meaning | Where it lands |
+|--------|---------|----------------|
+| `— verify: auto` | A machine gate (test, typecheck, lint, build) | the automated gates |
+| `— verify: human` | A judgment/taste/intent item | the human review checklist |
+
+- Unmarked items default to `auto` and are **flagged by `lyt lint`** — qualify them explicitly.
+- A DoD with **at least one `verify: auto`** item is loop-eligible. An **all-`human`** DoD is not loop work — the loop refuses it and leaves it for a human.
+- `lyt show ISS-X` surfaces the auto/human counts and the loop-eligibility flag.
+
+---
+
+## Quality kit — executable Standards (ADR-0005/0007)
+
+The kit lives in `.lytos/quality/`:
+
+- **`kit.md`** — the gate catalog, a markdown table `| id | kind | tiers | tool |`.
+  `kind` ∈ `gate` (machine), `reviewer` (rubric), `human` (checklist). `tiers` lists the
+  risk levels where it is mandatory — the risk matrix (ISS-0114) selects from here. A rule
+  that can't be bound to a checker is `reviewer`/`human`, **never silently enforced**.
+- **`stack.md`** — the stack contract: `lockfile`, `docs_source`, and the allowed-deps list
+  (a new dependency needs an ADR, not a silent add).
+
+To **add an executable rule**: add a row to `kit.md`, fill its `tool` for this stack. A DoD
+item pins a gate with `— verify: auto:<id>`; `lyt doctor` flags unresolved refs and any
+malformed row. A project may only **tighten** tiers, never loosen below `low`.
+
+**The risk → gate matrix (ADR-0007 §1):** an issue's `risk` field (`low|medium|high`,
+**default `medium`** when absent) selects which gates are mandatory. `lyt gates ISS-XXXX`
+resolves them (grouped auto/reviewer/human); `lyt gates` alone prints the whole matrix.
+Nothing is always-on — a low-risk change carries only the `low` gates.
 
 ---
 

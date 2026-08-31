@@ -16,7 +16,16 @@ import {
   countArchived,
   generateBoardMarkdown,
 } from "../lib/board-generator.js";
-import { ok, info, warn, error, cyan, bold, green, dim } from "../lib/output.js";
+import {
+  ok,
+  info,
+  warn,
+  error,
+  cyan,
+  bold,
+  green,
+  dim,
+} from "../lib/output.js";
 
 function findBoardDir(cwd: string): string | null {
   const candidates = [
@@ -59,7 +68,11 @@ export const archiveCommand = new Command("archive")
     "Archive everything in 5-done/ regardless of age (shortcut for --older-than 0d).",
     false
   )
-  .option("--dry-run", "Preview what would move without touching the filesystem.", false)
+  .option(
+    "--dry-run",
+    "Preview what would move without touching the filesystem.",
+    false
+  )
   .action((opts: { olderThan: string; all: boolean; dryRun: boolean }) => {
     const cwd = process.cwd();
     const boardDir = findBoardDir(cwd);
@@ -114,7 +127,8 @@ export const archiveCommand = new Command("archive")
     }
 
     if (opts.dryRun) {
-      const verb = result.moved.length === 1 ? "issue would be" : "issues would be";
+      const verb =
+        result.moved.length === 1 ? "issue would be" : "issues would be";
       info(
         `${result.moved.length} ${verb} archived · ${result.skippedTooRecent.length} kept in 5-done/`
       );
@@ -128,7 +142,11 @@ export const archiveCommand = new Command("archive")
       const data = collectIssues(boardDir);
       const archivedCount = countArchived(boardDir);
       const boardPath = join(boardDir, "BOARD.md");
-      writeFileSync(boardPath, generateBoardMarkdown(data, archivedCount), "utf-8");
+      writeFileSync(
+        boardPath,
+        generateBoardMarkdown(data, archivedCount),
+        "utf-8"
+      );
 
       const verb = result.moved.length === 1 ? "issue" : "issues";
       ok(

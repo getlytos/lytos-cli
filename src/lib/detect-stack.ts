@@ -44,7 +44,8 @@ const detectors: Detector[] = [
       else if (deps.nuxt) stack.framework = "Nuxt";
       else if (deps.react) stack.framework = "React";
       else if (deps.vue) stack.framework = "Vue";
-      else if (deps.svelte || deps["@sveltejs/kit"]) stack.framework = "SvelteKit";
+      else if (deps.svelte || deps["@sveltejs/kit"])
+        stack.framework = "SvelteKit";
       else if (deps.express) stack.framework = "Express";
       else if (deps.fastify) stack.framework = "Fastify";
       else if (deps.hono) stack.framework = "Hono";
@@ -55,7 +56,8 @@ const detectors: Detector[] = [
       else if (deps.mongoose) stack.database = "MongoDB (Mongoose)";
       else if (deps.pg) stack.database = "PostgreSQL";
       else if (deps.mysql2) stack.database = "MySQL";
-      else if (deps.drizzle || deps["drizzle-orm"]) stack.database = "Drizzle ORM";
+      else if (deps.drizzle || deps["drizzle-orm"])
+        stack.database = "Drizzle ORM";
 
       // Tests
       if (deps.vitest) stack.tests = "Vitest";
@@ -65,8 +67,10 @@ const detectors: Detector[] = [
 
       // Package manager (resolve relative to cwd, not process.cwd())
       if (existsSync(join(cwd, "bun.lockb"))) stack.packageManager = "Bun";
-      else if (existsSync(join(cwd, "pnpm-lock.yaml"))) stack.packageManager = "pnpm";
-      else if (existsSync(join(cwd, "yarn.lock"))) stack.packageManager = "Yarn";
+      else if (existsSync(join(cwd, "pnpm-lock.yaml")))
+        stack.packageManager = "pnpm";
+      else if (existsSync(join(cwd, "yarn.lock")))
+        stack.packageManager = "Yarn";
       else stack.packageManager = "npm";
 
       return stack;

@@ -101,9 +101,7 @@ export async function checkForUpdates(currentVersion: string): Promise<void> {
     console.error(
       `  ${yellow("⚠")} Update available: ${dim(currentVersion)} → ${cyan(bold(latest))}`
     );
-    console.error(
-      `    Run ${cyan(bold("lyt update"))} to update`
-    );
+    console.error(`    Run ${cyan(bold("lyt update"))} to update`);
     console.error("");
   }
 }

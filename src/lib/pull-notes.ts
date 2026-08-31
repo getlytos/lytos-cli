@@ -32,7 +32,12 @@ export interface PullNotesScan {
 }
 
 function git(cwd: string, args: string[], timeout = 15_000): string {
-  return execFileSync("git", args, { cwd, encoding: "utf-8", stdio: "pipe", timeout });
+  return execFileSync("git", args, {
+    cwd,
+    encoding: "utf-8",
+    stdio: "pipe",
+    timeout,
+  });
 }
 
 /** True when the path belongs to the Lytos context directory. */
@@ -48,20 +53,34 @@ function isLytosPath(path: string): boolean {
  * on HEAD under another SHA — exactly the manual-cherry-pick history
  * this command replaces.
  */
-export function scanOriginNotes(cwd: string, mainBranch = "main"): PullNotesScan {
+export function scanOriginNotes(
+  cwd: string,
+  mainBranch = "main"
+): PullNotesScan {
   const scan: PullNotesScan = { notes: [], mixed: [], codeOnly: 0 };
 
   const revList = git(cwd, [
-    "rev-list", "--reverse", "--right-only", "--cherry-pick",
+    "rev-list",
+    "--reverse",
+    "--right-only",
+    "--cherry-pick",
     `HEAD...origin/${mainBranch}`,
   ]);
-  const shas = revList.split("\n").map((s) => s.trim()).filter(Boolean);
+  const shas = revList
+    .split("\n")
+    .map((s) => s.trim())
+    .filter(Boolean);
 
   for (const sha of shas) {
     const subject = git(cwd, ["log", "-1", "--format=%s", sha]).trim();
     const shortSha = git(cwd, ["rev-parse", "--short", sha]).trim();
     const files = git(cwd, [
-      "diff-tree", "--no-commit-id", "--name-only", "-r", "--root", sha,
+      "diff-tree",
+      "--no-commit-id",
+      "--name-only",
+      "-r",
+      "--root",
+      sha,
     ])
       .split("\n")
       .map((s) => s.trim())
@@ -93,7 +112,10 @@ export interface CherryPickResult {
  * the message). On the first failure the pick is aborted so the working
  * tree stays clean, and the failure is reported to the caller.
  */
-export function cherryPickNotes(cwd: string, notes: NoteCommit[]): CherryPickResult {
+export function cherryPickNotes(
+  cwd: string,
+  notes: NoteCommit[]
+): CherryPickResult {
   const picked: NoteCommit[] = [];
 
   for (const commit of notes) {

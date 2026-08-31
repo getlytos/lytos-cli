@@ -76,12 +76,28 @@ Every bridge points at the same `.lytos/` directory, so switching tools does not
 | `lyt show [ISS-XXXX]` | Display issue detail with progress bar, or all in-progress issues |
 | `lyt start ISS-XXXX` | Start an issue — move to in-progress, create branch, update board |
 | `lyt move ISS-XXXX <stage>` | Any other transition (e.g. work done → `4-review`) — status, file move, and board in one atomic verb. Stages owned by a richer verb are refused (`3-in-progress` → `lyt start`, `5-done` → `lyt close`) |
+| `lyt claim ISS-XXXX` | Assign an issue to yourself and move it to in-progress (multi-user). `lyt unclaim` releases it back to the sprint |
+| `lyt journal` | Derived logbook — the *why* of closed issues, chronological, grouped by sprint, linked back to each fiche. Regenerated like BOARD.md, never written by hand. `--json` for the App |
 | `lyt pull-notes` | Cherry-pick (`-x`) the `.lytos/`-only commits of `origin/main` missing from HEAD onto the current branch — notes captured on main rejoin the branch board. Mixed commits (code + `.lytos/`) are refused and listed. `--dry-run` previews |
 | `lyt close ISS-XXXX` | Close one issue — promote to `5-done` from `4-review` (or explicitly from in-progress), warns about unchecked items |
 | `lyt close` | Batch-close every issue in 4-review/ → 5-done/ (asks to confirm; `--yes` skips the prompt; `--dry-run` previews) |
-| `lyt review [ISS-XXXX]` | Cross-model audit for issues in `4-review/` — prints a self-contained prompt or ingests a returned audit block (`--accept`). The prompt targets the branch declared by the issue's `branch:` field (and instructs the auditor to check it out); the export warns when `branch:` is empty or missing on origin. Run from a **fresh AI session**, ideally a different vendor than the implementer. |
+| `lyt review [ISS-XXXX]` | Cross-model audit for issues in `4-review/` — prints a self-contained prompt or ingests a returned audit block (`--accept`). The prompt targets the branch declared by the issue's `branch:` field (and instructs the auditor to check it out); the export warns when `branch:` is empty or missing on origin. Run from a **fresh AI session**, ideally a different vendor than the implementer. Three verdicts: `GO`, `NO_GO`, and `GO_PENDING_HUMAN` — the last one for when every machine gate is green but `verify: human` items remain, which no model may tick |
+| `lyt migrate-frontmatter` | Backfill schema v2 fields (`schema_version`, lifecycle dates) on existing issues. Dry-run by default |
+| `lyt absorb` | Merge the AI-wrapper session journal into an issue's audit fields (cost, model, tokens). Dry-run by default |
 | `lyt upgrade` | Pull the latest method files into `.lytos/`. `--migrate-cursor` converts a legacy `.cursorrules` to `.cursor/rules/lytos.mdc`. |
 | `lyt update` | Update lytos-cli to the latest version |
+
+### Loop primitives
+
+The CLI exposes decidable primitives; the wrapper or the App orchestrates them. Each is read-only unless stated.
+
+| Command | What it does |
+|---------|-------------|
+| `lyt next` | The next loop-eligible issue in the sprint — status workable, dependencies satisfied, Definition of Ready met, and a DoD carrying at least one machine-verifiable item. Refuses **and explains** when nothing qualifies |
+| `lyt park ISS-XXXX --reason <code>` | Halt instead of guessing: park an issue out of the flow with a reason from a closed taxonomy (`ambiguous-spec`, `missing-dependency`, `gate-failed`, `budget-exhausted`, `human-judgment-required`, `external-blocker`). `lyt unpark` resumes it |
+| `lyt budget` | Aggregate pipeline cost against a ceiling (`--max-usd`, `--max-issues`, or `budget:` in `sprint.md`). Exits non-zero when breached — a stop condition a `while` loop or CI can read |
+| `lyt gates [ISS-XXXX]` | The gates mandatory at an issue's `risk` level, resolved from the project's quality kit. Rigor follows blast radius: `low` gets the floor, `high` gets everything |
+| `lyt report ISS-XXXX` | The review packet for one issue — diff, gate evidence, parks, human checklist, auditor verdict, audit trail. Laid out **doubt-first**: what needs deciding sits above what is already green. `--sprint` aggregates the whole sprint |
 
 ![lyt show](docs/screenshots/lyt-show.png)
 

@@ -105,7 +105,17 @@ The key point is that finishing code does not immediately mean "done". Work stop
 
 ## Implementer and auditor are two different roles
 
-A first-class Lytos principle: **the AI session that implements an issue does not audit it**. A fresh session — ideally a different vendor or model — runs the review, reads the diff cold, and returns a `GO` or `NO_GO` verdict in a fixed block format. This is what `lyt review ISS-XXXX` is for.
+A first-class Lytos principle: **the AI session that implements an issue does not audit it**. A fresh session — ideally a different vendor or model — runs the review, reads the diff cold, and returns a verdict in a fixed block format. This is what `lyt review ISS-XXXX` is for.
+
+There are three verdicts, and the third one is what keeps the gate honest:
+
+| Verdict | Meaning | Effect |
+|---------|---------|--------|
+| `GO` | No defect; every Definition-of-Done item is satisfied | Stays in `4-review`, ready for `lyt close` |
+| `GO_PENDING_HUMAN` | No defect; every `verify: auto` item is green, but `verify: human` items remain | Stays in `4-review` — the auditor hands the judgment to the human |
+| `NO_GO` | A defect, a failing gate, or a promised deliverable that does not exist | Moves back to `3-in-progress` with a fix list |
+
+`GO_PENDING_HUMAN` exists because an auditing model **cannot** tick a `verify: human` item — that is the whole point of the marker. Without a third verdict, any issue carrying one is unpassable: the model has to call it NO_GO, the implementer cannot fix it, and the issue bounces forever. An auditor must therefore never return NO_GO merely because a `verify: human` box is empty.
 
 Why it matters:
 

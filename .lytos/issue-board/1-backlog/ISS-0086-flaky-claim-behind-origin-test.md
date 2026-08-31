@@ -1,6 +1,6 @@
 ---
 id: ISS-0086
-title: "Flaky : claim.test.ts 'aborts when local main is behind origin' (timeout 5s)"
+title: "Flaky: claim.test.ts 'aborts when local main is behind origin' (5s timeout)"
 type: fix
 priority: P2-normal
 effort: S
@@ -16,17 +16,17 @@ updated: 2026-06-14
 schema_version: 2
 ---
 
-# ISS-0086 — Flaky : claim.test.ts 'aborts when local main is behind origin'
+# ISS-0086 — Flaky: claim.test.ts 'aborts when local main is behind origin'
 
 ## Context
 
-Review Sprint #03 : seule défaillance de la suite complète, intermittente. `tests/commands/claim.test.ts > 'aborts when local main is behind origin'` dépasse le timeout 5 s ; passe en isolation (~1.7 s). Test git/réseau non déterministe, sans rapport avec le code de la branche cloud. Un test flaky qui prouve un comportement ne doit pas dépendre du réseau (cf. default-rules : « the test must prove the bug doesn't come back »).
+Sprint #03 review: the only failure in the full suite, and it is intermittent. `tests/commands/claim.test.ts > 'aborts when local main is behind origin'` exceeds the 5s timeout; it passes in isolation (~1.7s). A non-deterministic git/network test, unrelated to the cloud branch's code. A flaky test that is supposed to prove a behaviour must not depend on the network (cf. default-rules: "the test must prove the bug doesn't come back").
 
 ## Proposed solution
 
-Rendre le test déterministe : mocker l'accès git/réseau (état behind-origin) plutôt que de dépendre d'un appel réel ; ajuster/contrôler le timeout si nécessaire.
+Make the test deterministic: mock the git/network access (the behind-origin state) rather than depending on a real call; adjust or control the timeout if needed.
 
 ## Definition of done
 
-- [ ] Le test ne dépend plus d'un appel réseau réel (dépendance git injectée/mockée).
-- [ ] Stable sur 10 runs consécutifs de la suite complète.
+- [ ] The test no longer depends on a real network call (git dependency injected or mocked).
+- [ ] Stable across 10 consecutive runs of the full suite.

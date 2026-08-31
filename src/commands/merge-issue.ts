@@ -19,7 +19,9 @@ import { mergeIssue } from "../lib/merge-issue.js";
 import { warn, error } from "../lib/output.js";
 
 export const mergeIssueDriverCommand = new Command("_merge-issue")
-  .description("Git merge driver for Lytos issue files (called by git, not by hand)")
+  .description(
+    "Git merge driver for Lytos issue files (called by git, not by hand)"
+  )
   .argument("<base>", "Ancestor version (%O)")
   .argument("<ours>", "Our version (%A) — the merge result is written here")
   .argument("<theirs>", "Their version (%B)")
@@ -32,7 +34,9 @@ export const mergeIssueDriverCommand = new Command("_merge-issue")
       ours = readFileSync(oursPath, "utf-8");
       theirs = readFileSync(theirsPath, "utf-8");
     } catch (err) {
-      error(`_merge-issue: cannot read merge inputs: ${err instanceof Error ? err.message : String(err)}`);
+      error(
+        `_merge-issue: cannot read merge inputs: ${err instanceof Error ? err.message : String(err)}`
+      );
       process.exit(2);
     }
 

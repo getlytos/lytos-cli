@@ -16,7 +16,16 @@ import {
   type GitDateResolver,
   type MigrationPlan,
 } from "../lib/migrate.js";
-import { ok, info, warn, error, bold, cyan, green, dim } from "../lib/output.js";
+import {
+  ok,
+  info,
+  warn,
+  error,
+  bold,
+  cyan,
+  green,
+  dim,
+} from "../lib/output.js";
 
 /**
  * Git-backed date resolver. Both lookups are best-effort: any git failure
@@ -29,10 +38,21 @@ function createGitResolver(): GitDateResolver {
       try {
         const out = execFileSync(
           "git",
-          ["log", "--follow", "--diff-filter=A", "--format=%ad", "--date=short", "--", absPath],
+          [
+            "log",
+            "--follow",
+            "--diff-filter=A",
+            "--format=%ad",
+            "--date=short",
+            "--",
+            absPath,
+          ],
           { encoding: "utf-8", stdio: "pipe" }
         );
-        const lines = out.split("\n").map((s) => s.trim()).filter(Boolean);
+        const lines = out
+          .split("\n")
+          .map((s) => s.trim())
+          .filter(Boolean);
         // git log is newest-first; the oldest add (file's first existence) is last.
         return lines.length > 0 ? lines[lines.length - 1] : null;
       } catch {
@@ -56,7 +76,9 @@ function createGitResolver(): GitDateResolver {
 
 function printReport(plan: MigrationPlan, applied: boolean): void {
   console.error("");
-  console.error(`  ${cyan(bold(applied ? "Migrate frontmatter" : "Migrate frontmatter (dry-run)"))}`);
+  console.error(
+    `  ${cyan(bold(applied ? "Migrate frontmatter" : "Migrate frontmatter (dry-run)"))}`
+  );
   console.error("");
 
   for (const m of plan.migrations) {
@@ -78,7 +100,9 @@ function printReport(plan: MigrationPlan, applied: boolean): void {
   console.error("");
 
   if (applied) {
-    ok(`Migrated ${green(String(plan.toMigrate))} issue${plan.toMigrate === 1 ? "" : "s"}`);
+    ok(
+      `Migrated ${green(String(plan.toMigrate))} issue${plan.toMigrate === 1 ? "" : "s"}`
+    );
   } else if (plan.toMigrate > 0) {
     info("Dry run — no files changed. Re-run with --apply to write.");
   } else {
@@ -88,15 +112,25 @@ function printReport(plan: MigrationPlan, applied: boolean): void {
 }
 
 export const migrateFrontmatterCommand = new Command("migrate-frontmatter")
-  .description("Backfill schema_version + lifecycle dates on existing issues (dry-run by default)")
+  .description(
+    "Backfill schema_version + lifecycle dates on existing issues (dry-run by default)"
+  )
   .option("--apply", "Write the changes (default is a dry run)", false)
   .option("--json", "Output the plan as JSON", false)
-  .option("--include-archive", "Also migrate issues under issue-board/archive/", false)
+  .option(
+    "--include-archive",
+    "Also migrate issues under issue-board/archive/",
+    false
+  )
   .on("--help", () => {
     console.log("");
     console.log("Examples:");
-    console.log("  lyt migrate-frontmatter                  # dry run — show what would change");
-    console.log("  lyt migrate-frontmatter --apply          # write the changes");
+    console.log(
+      "  lyt migrate-frontmatter                  # dry run — show what would change"
+    );
+    console.log(
+      "  lyt migrate-frontmatter --apply          # write the changes"
+    );
     console.log("  lyt migrate-frontmatter --include-archive --apply");
   })
   .action((opts) => {

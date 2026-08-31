@@ -82,7 +82,10 @@ function hasValue(v: Frontmatter[string] | undefined): boolean {
   return typeof v === "string" && v.trim().length > 0;
 }
 
-function collectIssueFiles(boardDir: string, includeArchive: boolean): IssueTarget[] {
+function collectIssueFiles(
+  boardDir: string,
+  includeArchive: boolean
+): IssueTarget[] {
   const targets: IssueTarget[] = [];
   const lytosDir = join(boardDir, "..");
 
@@ -129,7 +132,10 @@ function pushIssuesFrom(
     if (!frontmatter) continue;
 
     const isArchive = dir.startsWith("archive");
-    const id = typeof frontmatter.id === "string" ? frontmatter.id : file.replace(/\.md$/, "");
+    const id =
+      typeof frontmatter.id === "string"
+        ? frontmatter.id
+        : file.replace(/\.md$/, "");
 
     targets.push({
       absPath,
@@ -144,7 +150,10 @@ function pushIssuesFrom(
   }
 }
 
-function computeDelta(target: IssueTarget, resolver: GitDateResolver): IssueMigration {
+function computeDelta(
+  target: IssueTarget,
+  resolver: GitDateResolver
+): IssueMigration {
   const added: AddedField[] = [];
   const skipped: SkippedField[] = [];
   const fm = target.frontmatter;
@@ -188,7 +197,10 @@ export function planMigration(
   const migrations: IssueMigration[] = [];
 
   if (existsSync(boardDir)) {
-    for (const target of collectIssueFiles(boardDir, opts.includeArchive ?? false)) {
+    for (const target of collectIssueFiles(
+      boardDir,
+      opts.includeArchive ?? false
+    )) {
       migrations.push(computeDelta(target, resolver));
     }
   }

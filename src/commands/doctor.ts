@@ -10,7 +10,17 @@ import { Command } from "commander";
 import { existsSync } from "fs";
 import { resolve } from "path";
 import { diagnose, type DiagnosticResult } from "../lib/doctor.js";
-import { ok, error, bold, green, red, yellow, blue, cyan, dim } from "../lib/output.js";
+import {
+  ok,
+  error,
+  bold,
+  green,
+  red,
+  yellow,
+  blue,
+  cyan,
+  dim,
+} from "../lib/output.js";
 
 const CATEGORY_LABELS: Record<string, string> = {
   "broken-link": "Broken Links",
@@ -33,7 +43,9 @@ function displayResults(result: DiagnosticResult): void {
   console.error("");
 
   if (result.findings.length === 0) {
-    ok(`${green(bold("All diagnostics passed"))} — ${result.filesChecked} files checked`);
+    ok(
+      `${green(bold("All diagnostics passed"))} — ${result.filesChecked} files checked`
+    );
     console.error("");
     displayScore(result.score);
     return;
@@ -53,9 +65,11 @@ function displayResults(result: DiagnosticResult): void {
 
     for (const f of findings) {
       const icon =
-        f.severity === "error" ? red("✗") :
-        f.severity === "warning" ? yellow("!") :
-        blue("·");
+        f.severity === "error"
+          ? red("✗")
+          : f.severity === "warning"
+            ? yellow("!")
+            : blue("·");
       console.error(`    ${icon} ${dim(f.file)} ${f.message}`);
       console.error(`      ${dim("→")} ${dim(f.fix)}`);
     }
@@ -69,7 +83,9 @@ function displayResults(result: DiagnosticResult): void {
     parts.push(red(`${result.errors} error${result.errors > 1 ? "s" : ""}`));
   }
   if (result.warnings > 0) {
-    parts.push(yellow(`${result.warnings} warning${result.warnings > 1 ? "s" : ""}`));
+    parts.push(
+      yellow(`${result.warnings} warning${result.warnings > 1 ? "s" : ""}`)
+    );
   }
   if (result.infos > 0) {
     parts.push(blue(`${result.infos} info${result.infos > 1 ? "s" : ""}`));
@@ -83,7 +99,9 @@ function displayResults(result: DiagnosticResult): void {
 function displayScore(score: number): void {
   const colorFn = scoreColor(score);
   const bar = buildScoreBar(score);
-  console.error(`  ${cyan(bold("Health score:"))} ${colorFn(bold(`${score}%`))} ${bar}`);
+  console.error(
+    `  ${cyan(bold("Health score:"))} ${colorFn(bold(`${score}%`))} ${bar}`
+  );
   console.error("");
 }
 
@@ -96,7 +114,9 @@ function buildScoreBar(score: number): string {
 }
 
 export const doctorCommand = new Command("doctor")
-  .description("Full diagnostic — broken links, stale memory, missing skills, health score")
+  .description(
+    "Full diagnostic — broken links, stale memory, missing skills, health score"
+  )
   .option("--json", "Output diagnostics as JSON", false)
   .action((opts) => {
     const cwd = process.cwd();

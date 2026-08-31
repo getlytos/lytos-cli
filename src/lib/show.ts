@@ -8,7 +8,12 @@
 
 import { existsSync, readFileSync, readdirSync } from "fs";
 import { join } from "path";
-import { parseFrontmatter, type Frontmatter, type FrontmatterValue } from "./frontmatter.js";
+import {
+  parseFrontmatter,
+  type Frontmatter,
+  type FrontmatterValue,
+} from "./frontmatter.js";
+import { analyzeDod, type DodAnalysis } from "./dod.js";
 
 export interface ChecklistItem {
   text: string;
@@ -25,6 +30,8 @@ export interface IssueDetail {
   id: string;
   title: string;
   status: string;
+  parkReason: string;
+  parkedAt: string;
   priority: string;
   effort: string;
   skill: string;
@@ -39,6 +46,7 @@ export interface IssueDetail {
   checklistTotal: number;
   progress: number;
   dependencies: DependencyInfo[];
+  dod: DodAnalysis;
   body: string;
 }
 
@@ -53,8 +61,13 @@ export interface IssueSummary {
 }
 
 const STATUS_DIRS = [
-  "0-icebox", "1-backlog", "2-sprint",
-  "3-in-progress", "4-review", "5-done",
+  "0-icebox",
+  "1-backlog",
+  "2-sprint",
+  "3-in-progress",
+  "4-review",
+  "5-done",
+  "parked", // side-state (ADR-0004 §3)
 ];
 
 /**
@@ -102,21 +115,24 @@ export function parseIssueDetail(
   const checklist = parseChecklist(content);
   const checklistDone = checklist.filter((c) => c.done).length;
   const checklistTotal = checklist.length;
-  const progress = checklistTotal > 0
-    ? Math.round((checklistDone / checklistTotal) * 100)
-    : 0;
+  const progress =
+    checklistTotal > 0 ? Math.round((checklistDone / checklistTotal) * 100) : 0;
 
   const dependencies = resolveDependencies(lytosDir, fm);
   const daysOpen = computeDaysOpen(fm);
 
   // Extract body (content after frontmatter, skip the H1 title)
-  const bodyMatch = content.match(/^---[\s\S]*?---\s*\n(?:#[^\n]*\n)?([\s\S]*)/);
+  const bodyMatch = content.match(
+    /^---[\s\S]*?---\s*\n(?:#[^\n]*\n)?([\s\S]*)/
+  );
   const body = bodyMatch ? bodyMatch[1].trim() : "";
 
   return {
     id: str(fm.id),
     title: str(fm.title),
     status: found.dir,
+    parkReason: str(fm.park_reason),
+    parkedAt: str(fm.parked_at),
     priority: str(fm.priority),
     effort: str(fm.effort),
     skill: str(fm.skill),
@@ -131,6 +147,7 @@ export function parseIssueDetail(
     checklistTotal,
     progress,
     dependencies,
+    dod: analyzeDod(content),
     body,
   };
 }
@@ -158,9 +175,10 @@ export function getInProgressSummaries(lytosDir: string): IssueSummary[] {
     const checklist = parseChecklist(content);
     const checklistDone = checklist.filter((c) => c.done).length;
     const checklistTotal = checklist.length;
-    const progress = checklistTotal > 0
-      ? Math.round((checklistDone / checklistTotal) * 100)
-      : 0;
+    const progress =
+      checklistTotal > 0
+        ? Math.round((checklistDone / checklistTotal) * 100)
+        : 0;
 
     summaries.push({
       id: str(fm.id),

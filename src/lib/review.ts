@@ -10,11 +10,22 @@
  * Companion command at src/commands/review.ts drives the UX.
  */
 
-import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFileSync } from "fs";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  renameSync,
+  writeFileSync,
+} from "fs";
 import { execFileSync } from "child_process";
 import { join, dirname } from "path";
-import { parseFrontmatter, serializeFrontmatter, type Frontmatter } from "./frontmatter.js";
-import { currentGitUser, today } from "./issue-ops.js";
+import {
+  parseFrontmatter,
+  serializeFrontmatter,
+  type Frontmatter,
+} from "./frontmatter.js";
+import { currentGitUser, isValidBranchName, today } from "./issue-ops.js";
 
 export interface PendingReview {
   id: string;
@@ -23,7 +34,7 @@ export interface PendingReview {
   hasAudit: boolean;
 }
 
-export type AuditVerdict = "GO" | "NO_GO" | "UNKNOWN";
+export type AuditVerdict = "GO" | "GO_PENDING_HUMAN" | "NO_GO" | "UNKNOWN";
 
 export interface ParsedAudit {
   verdict: AuditVerdict;
@@ -45,8 +56,9 @@ export function listPendingReviews(boardDir: string): PendingReview[] {
     const filePath = join(reviewDir, file);
     const content = readFileSync(filePath, "utf-8");
     const fm = parseFrontmatter(content);
-    const id = (fm && typeof fm.id === "string" ? fm.id : file.replace(/\.md$/, ""));
-    const title = (fm && typeof fm.title === "string" ? fm.title : "?");
+    const id =
+      fm && typeof fm.id === "string" ? fm.id : file.replace(/\.md$/, "");
+    const title = fm && typeof fm.title === "string" ? fm.title : "?";
     const hasAudit = /^##\s+Audit\s+—\s+\d{4}-\d{2}-\d{2}/m.test(content);
     out.push({ id, title, filePath, hasAudit });
   }
@@ -57,7 +69,10 @@ export function listPendingReviews(boardDir: string): PendingReview[] {
  * Resolve the issue file for a given ID inside 4-review/.
  * Returns null if no match is found (issue might be in another column).
  */
-export function findReviewIssue(boardDir: string, issueId: string): string | null {
+export function findReviewIssue(
+  boardDir: string,
+  issueId: string
+): string | null {
   const reviewDir = join(boardDir, "4-review");
   if (!existsSync(reviewDir)) return null;
   for (const file of readdirSync(reviewDir)) {
@@ -109,22 +124,35 @@ export type BranchAuditStatus =
   | { kind: "none" }
   | { kind: "declared"; branch: string; onOrigin: boolean | "unknown" };
 
-export function checkDeclaredBranch(cwd: string, issueFilePath: string): BranchAuditStatus {
+export function checkDeclaredBranch(
+  cwd: string,
+  issueFilePath: string
+): BranchAuditStatus {
   const branch = issueBranch(safeRead(issueFilePath));
   if (!branch) return { kind: "none" };
 
   try {
-    execFileSync("git", ["rev-parse", "--is-inside-work-tree"], { cwd, stdio: "pipe" });
-    execFileSync("git", ["remote", "get-url", "origin"], { cwd, stdio: "pipe" });
+    execFileSync("git", ["rev-parse", "--is-inside-work-tree"], {
+      cwd,
+      stdio: "pipe",
+    });
+    execFileSync("git", ["remote", "get-url", "origin"], {
+      cwd,
+      stdio: "pipe",
+    });
   } catch {
     return { kind: "declared", branch, onOrigin: "unknown" };
   }
 
   try {
-    execFileSync("git", ["rev-parse", "--verify", `refs/remotes/origin/${branch}`], {
-      cwd,
-      stdio: "pipe",
-    });
+    execFileSync(
+      "git",
+      ["rev-parse", "--verify", `refs/remotes/origin/${branch}`],
+      {
+        cwd,
+        stdio: "pipe",
+      }
+    );
     return { kind: "declared", branch, onOrigin: true };
   } catch {
     return { kind: "declared", branch, onOrigin: false };
@@ -149,6 +177,335 @@ function tryGitDiff(cwd: string, diffRef: string): string {
   }
 }
 
+/**
+ * The commits that reference this issue, patches included.
+ *
+ * `branch:` says where the work lives; it stopped saying *what this issue
+ * changed* the day cloud sessions started putting a whole sprint on one branch
+ * (an exception CLAUDE.md documents). Four fiches declaring the same branch got
+ * four identical 7113-line diffs, and an auditor reported one issue's defect on
+ * another — the misattribution ISS-0133 exists to stop.
+ *
+ * `Refs: ISS-XXXX` is the join that survives: it is a project rule, and it is on
+ * 183 of the last 200 commits. Searched across all refs on purpose — a fiche
+ * routinely declares one branch while its fixes land on another.
+ *
+ * Returns "" when nothing references the issue, which is the caller's signal to
+ * fall back rather than hand an auditor an empty diff.
+ */
+function tryScopedDiff(cwd: string, issueId: string): string {
+  try {
+    return execFileSync(
+      "git",
+      [
+        "log",
+        "--all",
+        "--no-merges",
+        "--reverse",
+        `--grep=Refs: ${issueId}`,
+        "-p",
+      ],
+      { cwd, encoding: "utf-8", maxBuffer: 20 * 1024 * 1024 }
+    ).trim();
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * The SHAs of the commits that reference this issue, oldest first.
+ *
+ * Same selection as `tryScopedDiff`, without the patches: the two must
+ * agree, because the whole point of `auditTarget()` below is to check the
+ * *exported* commits against the tree the auditor is sent to.
+ */
+function scopedCommitShas(cwd: string, issueId: string): string[] {
+  try {
+    return execFileSync(
+      "git",
+      [
+        "log",
+        "--all",
+        "--no-merges",
+        "--reverse",
+        `--grep=Refs: ${issueId}`,
+        "--format=%H",
+      ],
+      { cwd, encoding: "utf-8" }
+    )
+      .split("\n")
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * A ref an auditor can actually be sent to.
+ *
+ * `name` is the short branch name — what you pass to `git fetch origin`.
+ * `onOrigin` says whether `origin/<name>` exists, which decides both the
+ * fetch line and whether a fresh clone can reach it at all.
+ */
+interface AuditRef {
+  name: string;
+  onOrigin: boolean;
+}
+
+/** True when the project is a git repo with an `origin` remote. */
+function hasOrigin(cwd: string): boolean {
+  try {
+    execFileSync("git", ["remote", "get-url", "origin"], {
+      cwd,
+      stdio: "pipe",
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function refExists(cwd: string, ref: string): boolean {
+  try {
+    execFileSync("git", ["rev-parse", "--verify", `${ref}^{commit}`], {
+      cwd,
+      stdio: "pipe",
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Every sha in `shas` reachable from `ref`? */
+function containsAll(cwd: string, ref: string, shas: string[]): string[] {
+  return shas.filter((sha) => {
+    try {
+      execFileSync("git", ["merge-base", "--is-ancestor", sha, ref], {
+        cwd,
+        stdio: "pipe",
+      });
+      return false;
+    } catch {
+      return true;
+    }
+  });
+}
+
+/**
+ * Branch-shaped refs that contain every one of `shas`, deduplicated to
+ * short names, the ones an auditor can fetch first.
+ *
+ * `git branch -a` lists `chore/x` and `origin/chore/x` as two entries for
+ * what is one branch. Handing the second to `git fetch origin` produces
+ * `git fetch origin origin/chore/x` — a request for a branch of that
+ * literal name, which does not exist. Collapse them, and remember whether
+ * origin had it.
+ */
+function refsContainingAll(cwd: string, shas: string[]): AuditRef[] {
+  if (shas.length === 0) return [];
+  let acc: string[] | null = null;
+  for (const sha of shas) {
+    let refs: string[];
+    try {
+      refs = execFileSync(
+        "git",
+        ["branch", "-a", "--format=%(refname:short)", "--contains", sha],
+        {
+          cwd,
+          encoding: "utf-8",
+        }
+      )
+        .split("\n")
+        .map((l) => l.trim())
+        .filter((l) => l.length > 0 && !l.includes("HEAD ->"));
+    } catch {
+      return [];
+    }
+    acc = acc === null ? refs : acc.filter((r) => refs.includes(r));
+    if (acc.length === 0) return [];
+  }
+
+  const byName = new Map<string, boolean>();
+  for (const ref of (acc ?? []).filter((r) => isValidBranchName(r))) {
+    const remote = ref.startsWith("origin/");
+    const name = remote ? ref.slice("origin/".length) : ref;
+    if (!isValidBranchName(name)) continue;
+    byName.set(name, (byName.get(name) ?? false) || remote);
+  }
+  // A ref origin already has is worth more than a local-only one: the
+  // auditor is a fresh session, and may be a fresh clone.
+  return [...byName.entries()]
+    .map(([name, onOrigin]) => ({ name, onOrigin }))
+    .sort((a, b) => Number(b.onOrigin) - Number(a.onOrigin));
+}
+
+/**
+ * Where the auditor must run the checks — and whether that tree actually
+ * contains the patches we are about to show them.
+ *
+ * ISS-0133 scoped the *diff* to the issue's own commits, searched across
+ * every ref. It left the *tree* pinned to `branch:`. Those are two answers
+ * to two different questions, and on this very board they diverged: the
+ * four loop-B fiches declared `claude/…wtkc94` while their correction
+ * commits landed on `chore/ISS-0126-…`. An auditor sent to the declared
+ * branch reads a fixed patch and then reproduces the old defect in the
+ * tests — a packet that contradicts itself, and a false NO_GO.
+ *
+ * **The cross-check must use the ref an auditor can retrieve.** The first
+ * version of this function preferred the local branch, and the re-review
+ * caught it committing the very defect it was written to stop: local was
+ * two commits ahead of origin, `contained` was returned, and the packet
+ * still sent a fresh clone to a tree without the fixes. `origin/<branch>`
+ * is authoritative here; local agreement is not evidence.
+ *
+ * `unsafe` is a separate concern: the branch name is interpolated into a
+ * bash fence the prompt tells the auditor to run. `issue-ops.ts` already
+ * gained `isValidBranchName()` for exactly this class of bug; review had
+ * not used it.
+ */
+export type AuditTarget =
+  | { kind: "none" }
+  | { kind: "unsafe"; branch: string }
+  | { kind: "contained"; branch: string; onOrigin: boolean; commits: number }
+  | { kind: "unpushed"; branch: string; missing: string[] }
+  | {
+      kind: "diverged";
+      branch: string;
+      missing: string[];
+      candidates: AuditRef[];
+    };
+
+export function auditTarget(
+  cwd: string,
+  issueId: string,
+  declaredBranch: string | null
+): AuditTarget {
+  if (!declaredBranch) return { kind: "none" };
+  if (!isValidBranchName(declaredBranch))
+    return { kind: "unsafe", branch: declaredBranch };
+
+  const shas = scopedCommitShas(cwd, issueId);
+  const remoteRef = `origin/${declaredBranch}`;
+  const onOrigin = hasOrigin(cwd) && refExists(cwd, remoteRef);
+  const localExists = refExists(cwd, declaredBranch);
+
+  // Nothing to cross-check: no scoped commits (the loud fallback in
+  // section 7 owns that case) or no reachable ref at all.
+  if (shas.length === 0 || (!onOrigin && !localExists)) {
+    return {
+      kind: "contained",
+      branch: declaredBranch,
+      onOrigin,
+      commits: shas.length,
+    };
+  }
+
+  // The ref the auditor will actually retrieve.
+  const auditRef = onOrigin ? remoteRef : declaredBranch;
+  const missing = containsAll(cwd, auditRef, shas);
+  if (missing.length === 0) {
+    return {
+      kind: "contained",
+      branch: declaredBranch,
+      onOrigin,
+      commits: shas.length,
+    };
+  }
+
+  // Present locally but not on origin: not a wrong branch, an unpushed one.
+  // Different defect, different remedy — say which.
+  if (
+    onOrigin &&
+    localExists &&
+    containsAll(cwd, declaredBranch, shas).length === 0
+  ) {
+    return {
+      kind: "unpushed",
+      branch: declaredBranch,
+      missing: missing.map((s) => s.slice(0, 7)),
+    };
+  }
+
+  return {
+    kind: "diverged",
+    branch: declaredBranch,
+    missing: missing.map((sha) => sha.slice(0, 7)),
+    candidates: refsContainingAll(cwd, shas).filter(
+      (r) => r.name !== declaredBranch
+    ),
+  };
+}
+
+/** The `git fetch` + `git worktree add` pair for a retrievable ref. */
+function checkoutBlock(ref: AuditRef, issueId: string): string {
+  return ref.onOrigin
+    ? `\`\`\`bash
+git fetch origin ${ref.name}
+git worktree add /tmp/audit-${issueId} origin/${ref.name}   # or: git checkout ${ref.name}
+\`\`\``
+    : `\`\`\`bash
+git worktree add /tmp/audit-${issueId} ${ref.name}   # or: git checkout ${ref.name}
+\`\`\`
+
+⚠️ This ref exists only locally — \`origin\` does not have it. If you are working from a fresh clone you cannot retrieve it; say so in your Notes rather than auditing a different tree.`;
+}
+
+/** The `**Where to audit:**` paragraph, rendered from an `AuditTarget`. */
+function renderWhereToAudit(target: AuditTarget, issueId: string): string {
+  switch (target.kind) {
+    case "none":
+      return `**Where to audit:** the issue declares no \`branch:\` — this audit covers the CURRENT working tree (HEAD) as-is. State this explicitly in your Notes: your findings apply to the tree you were opened on, not to a declared implementation branch.`;
+
+    case "unsafe":
+      // The value is deliberately NOT placed in a runnable fence.
+      return `**Where to audit:** ⚠️ the issue's \`branch:\` field is **not a valid git branch name** and has been withheld from this prompt — it contained characters that do not belong in a ref (a shell metacharacter, a space, or similar). Do NOT reconstruct it from the fiche and do NOT run it. This audit therefore covers the CURRENT working tree (HEAD) as-is; say so in your Notes, and report the malformed \`branch:\` field as a defect.`;
+
+    case "contained":
+      return `**Where to audit:** the issue declares its work on branch \`${target.branch}\`. Audit THAT branch, not the tree your session was opened on. Place yourself on it first — either check it out, or create a temporary worktree:
+
+${checkoutBlock({ name: target.branch, onOrigin: target.onOrigin }, issueId)}
+
+Run every check (tests, file reads, greps) against that branch.`;
+
+    case "unpushed":
+      return `**Where to audit:** ⚠️ **the corrections exist only on someone's local machine.** The fiche declares \`${target.branch}\`, and a local branch of that name does contain every commit in the diff below — but \`origin/${target.branch}\` does not: ${target.missing.map((s) => `\`${s}\``).join(", ")} were never pushed.
+
+Fetching and auditing \`${target.branch}\` gets you the tree *before* those commits. You would read the corrected patches in section 7 and then reproduce the old behaviour in the tests.
+
+**Do not run the checks.** Report this: the work is unpushed, and the audit cannot proceed until it is. This is a one-command fix for the implementer, not a defect in the code you are reading.`;
+
+    case "diverged": {
+      const best = target.candidates[0];
+      const missingList = target.missing.map((s) => `\`${s}\``).join(", ");
+      const others = target.candidates
+        .slice(1, 4)
+        .map((c) => `\`${c.name}\``)
+        .join(", ");
+      const fallback = best
+        ? `The commits below are all reachable from \`${best.name}\`. **Audit there**, and note the substitution in your Notes:
+
+${checkoutBlock(best, issueId)}${
+            others
+              ? `
+
+Other refs that also contain them: ${others}.`
+              : ""
+          }`
+        : `**No ref in this repository contains all of them.** Do not run the checks anywhere: report this as a defect — the fiche points at work that cannot be tested as exported.`;
+
+      return `**Where to audit:** ⚠️ **the declared branch does not contain this issue's commits.** The fiche declares \`${target.branch}\`, but ${target.missing.length} of the commits in the diff below (${missingList}) are not reachable from it.
+
+Auditing \`${target.branch}\` would make this packet contradict itself: you would read the corrected patches in section 7 and then reproduce the *old* behaviour when you run the tests. Any "the fix was never applied" finding you reach that way is an artefact of the stale \`branch:\` field, not a defect in the code.
+
+${fallback}
+
+Either way, **report the stale \`branch:\` field itself** — the fiche is lying about where its work lives.`;
+    }
+  }
+}
+
 export interface BuildPromptOptions {
   /** Project root that contains .lytos/ */
   cwd: string;
@@ -168,28 +525,26 @@ export function buildPrompt(opts: BuildPromptOptions): string {
     safeRead(join(lytosDir, "skills", "code-review.md"));
   const issueBody = safeRead(opts.issueFilePath);
   const declaredBranch = issueBranch(issueBody);
-  const diffRef = declaredBranch || "HEAD";
-  const diff = tryGitDiff(opts.cwd, diffRef);
+  const target = auditTarget(opts.cwd, opts.issueId, declaredBranch);
+  // An unusable branch name never reaches a git command or a shell fence.
+  const safeBranch =
+    target.kind === "none" || target.kind === "unsafe" ? null : target.branch;
+  const diffRef = safeBranch || "HEAD";
+  // Prefer the issue's own commits; fall back to the branch range, loudly.
+  const scoped = tryScopedDiff(opts.cwd, opts.issueId);
+  const diff = scoped || tryGitDiff(opts.cwd, diffRef);
+  const diffIsScoped = scoped.length > 0;
 
   // The audit must happen where the issue says the work lives — not on
-  // whatever tree the auditor's session happens to be open on. A re-review
-  // reading the wrong tree produces false "no fix was pushed" verdicts.
-  const whereToAudit = declaredBranch
-    ? `**Where to audit:** the issue declares its work on branch \`${declaredBranch}\`. Audit THAT branch, not the tree your session was opened on. Place yourself on it first — either check it out, or create a temporary worktree:
-
-\`\`\`bash
-git fetch origin ${declaredBranch}
-git worktree add /tmp/audit-${opts.issueId} ${declaredBranch}   # or: git checkout ${declaredBranch}
-\`\`\`
-
-Run every check (tests, file reads, greps) against that branch.`
-    : `**Where to audit:** the issue declares no \`branch:\` — this audit covers the CURRENT working tree (HEAD) as-is. State this explicitly in your Notes: your findings apply to the tree you were opened on, not to a declared implementation branch.`;
+  // whatever tree the auditor's session happens to be open on, and not on a
+  // declared branch that turns out not to contain the patches we exported.
+  const whereToAudit = renderWhereToAudit(target, opts.issueId);
 
   return `# Cross-model audit prompt — ${opts.issueId}
 
 ## 1 — Your role
 
-You are auditing a Lytos-managed project. **You did NOT implement this issue.** Another AI session (or human) wrote the code. Your job is to read the issue, read the diff, apply the project's rules and the code-review skill, and return a single GO or NO_GO verdict in the exact block format defined in section 8.
+You are auditing a Lytos-managed project. **You did NOT implement this issue.** Another AI session (or human) wrote the code. Your job is to read the issue, read the diff, apply the project's rules and the code-review skill, and return a single verdict — GO, GO_PENDING_HUMAN, or NO_GO — in the exact block format defined in section 8.
 
 ${whereToAudit}
 
@@ -200,6 +555,19 @@ Do not correct the code. Do not implement anything. Do not propose a diff. Only 
 Lytos is a human-first method for AI-assisted development. The project's context (identity, conventions, rules, past decisions, issue lifecycle) lives as Markdown in the Git repo. Every AI session reads that context at the start. Issues move through Kanban columns: \`3-in-progress → 4-review → 5-done\`. An issue in \`4-review/\` is code-complete per the implementer; your job is to rule whether it passes review.
 
 An audit that says **GO** lets the human run \`lyt close\` to promote the issue. An audit that says **NO_GO** sends the issue back to \`3-in-progress\` with a concrete list of points to fix.
+
+### Definition-of-Done items declare who verifies them
+
+Each DoD item may carry a verification marker (ISS-0101):
+
+- \`— verify: auto\` — a **machine gate**. You judge it: the test exists and passes, the behaviour is in the diff, the claim is true. An unchecked or unproven \`auto\` item is a **defect** → NO_GO.
+- \`— verify: human\` — a **judgment call reserved for the accountable human** ("is the wording clear?", "is this readable by a non-technical reader?"). You are not the human. You **cannot** tick these, and their being unticked is **not a defect**.
+
+This distinction has a hard consequence: **never return NO_GO because a \`verify: human\` item is unchecked.** Doing so makes every issue that carries one unpassable — no model can ever tick it, so the issue would bounce forever. That is what the third verdict exists for:
+
+- **GO_PENDING_HUMAN** — every \`verify: auto\` item is green, you found no defect, and what remains is human judgment. You are attesting the machine-verifiable half and handing the rest to the human. List the pending items so they know exactly what they own.
+
+Judge the code, not the checkbox discipline. One caveat: if a DoD item promises a **deliverable** that simply does not exist (documentation that was never written, a test case that was never added), that is a real defect and warrants NO_GO — regardless of which marker it carries. The marker says *who verifies*, not *whether the work was done*.
 
 ## 3 — Project manifest excerpt
 
@@ -214,13 +582,17 @@ ${manifest || "(manifest.md not found — proceed with general software-engineer
 \`\`\`markdown
 ${defaultRules || "(no default-rules.md in this project)"}
 \`\`\`
-${cliRules ? `
+${
+  cliRules
+    ? `
 ### cli-rules.md
 
 \`\`\`markdown
 ${cliRules}
 \`\`\`
-` : ""}
+`
+    : ""
+}
 ## 5 — Review skill to follow
 
 \`\`\`markdown
@@ -235,9 +607,13 @@ ${issueBody}
 
 ## 7 — Implementation diff
 
-${declaredBranch
-  ? `The issue declares branch \`${declaredBranch}\`. The diff below is generated from \`git diff main...${declaredBranch}\`:`
-  : `No branch is declared in the issue frontmatter — the diff below is taken from the current \`HEAD\` (\`git diff main...HEAD\`), i.e. the tree this prompt was exported from:`}
+${
+  diffIsScoped
+    ? `Below are **only the commits that reference ${opts.issueId}** (\`Refs: ${opts.issueId}\`), oldest first, with their messages — not the whole branch. Other issues delivered on the same branch are deliberately absent: findings about them are out of scope for this audit.`
+    : safeBranch
+      ? `⚠️ **Scoping unreliable.** No commit references \`Refs: ${opts.issueId}\`, so the diff below falls back to the whole branch (\`git diff main...${safeBranch}\`) and **may contain work belonging to other issues delivered on it**. Attribute findings with care, and state in your Notes that the diff was not scoped to this issue.`
+      : `⚠️ **Scoping unreliable.** No commit references \`Refs: ${opts.issueId}\`, and **No branch is declared** in the issue frontmatter — the diff below is the current \`HEAD\` (\`git diff main...HEAD\`), i.e. the tree this prompt was exported from. It **may contain work belonging to other issues**; state that in your Notes.`
+}
 
 \`\`\`diff
 ${diff}
@@ -252,25 +628,37 @@ Return **only** the markdown block below, with your verdict filled in. No commen
 
 **Verdict:** GO
 <or>
+**Verdict:** GO_PENDING_HUMAN
+<or>
 **Verdict:** NO_GO
 
 ### Checks
 - [x] Tests pass (mention count if visible in the diff)
-- [x] Issue checklist complete
+- [x] Machine-verifiable DoD items (\`verify: auto\`) complete
 - [x] Rules respected (file/fn size, params, coverage as defined in default-rules.md)
 - [x] Documentation aligned
 
 ### Notes
 Free prose — reference specific files and line ranges from the diff when relevant.
 
+### Awaiting human judgment (only include this section if GO_PENDING_HUMAN)
+- [ ] The \`verify: human\` item, quoted verbatim from the issue
+- [ ] …
+
 ### To fix before next review (only include this section if NO_GO)
 - [ ] Concrete actionable point 1
 - [ ] Concrete actionable point 2
 \`\`\`
 
+Pick the verdict by this rule, in order:
+
+1. A defect, a failing/missing gate, or a promised deliverable that does not exist → **NO_GO**.
+2. Otherwise, one or more \`verify: human\` items still open → **GO_PENDING_HUMAN**.
+3. Otherwise → **GO**.
+
 ## 9 — Exit instructions
 
-- If you have filesystem tools: append your audit block at the end of the issue file (\`${opts.issueFilePath}\`). If the verdict is NO_GO, also move the file from \`4-review/\` to \`3-in-progress/\` and update its frontmatter \`status\` to \`3-in-progress\`.
+- If you have filesystem tools: append your audit block at the end of the issue file (\`${opts.issueFilePath}\`). If — and only if — the verdict is NO_GO, also move the file from \`4-review/\` to \`3-in-progress/\` and update its frontmatter \`status\` to \`3-in-progress\`. GO and GO_PENDING_HUMAN both leave the issue in \`4-review/\`: the human decides from there.
 - If you do not have filesystem tools: reply with **only** the audit block (no preamble, no postscript). The human will pipe it back into \`lyt review ${opts.issueId} --accept\` to land the changes.
 
 Do not mix the two modes.
@@ -284,14 +672,23 @@ Do not mix the two modes.
  */
 export function parseAuditResponse(raw: string): ParsedAudit {
   // Strip outer code fence if the model wrapped the block in ```markdown …```
-  const unwrapped = raw.replace(/^```(?:markdown)?\n([\s\S]*?)\n```\s*$/m, "$1");
+  const unwrapped = raw.replace(
+    /^```(?:markdown)?\n([\s\S]*?)\n```\s*$/m,
+    "$1"
+  );
 
-  const match = unwrapped.match(/(^|\n)(##\s+Audit\s+—\s+\d{4}-\d{2}-\d{2}[\s\S]*?)$/);
+  const match = unwrapped.match(
+    /(^|\n)(##\s+Audit\s+—\s+\d{4}-\d{2}-\d{2}[\s\S]*?)$/
+  );
   const block = match ? match[2].trim() : unwrapped.trim();
 
+  // Order matters: GO_PENDING_HUMAN must be tested before the bare GO, whose
+  // `\b` would otherwise swallow a hyphenated spelling of the longer verdict.
   let verdict: AuditVerdict = "UNKNOWN";
-  if (/\*\*Verdict:\*\*\s*GO\b/i.test(block)) verdict = "GO";
+  if (/\*\*Verdict:\*\*\s*GO[_\s-]?PENDING[_\s-]?HUMAN\b/i.test(block))
+    verdict = "GO_PENDING_HUMAN";
   else if (/\*\*Verdict:\*\*\s*NO[_\s-]?GO\b/i.test(block)) verdict = "NO_GO";
+  else if (/\*\*Verdict:\*\*\s*GO\b/i.test(block)) verdict = "GO";
 
   return { verdict, block };
 }
@@ -350,7 +747,11 @@ export function applyAudit(options: ApplyAuditOptions): ApplyAuditResult {
     replacedExisting = true;
   } else {
     // Append: normalize spacing so the new block sits on its own.
-    const separator = original.endsWith("\n\n") ? "" : original.endsWith("\n") ? "\n" : "\n\n";
+    const separator = original.endsWith("\n\n")
+      ? ""
+      : original.endsWith("\n")
+        ? "\n"
+        : "\n\n";
     rewritten = original + separator + parsed.block + "\n";
   }
 
@@ -378,7 +779,12 @@ export function applyAudit(options: ApplyAuditOptions): ApplyAuditResult {
   return { newPath: targetPath, moved, replacedExisting };
 }
 
-export type ReviewVerdict = "go" | "no-go" | "pending";
+/**
+ * The v2 `review:` field. `pending` means "not audited yet"; `go-pending-human`
+ * means "audited, machine half green, human judgment still owed" (ISS-0101) —
+ * the two are different states and must not be collapsed.
+ */
+export type ReviewVerdict = "go" | "go-pending-human" | "no-go" | "pending";
 
 export interface ApplyVerdictOptions {
   boardDir: string;

@@ -76,14 +76,25 @@ schema_version: 2
 
 *What we'll concretely do to solve the problem.*
 
+## Ready
+
+*Definition of Ready (ADR-0007 §3) — the entry gate; an issue is loop-eligible only when ready.*
+
+- **Scope** — what this issue does, in one line.
+- **Constraints** — what it must respect.
+- **Out of scope** — what it explicitly does NOT do.
+- `risk:` set in the frontmatter (low | medium | high), and the DoD below has ≥1 machine-verifiable item.
+
 ## Definition of done
 
 *How we know this issue is finished. The bigger the issue, the more precise the done criteria should be.*
 
-- [ ] Verifiable criterion 1
-- [ ] Verifiable criterion 2
-- [ ] Tests written and passing
-- [ ] Documentation up to date
+*Declare how each item is verified (ADR-0004 §4): `— verify: auto` for a machine gate (test, typecheck, lint, build) or `— verify: human` for a human checklist item. Unmarked items default to auto and are flagged by `lyt lint`. A DoD with at least one `verify: auto` item is loop-eligible; an all-`human` DoD is not loop work.*
+
+- [ ] Verifiable criterion 1 — verify: auto
+- [ ] Verifiable criterion 2 — verify: auto
+- [ ] Tests written and passing — verify: auto
+- [ ] Documentation up to date — verify: human
 
 ## Checklist
 

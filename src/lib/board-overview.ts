@@ -8,8 +8,7 @@ import { basename, dirname, join, resolve } from "path";
 import { collectIssues, countArchived } from "./board-generator.js";
 
 const noColor =
-  process.env.NO_COLOR !== undefined ||
-  process.argv.includes("--no-color");
+  process.env.NO_COLOR !== undefined || process.argv.includes("--no-color");
 
 function c(code: string, text: string): string {
   if (noColor) return text;
@@ -122,7 +121,8 @@ function summaryLine(repo: RepoSummary): string {
   if (sprint) parts.push(`${cyan(String(sprint))} sprint`);
   if (wip) parts.push(`${yellow(String(wip))} wip`);
   if (review) parts.push(`${magenta(String(review))} review`);
-  if (repo.archived) parts.push(`${green(String(repo.archived))} done ${green("✓")}`);
+  if (repo.archived)
+    parts.push(`${green(String(repo.archived))} done ${green("✓")}`);
 
   if (parts.length === 0) return dim("empty");
   return parts.join(dim(" · "));
@@ -135,11 +135,17 @@ export function displayOverview(repos: RepoSummary[]): void {
   const innerWidth = 52;
 
   console.log("");
-  console.log(`  ${boldCyan("╔")}${boldCyan("═".repeat(innerWidth))}${boldCyan("╗")}`);
+  console.log(
+    `  ${boldCyan("╔")}${boldCyan("═".repeat(innerWidth))}${boldCyan("╗")}`
+  );
   const title = "LYTOS OVERVIEW";
   const padding = innerWidth - (2 + title.length);
-  console.log(`  ${boldCyan("║")}  ${bold(title)}${" ".repeat(padding)}${boldCyan("║")}`);
-  console.log(`  ${boldCyan("╚")}${boldCyan("═".repeat(innerWidth))}${boldCyan("╝")}`);
+  console.log(
+    `  ${boldCyan("║")}  ${bold(title)}${" ".repeat(padding)}${boldCyan("║")}`
+  );
+  console.log(
+    `  ${boldCyan("╚")}${boldCyan("═".repeat(innerWidth))}${boldCyan("╝")}`
+  );
   console.log("");
 
   if (repos.length === 0) {
@@ -174,7 +180,8 @@ export function displayOverview(repos: RepoSummary[]): void {
   if (totals.sprint) parts.push(`${cyan(String(totals.sprint))} sprint`);
   if (totals.wip) parts.push(`${yellow(String(totals.wip))} wip`);
   if (totals.review) parts.push(`${magenta(String(totals.review))} review`);
-  if (totals.done) parts.push(`${green(String(totals.done))} done ${green("✓")}`);
+  if (totals.done)
+    parts.push(`${green(String(totals.done))} done ${green("✓")}`);
 
   console.log(`  ${parts.join(dim(" · "))}`);
   console.log("");

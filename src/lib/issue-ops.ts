@@ -5,15 +5,30 @@
  * Zero dependencies beyond Node.js stdlib.
  */
 
-import { existsSync, readFileSync, writeFileSync, renameSync, readdirSync } from "fs";
+import {
+  existsSync,
+  readFileSync,
+  writeFileSync,
+  renameSync,
+  readdirSync,
+} from "fs";
 import { join } from "path";
 import { execFileSync } from "child_process";
-import { parseFrontmatter, serializeFrontmatter, type Frontmatter } from "./frontmatter.js";
+import {
+  parseFrontmatter,
+  serializeFrontmatter,
+  type Frontmatter,
+} from "./frontmatter.js";
 import { collectIssues, generateBoardMarkdown } from "./board-generator.js";
 
 const STATUS_DIRS = [
-  "0-icebox", "1-backlog", "2-sprint",
-  "3-in-progress", "4-review", "5-done",
+  "0-icebox",
+  "1-backlog",
+  "2-sprint",
+  "3-in-progress",
+  "4-review",
+  "5-done",
+  "parked", // side-state (ADR-0004 §3), not a linear stage
 ];
 
 export interface IssueLocation {
@@ -27,7 +42,10 @@ export interface IssueLocation {
 /**
  * Find an issue by ID across all status directories.
  */
-export function locateIssue(lytosDir: string, issueId: string): IssueLocation | null {
+export function locateIssue(
+  lytosDir: string,
+  issueId: string
+): IssueLocation | null {
   const boardDir = join(lytosDir, "issue-board");
   if (!existsSync(boardDir)) return null;
 
@@ -98,7 +116,12 @@ export function moveIssue(
  */
 export function currentGitUser(): string {
   try {
-    return execFileSync("git", ["config", "user.name"], { encoding: "utf-8", stdio: "pipe" }).trim() || "unknown";
+    return (
+      execFileSync("git", ["config", "user.name"], {
+        encoding: "utf-8",
+        stdio: "pipe",
+      }).trim() || "unknown"
+    );
   } catch {
     return "unknown";
   }
@@ -109,7 +132,10 @@ export function currentGitUser(): string {
  * Returns an empty array on git failure (not a repo, branch missing,
  * etc.) — caller decides whether to skip writing the field.
  */
-export function getBranchCommits(branch: string, mainBranch = "main"): string[] {
+export function getBranchCommits(
+  branch: string,
+  mainBranch = "main"
+): string[] {
   if (!branch) return [];
   try {
     const out = execFileSync(
@@ -117,7 +143,10 @@ export function getBranchCommits(branch: string, mainBranch = "main"): string[] 
       ["log", `${mainBranch}..${branch}`, "--format=%h"],
       { encoding: "utf-8", stdio: "pipe" }
     );
-    return out.split("\n").map((s) => s.trim()).filter(Boolean);
+    return out
+      .split("\n")
+      .map((s) => s.trim())
+      .filter(Boolean);
   } catch {
     return [];
   }
@@ -138,7 +167,9 @@ export function regenerateBoard(lytosDir: string): void {
  * Only allows: a-z, A-Z, 0-9, hyphens, underscores, slashes, dots.
  */
 export function isValidBranchName(name: string): boolean {
-  return /^[a-zA-Z0-9/_.\-]+$/.test(name) && name.length > 0 && name.length <= 200;
+  return (
+    /^[a-zA-Z0-9/_.\-]+$/.test(name) && name.length > 0 && name.length <= 200
+  );
 }
 
 /**
@@ -146,17 +177,21 @@ export function isValidBranchName(name: string): boolean {
  * Returns "created", "switched", "invalid", or "error".
  * Uses execFileSync (no shell) to prevent command injection.
  */
-export function ensureBranch(branchName: string): "created" | "switched" | "invalid" | "error" {
+export function ensureBranch(
+  branchName: string
+): "created" | "switched" | "invalid" | "error" {
   if (!isValidBranchName(branchName)) {
     return "invalid";
   }
 
   try {
     // Check if branch exists (no shell — safe)
-    const branches = execFileSync("git", ["branch", "--list"], { encoding: "utf-8" });
-    const exists = branches.split("\n").some(
-      (b) => b.trim().replace("* ", "") === branchName
-    );
+    const branches = execFileSync("git", ["branch", "--list"], {
+      encoding: "utf-8",
+    });
+    const exists = branches
+      .split("\n")
+      .some((b) => b.trim().replace("* ", "") === branchName);
 
     if (exists) {
       execFileSync("git", ["checkout", branchName], { stdio: "pipe" });
@@ -192,7 +227,13 @@ export function today(): string {
  *                       Caller should skip the check silently.
  */
 export interface OriginCheckResult {
-  status: "ok" | "behind" | "diverged" | "already-claimed" | "offline" | "not-applicable";
+  status:
+    | "ok"
+    | "behind"
+    | "diverged"
+    | "already-claimed"
+    | "offline"
+    | "not-applicable";
   message?: string;
   assignee?: string;
 }
@@ -216,7 +257,9 @@ export function checkOriginFresh(
 
   // Not a git repo → skip silently
   try {
-    execFileSync("git", ["rev-parse", "--is-inside-work-tree"], { stdio: "pipe" });
+    execFileSync("git", ["rev-parse", "--is-inside-work-tree"], {
+      stdio: "pipe",
+    });
   } catch {
     return { status: "not-applicable" };
   }
@@ -235,12 +278,17 @@ export function checkOriginFresh(
       timeout: fetchTimeoutMs,
     });
   } catch {
-    return { status: "offline", message: `Could not fetch origin/${mainBranch} — proceeding with local state only` };
+    return {
+      status: "offline",
+      message: `Could not fetch origin/${mainBranch} — proceeding with local state only`,
+    };
   }
 
   // origin/main exists?
   try {
-    execFileSync("git", ["rev-parse", "--verify", `origin/${mainBranch}`], { stdio: "pipe" });
+    execFileSync("git", ["rev-parse", "--verify", `origin/${mainBranch}`], {
+      stdio: "pipe",
+    });
   } catch {
     return { status: "not-applicable" };
   }
@@ -249,13 +297,25 @@ export function checkOriginFresh(
   let localIsAncestor = false;
   let originIsAncestor = false;
   try {
-    execFileSync("git", ["merge-base", "--is-ancestor", mainBranch, `origin/${mainBranch}`], { stdio: "pipe" });
+    execFileSync(
+      "git",
+      ["merge-base", "--is-ancestor", mainBranch, `origin/${mainBranch}`],
+      { stdio: "pipe" }
+    );
     localIsAncestor = true;
-  } catch { /* non-zero exit = not an ancestor */ }
+  } catch {
+    /* non-zero exit = not an ancestor */
+  }
   try {
-    execFileSync("git", ["merge-base", "--is-ancestor", `origin/${mainBranch}`, mainBranch], { stdio: "pipe" });
+    execFileSync(
+      "git",
+      ["merge-base", "--is-ancestor", `origin/${mainBranch}`, mainBranch],
+      { stdio: "pipe" }
+    );
     originIsAncestor = true;
-  } catch { /* non-zero exit = not an ancestor */ }
+  } catch {
+    /* non-zero exit = not an ancestor */
+  }
 
   if (localIsAncestor && !originIsAncestor) {
     return {
@@ -277,14 +337,23 @@ export function checkOriginFresh(
   try {
     const out = execFileSync(
       "git",
-      ["ls-tree", "-r", "--name-only", `origin/${mainBranch}`, ".lytos/issue-board/"],
+      [
+        "ls-tree",
+        "-r",
+        "--name-only",
+        `origin/${mainBranch}`,
+        ".lytos/issue-board/",
+      ],
       { encoding: "utf-8", stdio: "pipe" }
     );
     for (const line of out.split("\n")) {
       const trimmed = line.trim();
       if (!trimmed) continue;
       const fileName = trimmed.split("/").pop() ?? "";
-      if (fileName.toUpperCase().startsWith(normalizedId) && fileName.endsWith(".md")) {
+      if (
+        fileName.toUpperCase().startsWith(normalizedId) &&
+        fileName.endsWith(".md")
+      ) {
         pathOnOrigin = trimmed;
         break;
       }
@@ -298,10 +367,14 @@ export function checkOriginFresh(
 
   let content: string;
   try {
-    content = execFileSync("git", ["show", `origin/${mainBranch}:${pathOnOrigin}`], {
-      encoding: "utf-8",
-      stdio: "pipe",
-    });
+    content = execFileSync(
+      "git",
+      ["show", `origin/${mainBranch}:${pathOnOrigin}`],
+      {
+        encoding: "utf-8",
+        stdio: "pipe",
+      }
+    );
   } catch {
     return { status: "ok" };
   }
@@ -309,7 +382,8 @@ export function checkOriginFresh(
   const fm = parseFrontmatter(content);
   if (!fm) return { status: "ok" };
 
-  const originAssignee = typeof fm.assignee === "string" ? fm.assignee : undefined;
+  const originAssignee =
+    typeof fm.assignee === "string" ? fm.assignee : undefined;
   if (originAssignee && originAssignee !== gitUser) {
     const date = typeof fm.updated === "string" ? fm.updated : "?";
     return {
@@ -325,7 +399,10 @@ export function checkOriginFresh(
 /**
  * Count checklist items in markdown content.
  */
-export function countChecklist(content: string): { done: number; total: number } {
+export function countChecklist(content: string): {
+  done: number;
+  total: number;
+} {
   const pattern = /^[ \t]*- \[([ xX])\] /gm;
   let done = 0;
   let total = 0;

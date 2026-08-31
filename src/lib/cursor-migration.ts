@@ -16,7 +16,13 @@
  * expects. A user who has hand-tuned their `.cursorrules` keeps their work.
  */
 
-import { existsSync, readFileSync, writeFileSync, mkdirSync, unlinkSync } from "fs";
+import {
+  existsSync,
+  readFileSync,
+  writeFileSync,
+  mkdirSync,
+  unlinkSync,
+} from "fs";
 import { join, dirname } from "path";
 
 export type CursorMigrationStatus =

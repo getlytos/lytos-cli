@@ -24,9 +24,15 @@ import { ok, info, warn, error, bold, cyan, green } from "../lib/output.js";
 const getGitUser = currentGitUser;
 
 export const startCommand = new Command("start")
-  .description("Start working on an issue — move to in-progress, create branch, update board")
+  .description(
+    "Start working on an issue — move to in-progress, create branch, update board"
+  )
   .argument("<issue-id>", "Issue ID (e.g. ISS-0029)")
-  .option("--force", "Start even when origin is ahead or the issue is claimed on origin", false)
+  .option(
+    "--force",
+    "Start even when origin is ahead or the issue is claimed on origin",
+    false
+  )
   .option("--json", "Output result as JSON", false)
   .on("--help", () => {
     console.log("");
@@ -53,7 +59,9 @@ export const startCommand = new Command("start")
     // Edge case: already in-progress
     if (issue.dir === "3-in-progress") {
       if (opts.json) {
-        console.log(JSON.stringify({ status: "already-in-progress", id: issueId }));
+        console.log(
+          JSON.stringify({ status: "already-in-progress", id: issueId })
+        );
         return;
       }
       warn(`${issueId} is already in progress.`);
@@ -63,7 +71,12 @@ export const startCommand = new Command("start")
     // Edge case: done
     if (issue.dir === "5-done") {
       if (opts.json) {
-        console.log(JSON.stringify({ status: "error", message: "Cannot start a done issue" }));
+        console.log(
+          JSON.stringify({
+            status: "error",
+            message: "Cannot start a done issue",
+          })
+        );
       } else {
         error(`Cannot start ${issueId} — it's already done.`);
       }
@@ -73,9 +86,19 @@ export const startCommand = new Command("start")
     // Origin-freshness check — same as lyt claim
     if (!opts.force) {
       const check = checkOriginFresh(lytosDir, issueId, getGitUser());
-      if (check.status === "behind" || check.status === "diverged" || check.status === "already-claimed") {
+      if (
+        check.status === "behind" ||
+        check.status === "diverged" ||
+        check.status === "already-claimed"
+      ) {
         if (opts.json) {
-          console.log(JSON.stringify({ status: "error", reason: check.status, message: check.message }));
+          console.log(
+            JSON.stringify({
+              status: "error",
+              reason: check.status,
+              message: check.message,
+            })
+          );
         } else {
           error(check.message!);
         }
@@ -93,7 +116,10 @@ export const startCommand = new Command("start")
       schema_version: "2",
       updated: today(),
     };
-    const existingStartedAt = typeof issue.frontmatter.started_at === "string" ? issue.frontmatter.started_at : "";
+    const existingStartedAt =
+      typeof issue.frontmatter.started_at === "string"
+        ? issue.frontmatter.started_at
+        : "";
     if (!existingStartedAt) {
       extras.started_at = today();
     }
@@ -103,20 +129,27 @@ export const startCommand = new Command("start")
     regenerateBoard(lytosDir);
 
     // 3. Create/switch to branch
-    const branchName = typeof issue.frontmatter.branch === "string" && issue.frontmatter.branch
-      ? issue.frontmatter.branch
-      : buildBranchName(issue.frontmatter);
+    const branchName =
+      typeof issue.frontmatter.branch === "string" && issue.frontmatter.branch
+        ? issue.frontmatter.branch
+        : buildBranchName(issue.frontmatter);
 
     const branchResult = ensureBranch(branchName);
 
     if (opts.json) {
       const detail = parseIssueDetail(lytosDir, issueId);
-      console.log(JSON.stringify({
-        status: "started",
-        branch: branchName,
-        branchAction: branchResult,
-        issue: detail,
-      }, null, 2));
+      console.log(
+        JSON.stringify(
+          {
+            status: "started",
+            branch: branchName,
+            branchAction: branchResult,
+            issue: detail,
+          },
+          null,
+          2
+        )
+      );
       return;
     }
 
@@ -130,7 +163,9 @@ export const startCommand = new Command("start")
     } else if (branchResult === "switched") {
       info(`Switched to existing branch ${green(branchName)}`);
     } else if (branchResult === "invalid") {
-      warn(`Branch name "${branchName}" contains invalid characters — create it manually`);
+      warn(
+        `Branch name "${branchName}" contains invalid characters — create it manually`
+      );
     } else {
       warn(`Could not create branch ${branchName} — create it manually`);
     }

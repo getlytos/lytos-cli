@@ -8,12 +8,13 @@ complexity: standard
 domain: [cli, review]
 skill: 
 skills_aux: []
-status: 4-review
+status: 5-done
 branch: feat/1.4.0-retour-terrain
 depends: []
 created: 2026-08-04
-updated: 2026-08-04
+updated: 2026-08-10
 schema_version: 2
+completed_at: 2026-08-10
 ---
 # ISS-0095 — Le faux « aucun correctif versionné »
 
@@ -34,3 +35,16 @@ origin — c'est un mensonge de fiche, détectable avant l'audit.
 - [x] Le prompt exporté porte la branche + l'instruction de s'y placer
 - [x] Avertissement si `branch:` absent ou introuvable sur origin
 - [x] Tests sur les trois cas (branche valide, vide, introuvable)
+
+## Audit — 2026-08-10
+
+**Verdict:** GO
+
+### Checks
+- [x] Tests pass (313)
+- [x] Issue checklist complete
+- [x] Rules respected
+- [x] Documentation aligned
+
+### Notes
+The exported prompt now identifies the declared branch and gives a safe checkout/worktree instruction. `checkDeclaredBranch` also surfaces unavailable origin refs before an audit is wasted; the three required cases are covered.

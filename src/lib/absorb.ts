@@ -90,7 +90,10 @@ function roundCost(value: number): number {
  * Aggregate journal lines into a frontmatter delta for one issue. A line belongs
  * to the issue when its `issue` matches (case-insensitive) or is absent.
  */
-export function aggregate(lines: JournalLine[], issueId: string): { delta: Frontmatter; linesUsed: number } {
+export function aggregate(
+  lines: JournalLine[],
+  issueId: string
+): { delta: Frontmatter; linesUsed: number } {
   const target = issueId.toUpperCase();
   const relevant = lines.filter(
     (l) => !l.issue || l.issue.toUpperCase() === target
@@ -103,17 +106,37 @@ export function aggregate(lines: JournalLine[], issueId: string): { delta: Front
   let hasTokensOut = false;
   let hasCost = false;
   const skills = new Set<string>();
-  const roles: Partial<Record<JournalRole, { model?: string; session?: string; prompt_ref?: string }>> = {};
+  const roles: Partial<
+    Record<
+      JournalRole,
+      { model?: string; session?: string; prompt_ref?: string }
+    >
+  > = {};
 
   for (const line of relevant) {
-    if (typeof line.tokens_in === "number") { tokensIn += line.tokens_in; hasTokensIn = true; }
-    if (typeof line.tokens_out === "number") { tokensOut += line.tokens_out; hasTokensOut = true; }
-    if (typeof line.cost_usd === "number") { cost += line.cost_usd; hasCost = true; }
+    if (typeof line.tokens_in === "number") {
+      tokensIn += line.tokens_in;
+      hasTokensIn = true;
+    }
+    if (typeof line.tokens_out === "number") {
+      tokensOut += line.tokens_out;
+      hasTokensOut = true;
+    }
+    if (typeof line.cost_usd === "number") {
+      cost += line.cost_usd;
+      hasCost = true;
+    }
     if (Array.isArray(line.skills)) {
-      for (const s of line.skills) if (typeof s === "string" && s) skills.add(s);
+      for (const s of line.skills)
+        if (typeof s === "string" && s) skills.add(s);
     }
 
-    const role = line.role === "reviewer" ? "reviewer" : line.role === "implementer" ? "implementer" : null;
+    const role =
+      line.role === "reviewer"
+        ? "reviewer"
+        : line.role === "implementer"
+          ? "implementer"
+          : null;
     if (role) {
       const acc = roles[role] ?? (roles[role] = {});
       if (line.model) acc.model = line.model;
@@ -145,7 +168,10 @@ export function aggregate(lines: JournalLine[], issueId: string): { delta: Front
  * Compute the absorb result for an issue from raw journal content. Pure: does
  * not read or write any file.
  */
-export function absorbPlan(journalContent: string, issueId: string): AbsorbResult {
+export function absorbPlan(
+  journalContent: string,
+  issueId: string
+): AbsorbResult {
   const { lines, malformed } = parseJournal(journalContent);
   const { delta, linesUsed } = aggregate(lines, issueId);
   return { issue: issueId, delta, linesUsed, malformed };

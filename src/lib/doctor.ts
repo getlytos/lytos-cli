@@ -13,7 +13,18 @@
 import { existsSync, readFileSync, readdirSync, statSync } from "fs";
 import { join, relative } from "path";
 import { parseFrontmatter } from "./frontmatter.js";
-import { checkMergeDriver, GITATTRIBUTES_LINE, MERGE_DRIVER_COMMAND, MERGE_DRIVER_NAME } from "./merge-driver.js";
+import {
+  checkMergeDriver,
+  GITATTRIBUTES_LINE,
+  MERGE_DRIVER_COMMAND,
+  MERGE_DRIVER_NAME,
+} from "./merge-driver.js";
+import {
+  loadKit,
+  validateKit,
+  baselineViolations,
+  unresolvedGateRefs,
+} from "./quality.js";
 
 export type DiagnosticSeverity = "error" | "warning" | "info";
 
@@ -78,6 +89,9 @@ export function diagnose(lytosDir: string): DiagnosticResult {
   // 8. Rules from a generation that predates "The CLI Is the Interface" — ISS-0097
   findings.push(...checkCliInterfaceSection(lytosDir));
 
+  // 9. Quality kit presence + coherence (ADR-0005/0007, ISS-0107)
+  findings.push(...checkQualityKit(lytosDir));
+
   const errors = findings.filter((f) => f.severity === "error").length;
   const warnings = findings.filter((f) => f.severity === "warning").length;
   const infos = findings.filter((f) => f.severity === "info").length;
@@ -90,14 +104,16 @@ export function diagnose(lytosDir: string): DiagnosticResult {
 /**
  * Check all markdown files for internal links pointing to non-existent files.
  */
-function checkBrokenLinks(
-  lytosDir: string
-): { findings: DiagnosticFinding[]; filesChecked: number } {
+function checkBrokenLinks(lytosDir: string): {
+  findings: DiagnosticFinding[];
+  filesChecked: number;
+} {
   const findings: DiagnosticFinding[] = [];
   let filesChecked = 0;
 
-  const mdFiles = collectMarkdownFiles(lytosDir)
-    .filter((f) => !f.includes("/templates/"));
+  const mdFiles = collectMarkdownFiles(lytosDir).filter(
+    (f) => !f.includes("/templates/")
+  );
   // Match markdown links: [text](path) — skip http/https/mailto links and placeholders
   const linkPattern = /\[([^\]]*)\]\((?!https?:\/\/|mailto:)([^)]+)\)/g;
 
@@ -138,9 +154,10 @@ function checkBrokenLinks(
 /**
  * Check memory/cortex/ for stale files (not modified in STALE_DAYS days).
  */
-function checkStaleMemory(
-  lytosDir: string
-): { findings: DiagnosticFinding[]; filesChecked: number } {
+function checkStaleMemory(lytosDir: string): {
+  findings: DiagnosticFinding[];
+  filesChecked: number;
+} {
   const findings: DiagnosticFinding[] = [];
   let filesChecked = 0;
 
@@ -177,9 +194,10 @@ function checkStaleMemory(
 /**
  * Check issues for skill references that don't exist in skills/.
  */
-function checkMissingSkills(
-  lytosDir: string
-): { findings: DiagnosticFinding[]; filesChecked: number } {
+function checkMissingSkills(lytosDir: string): {
+  findings: DiagnosticFinding[];
+  filesChecked: number;
+} {
   const findings: DiagnosticFinding[] = [];
   let filesChecked = 0;
 
@@ -206,8 +224,11 @@ function checkMissingSkills(
   }
 
   const statusDirs = [
-    "0-icebox", "1-backlog", "2-sprint",
-    "3-in-progress", "4-review",
+    "0-icebox",
+    "1-backlog",
+    "2-sprint",
+    "3-in-progress",
+    "4-review",
   ];
 
   for (const dir of statusDirs) {
@@ -263,9 +284,10 @@ function checkMissingSkills(
 /**
  * Check that frontmatter status matches the folder the issue is in.
  */
-function checkStatusMismatches(
-  lytosDir: string
-): { findings: DiagnosticFinding[]; filesChecked: number } {
+function checkStatusMismatches(lytosDir: string): {
+  findings: DiagnosticFinding[];
+  filesChecked: number;
+} {
   const findings: DiagnosticFinding[] = [];
   let filesChecked = 0;
 
@@ -273,8 +295,12 @@ function checkStatusMismatches(
   if (!existsSync(boardDir)) return { findings, filesChecked };
 
   const statusDirs = [
-    "0-icebox", "1-backlog", "2-sprint",
-    "3-in-progress", "4-review", "5-done",
+    "0-icebox",
+    "1-backlog",
+    "2-sprint",
+    "3-in-progress",
+    "4-review",
+    "5-done",
   ];
 
   for (const dir of statusDirs) {
@@ -313,9 +339,10 @@ function checkStatusMismatches(
 /**
  * Check that issue dependencies reference existing issues.
  */
-function checkOrphanDependencies(
-  lytosDir: string
-): { findings: DiagnosticFinding[]; filesChecked: number } {
+function checkOrphanDependencies(lytosDir: string): {
+  findings: DiagnosticFinding[];
+  filesChecked: number;
+} {
   const findings: DiagnosticFinding[] = [];
   let filesChecked = 0;
 
@@ -325,8 +352,12 @@ function checkOrphanDependencies(
   // Collect all issue IDs
   const allIssueIds = new Set<string>();
   const statusDirs = [
-    "0-icebox", "1-backlog", "2-sprint",
-    "3-in-progress", "4-review", "5-done",
+    "0-icebox",
+    "1-backlog",
+    "2-sprint",
+    "3-in-progress",
+    "4-review",
+    "5-done",
   ];
 
   for (const dir of statusDirs) {
@@ -397,16 +428,19 @@ function checkOrphanDependencies(
  * Emits an `info` finding per issue — informational only, no score penalty.
  * Active boards (icebox → review) are checked; done/archive are not.
  */
-function checkSchemaVersion(
-  lytosDir: string
-): { findings: DiagnosticFinding[] } {
+function checkSchemaVersion(lytosDir: string): {
+  findings: DiagnosticFinding[];
+} {
   const findings: DiagnosticFinding[] = [];
   const boardDir = join(lytosDir, "issue-board");
   if (!existsSync(boardDir)) return { findings };
 
   const activeStatusDirs = [
-    "0-icebox", "1-backlog", "2-sprint",
-    "3-in-progress", "4-review",
+    "0-icebox",
+    "1-backlog",
+    "2-sprint",
+    "3-in-progress",
+    "4-review",
   ];
 
   for (const dir of activeStatusDirs) {
@@ -478,6 +512,84 @@ function checkMergeDriverInstall(lytosDir: string): DiagnosticFinding[] {
  * Any rules/*.md carrying the section (English or French wording)
  * satisfies the check.
  */
+/**
+ * Quality kit (ISS-0107): presence, structural coherence, and DoD gate-refs.
+ * Absence is info-level (the kit is additive); a malformed kit is a warning.
+ */
+function checkQualityKit(lytosDir: string): DiagnosticFinding[] {
+  const findings: DiagnosticFinding[] = [];
+  const kit = loadKit(lytosDir);
+
+  if (!kit) {
+    findings.push({
+      severity: "info",
+      category: "quality-kit",
+      file: "quality/",
+      message:
+        "No quality kit — gates and the risk matrix have nothing to select from",
+      fix: "Add `.lytos/quality/kit.md` (gate catalog) and `stack.md` (stack contract), or re-run `lyt init`",
+    });
+    return findings;
+  }
+
+  for (const problem of validateKit(kit)) {
+    findings.push({
+      severity: "warning",
+      category: "quality-kit",
+      file: "quality/kit.md",
+      message: `Malformed quality kit: ${problem}`,
+      fix: "Fix the gate row: | id | gate|reviewer|human | low,medium,high | tool |",
+    });
+  }
+
+  // The tighten-only contract (ISS-0114): a project may tune the kit above the
+  // `low` floor, never below it.
+  for (const violation of baselineViolations(kit)) {
+    findings.push({
+      severity: "warning",
+      category: "quality-kit",
+      file: "quality/kit.md",
+      message: `Loosened below the risk baseline: ${violation}`,
+      fix: "Restore the gate at low,medium,high — tune tiers above the floor instead, or record the exception in an ADR",
+    });
+  }
+
+  // DoD items may pin a gate (`verify: auto:<id>`) — flag refs the kit can't resolve.
+  const boardDir = join(lytosDir, "issue-board");
+  const statusDirs = [
+    "0-icebox",
+    "1-backlog",
+    "2-sprint",
+    "3-in-progress",
+    "4-review",
+    "5-done",
+    "parked",
+  ];
+  for (const dir of statusDirs) {
+    const dirPath = join(boardDir, dir);
+    if (!existsSync(dirPath)) continue;
+    for (const file of readdirSync(dirPath).filter(
+      (f) => f.startsWith("ISS-") && f.endsWith(".md")
+    )) {
+      const unresolved = unresolvedGateRefs(
+        readFileSync(join(dirPath, file), "utf-8"),
+        kit
+      );
+      if (unresolved.length > 0) {
+        findings.push({
+          severity: "warning",
+          category: "quality-kit",
+          file: `issue-board/${dir}/${file}`,
+          message: `DoD pins gate(s) absent from the kit: ${unresolved.join(", ")}`,
+          fix: "Add the gate to quality/kit.md, or fix the `verify: auto:<id>` reference",
+        });
+      }
+    }
+  }
+
+  return findings;
+}
+
 function checkCliInterfaceSection(lytosDir: string): DiagnosticFinding[] {
   const findings: DiagnosticFinding[] = [];
   const rulesDir = join(lytosDir, "rules");
@@ -498,7 +610,7 @@ function checkCliInterfaceSection(lytosDir: string): DiagnosticFinding[] {
       file: "rules/",
       message:
         "Rules never declare the CLI as THE interface to the board — agents reading them will do transitions by hand (frontmatter edits, git mv) even though the verbs exist",
-      fix: "Add the \"The CLI Is the Interface\" section (npx lyt verb table + never-edit-by-hand rule) to rules/default-rules.md, or re-run `lyt init` to regenerate the rules",
+      fix: 'Add the "The CLI Is the Interface" section (npx lyt verb table + never-edit-by-hand rule) to rules/default-rules.md, or re-run `lyt init` to regenerate the rules',
     });
   }
   return findings;
@@ -535,6 +647,15 @@ function collectArchivedIssueIds(boardDir: string): Set<string> {
 }
 
 /**
+ * Directories under `.lytos/` that hold generated, transient artefacts rather
+ * than authored documents. `review/` holds cross-model audit prompts, rebuilt
+ * by `lyt review --export`: they embed a snapshot of the board and its links, so
+ * reading them as live documents reports links that were valid when the snapshot
+ * was taken and have since moved (ISS-0133).
+ */
+const GENERATED_DIRS = new Set(["review"]);
+
+/**
  * Recursively collect all .md files in a directory.
  */
 function collectMarkdownFiles(dir: string): string[] {
@@ -547,6 +668,7 @@ function collectMarkdownFiles(dir: string): string[] {
     const stat = statSync(fullPath);
 
     if (stat.isDirectory()) {
+      if (GENERATED_DIRS.has(entry)) continue;
       results.push(...collectMarkdownFiles(fullPath));
     } else if (entry.endsWith(".md")) {
       results.push(fullPath);
@@ -565,7 +687,10 @@ function collectMarkdownFiles(dir: string): string[] {
  * - info: -0 points
  * Floor at 0.
  */
-function computeScore(findings: DiagnosticFinding[], filesChecked: number): number {
+function computeScore(
+  findings: DiagnosticFinding[],
+  filesChecked: number
+): number {
   if (filesChecked === 0) return 0;
 
   let score = 100;

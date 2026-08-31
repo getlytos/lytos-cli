@@ -17,8 +17,7 @@
  */
 
 const noColor =
-  process.env.NO_COLOR !== undefined ||
-  process.argv.includes("--no-color");
+  process.env.NO_COLOR !== undefined || process.argv.includes("--no-color");
 
 function color(code: string, text: string): string {
   if (noColor) return text;
