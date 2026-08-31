@@ -6,17 +6,18 @@ priority: P2-normal
 effort: S
 complexity: standard
 domain: [cli, ci]
-skill: ""
+skill: 
 skills_aux: []
-status: 1-backlog
-branch: "chore/ISS-0132-format-sweep-and-ci-wiring"
+status: 3-in-progress
+branch: chore/ISS-0132-format-sweep-and-ci-wiring
 depends: [ISS-0107]
 created: 2026-08-12
-updated: 2026-08-12
+updated: 2026-08-31
 schema_version: 2
 risk: low
+assignee: fredericgalline
+started_at: 2026-08-31
 ---
-
 # ISS-0132 — A gate that is permanently red trains the team to ignore red
 
 ## Context
@@ -52,9 +53,36 @@ Two related facts from the same pass:
 - `risk: low` — no behaviour change; failure mode is merge friction, which is what the timing
   constraint exists to avoid.
 
+## The constraint was satisfied a different way — 2026-08-31
+
+**The timing constraint above rested on a premise that stopped being true.** It says *"after PR
+#29 has landed, never before"*, because #29 is 72 files with 21 in `src/`, and sweeping first
+would force it through a wall of pure-whitespace conflicts.
+
+#29 has **not** landed. It did not have to: its head `349cd9e` is an **ancestor of the branch
+carrying this sweep**. The loop-B work was continued in place — `claude/…wtkc94` →
+`chore/ISS-0126-…` → `fix/ISS-0133-…` → this branch — so there is no second tree to conflict
+with. Landing this branch lands #29's content.
+
+The rest of the exposure, measured rather than assumed: **PR #28 touches 0 files in `src/`, PR #30
+touches 2.** The fiche predicted "five smaller unmerged `fix/` branches will rebase without pain";
+the reality is milder still.
+
+So the first DoD item is restated to the condition the constraint actually protects — *the sweep
+branch contains #29* — rather than its proxy. Ticking "PR #29 has landed" would have been false.
+
+**What forced the question.** Three fiches were returned NO_GO in a row — ISS-0133 twice, ISS-0136
+once — with no defect found in any of them, on this gate alone. `format` sits at
+`low,medium,high`, so it blocks *every* issue at *every* risk tier: the board was fully
+deadlocked. This fiche's own closing line — *"whichever branch is taken, it must be taken"* — came
+due.
+
+The tiering stays `low,medium,high`. Once the sweep lands and CI checks it, `format:check` costs a
+second and cannot silently rot again; it was the absent sweep that hurt, not the tier.
+
 ## The gesture
 
-1. Wait for **PR #29** to land.
+1. Wait for **PR #29** to land. — *superseded above: the sweep branch contains it.*
 2. `npm run format` as **one commit that does nothing else**.
 3. Add its SHA to a `.git-blame-ignore-revs` file — GitHub honours it automatically, and locally
    `git blame --ignore-revs-file` does. Without it, the sweep poisons the blame of the whole
@@ -76,7 +104,7 @@ Whichever branch is taken, it must be taken. This issue is closed by a decision,
 
 ## Definition of done
 
-- [ ] PR #29 has landed before the sweep commit exists — verify: auto
+- [x] The sweep branch contains PR #29's head — the constraint's purpose, stated checkably — verify: auto
 - [ ] `npm run format:check` exits 0 — verify: auto
 - [ ] The sweep is a single commit containing only formatting changes; test count unchanged before and after — verify: auto
 - [ ] `.git-blame-ignore-revs` exists and names the sweep commit — verify: auto
