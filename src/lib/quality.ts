@@ -146,6 +146,103 @@ export function loadKit(lytosDir: string): QualityKit | null {
   return { gates, stack };
 }
 
+/**
+ * A placeholder left by `lyt init` — the scaffold ships `<list your runtime
+ * dependencies here…>` so the section is not empty. An angle-bracketed bullet
+ * is nobody's package name, and treating it as one would allow-list a sentence.
+ */
+function isPlaceholder(entry: string): boolean {
+  return /^<.*>$/.test(entry.trim());
+}
+
+/**
+ * The package name a bullet declares.
+ *
+ * The allow-list is documentation as much as data: `- commander — the CLI
+ * framework (manifest)` must resolve to `commander`. Take the first token,
+ * unwrap backticks, and let anything else stay whatever it is — a bullet that
+ * does not name a package will simply never match one.
+ */
+function depName(entry: string): string {
+  const first = entry.trim().split(/[\s—(,]/)[0] ?? "";
+  return first.replace(/^`|`$/g, "").trim();
+}
+
+/**
+ * Structural problems in the stack contract (empty = coherent).
+ *
+ * ISS-0107 shipped `stack.md` with a documented promise — *"the allow-list
+ * below gates new dependencies (a new dep needs an ADR, not a silent add)"* —
+ * and `parseStack()` read the file into a struct nothing ever consulted. A
+ * contract that is parsed and then ignored is the same failure as a rule with
+ * no tool binding: it looks enforced. This function and `unlistedDependencies()`
+ * are what make the file mean something.
+ */
+export function validateStack(stack: StackContract | null): string[] {
+  if (!stack) return [];
+  const problems: string[] = [];
+  if (!stack.lockfile.trim())
+    problems.push(
+      "no `lockfile:` declared — the contract calls the lockfile the truth for pinned versions, and names no file"
+    );
+  if (!stack.docsSource.trim())
+    problems.push(
+      "no `docs_source:` declared — ADR-0005 §3 needs somewhere to inject ground-truth API docs from"
+    );
+  const real = stack.allowedDeps.filter((d) => !isPlaceholder(d));
+  if (stack.allowedDeps.length === 0)
+    problems.push(
+      "empty allow-list — every dependency is then unlisted, so the dependency gate can only ever say no"
+    );
+  else if (real.length === 0)
+    problems.push(
+      "the allow-list still holds only the `lyt init` placeholder — nothing is actually allow-listed"
+    );
+  return problems;
+}
+
+/**
+ * Runtime dependencies the stack contract does not allow.
+ *
+ * Runtime only, deliberately: `stack.md` allow-lists what *ships*. Dev
+ * dependencies are the build toolchain, they follow the deps-audit gate
+ * (`npm audit --omit=dev`, ISS-0136), and allow-listing eight of them would be
+ * the bureaucracy ADR-0007 exists to prevent.
+ *
+ * Returns `[]` — not a complaint — when the project is not npm-shaped. The kit
+ * is language-agnostic by design; this check is the npm implementation of it,
+ * and a Rust or Python project simply has none yet. Silence beats a warning
+ * nobody can act on.
+ */
+export function unlistedDependencies(
+  projectRoot: string,
+  stack: StackContract | null
+): string[] {
+  if (!stack) return [];
+  const pkgPath = join(projectRoot, "package.json");
+  if (!existsSync(pkgPath)) return [];
+
+  let deps: string[];
+  try {
+    const pkg = JSON.parse(readFileSync(pkgPath, "utf-8")) as {
+      dependencies?: Record<string, string>;
+    };
+    deps = Object.keys(pkg.dependencies ?? {});
+  } catch {
+    // A package.json that does not parse is npm's problem to report, not the
+    // quality kit's — and guessing at its dependencies would be worse.
+    return [];
+  }
+
+  const allowed = new Set(
+    stack.allowedDeps
+      .filter((d) => !isPlaceholder(d))
+      .map((d) => depName(d))
+      .filter((d) => d.length > 0)
+  );
+  return deps.filter((d) => !allowed.has(d));
+}
+
 /** Structural problems in a kit (empty = coherent). */
 export function validateKit(kit: QualityKit): string[] {
   const problems: string[] = [];

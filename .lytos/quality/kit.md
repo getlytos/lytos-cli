@@ -22,3 +22,9 @@ risk matrix (ADR-0007) selects from here.*
 
 *Reference a gate from a DoD item with `— verify: auto:<id>` (e.g. `verify: auto:tests-negative`);
 `lyt doctor` flags refs absent from this table.*
+
+*__The pin is optional.__ A bare `verify: auto` is a machine-checkable item that no catalog gate
+covers — an assertion written for one issue alone — and most DoD items are exactly that. What
+`doctor` enforces is that a pin, once written, resolves. Requiring every `auto` item to name a
+catalog gate would push those one-off assertions out of Definitions of Done, which is where they
+do their work.*

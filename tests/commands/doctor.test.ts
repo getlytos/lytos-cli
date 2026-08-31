@@ -418,6 +418,74 @@ schema_version: 2
     expect(schemaFindings[0].file).toContain("ISS-0001-v1.md");
   });
 
+  it("reports an incomplete stack contract — a contract nobody reads is not a contract (ISS-0107)", () => {
+    fixture = createEmptyFixture();
+    createValidLytos(fixture.cwd);
+    // The shape lyt init leaves behind when nobody fills it in: no lockfile,
+    // no docs source, and the placeholder bullet still in the allow-list.
+    writeFileSync(
+      resolve(fixture.cwd, ".lytos/quality/stack.md"),
+      `---
+lockfile: ""
+docs_source: ""
+---
+
+# Stack contract
+
+## Allowed dependencies
+
+- <list your runtime dependencies here>
+`
+    );
+
+    const data = JSON.parse(run("doctor --json", fixture.cwd).stdout);
+    const findings = data.findings.filter((f: { message: string }) =>
+      f.message.includes("Incomplete stack contract")
+    );
+    expect(findings).toHaveLength(3);
+    expect(findings.some((f: { message: string }) => f.message.includes("lockfile"))).toBe(true);
+    expect(findings.some((f: { message: string }) => f.message.includes("docs_source"))).toBe(true);
+    expect(findings.some((f: { message: string }) => f.message.includes("placeholder"))).toBe(true);
+  });
+
+  it("flags a runtime dependency the stack contract never allowed (ISS-0107)", () => {
+    fixture = createEmptyFixture();
+    createValidLytos(fixture.cwd);
+    writeFileSync(
+      resolve(fixture.cwd, ".lytos/quality/stack.md"),
+      `---
+lockfile: package-lock.json
+docs_source: vendored
+---
+
+# Stack contract
+
+## Allowed dependencies
+
+- commander
+`
+    );
+    // The silent add the contract exists to catch.
+    writeFileSync(
+      resolve(fixture.cwd, "package.json"),
+      JSON.stringify({
+        name: "fixture",
+        dependencies: { commander: "^12.1.0", "left-pad": "^1.3.0" },
+        devDependencies: { vitest: "^4.0.0" },
+      })
+    );
+
+    const data = JSON.parse(run("doctor --json", fixture.cwd).stdout);
+    const findings = data.findings.filter((f: { message: string }) =>
+      f.message.includes("Runtime dependency not allow-listed")
+    );
+    expect(findings).toHaveLength(1);
+    expect(findings[0].message).toContain("left-pad");
+    // commander is allow-listed and vitest is dev tooling — neither is a finding.
+    expect(findings[0].message).not.toContain("commander");
+    expect(findings[0].message).not.toContain("vitest");
+  });
+
   it("warns when a kit loosens below the risk floor (ISS-0114)", () => {
     fixture = createEmptyFixture();
     createValidLytos(fixture.cwd);
