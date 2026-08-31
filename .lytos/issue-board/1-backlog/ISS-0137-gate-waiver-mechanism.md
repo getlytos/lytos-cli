@@ -99,3 +99,33 @@ try to answer: *would we have needed a waiver if we had paid ISS-0132 the week i
   review command.
 - Related: **ISS-0132** (the `format` gate that produced the deadlock), **ISS-0136** (the
   `deps-audit` gate that was asking the wrong question), **ISS-0128** (prose that does not run).
+
+## Second field instance — 2026-08-31 (ISS-0139)
+
+The release of 1.5.0 hit the same wall from the other side, and turned up a defect in the escape
+hatch this issue is meant to replace.
+
+**The instance.** ISS-0139's DoD carried `the release workflow succeeds and npm reports 1.5.0 as
+latest`. Half of it came true; the other half **cannot ever** — the release run failed on an
+expired credential, and npm refuses to republish an existing version, so no re-tag and no re-run
+can reach it. The replacement proof exists and is complete (ISS-0142 published 1.5.1 through the
+workflow with SLSA v1 provenance), but the board has no way to say *"this criterion is dead, here
+is what discharges it"*. The issue was parked `gate-failed` — the only mechanism that records a
+reason in the frontmatter — while everyone knows the park is terminal and will never resume.
+
+**The defect, measured.** `lyt close --force` was the obvious alternative and does not survive
+inspection. `buildCloseExtras()` in `src/commands/close.ts:52-72` writes `updated`,
+`completed_at` and `commits` — and **nothing that records that the close was forced, or that an
+item was left red**. A forced close produces a `5-done` fiche byte-for-byte indistinguishable from
+a complete one, in the exact field the manifest calls the project's audit journal. The unchecked
+box survives only in the body, where nothing aggregates it: `lyt report --sprint` and `lyt journal`
+both read the frontmatter.
+
+So the board currently offers two ways out of a red gate it does not own, and both lie: a park that
+says "later" when it means "never", and a close that says "done" when it means "done except this".
+That is the deadlock this issue names, with a number attached.
+
+**What it adds to the scope.** Whatever the waiver looks like, it must leave a frontmatter trace
+that survives into the derived views — a `waived:` block naming the criterion, the reason, the
+discharging issue, and who granted it. And `--force` should either write that trace or stop
+existing.

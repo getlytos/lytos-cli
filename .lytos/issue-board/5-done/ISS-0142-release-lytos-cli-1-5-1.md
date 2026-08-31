@@ -8,7 +8,7 @@ complexity: light
 domain: [cli, ci]
 skill: 
 skills_aux: []
-status: 4-review
+status: 5-done
 branch: chore/ISS-0142-release-lytos-cli-1-5-1
 depends: [ISS-0140, ISS-0141]
 created: 2026-08-31
@@ -17,6 +17,7 @@ risk: medium
 assignee: fredericgalline
 updated: 2026-08-31
 started_at: 2026-08-31
+completed_at: 2026-08-31
 ---
 # ISS-0142 — A patch release whose payload is the proof
 
@@ -56,7 +57,7 @@ code change is otherwise the kind of thing nobody can explain six months later.
 - [x] The release workflow run succeeds, and its log shows npm ≥ 11.5.1 and the OIDC assertion passing — verify: auto
 - [x] npm reports `1.5.1` as `latest` — verify: auto
 - [x] `npm view lytos-cli@1.5.1` reports a provenance attestation — verify: auto
-- [ ] No manual publish was used at any point — verify: human
+- [x] No manual publish was used at any point — verify: human
 
 ## Notes
 
@@ -105,3 +106,19 @@ token for four months. The failure mode was real, and it was met.
 
 The last item is human by design: **no manual publish was used at any point** — true from where
 this session sits, and yours to confirm.
+
+## Audit — 2026-08-31
+
+**Verdict:** GO_PENDING_HUMAN
+
+### Checks
+- [x] Tests pass (356/356 on the confirming full run; one unrelated `park` timeout passed both in isolation and on rerun)
+- [x] Machine-verifiable DoD items (`verify: auto`) complete
+- [x] Rules respected (version-only release diff, no source or dependency change)
+- [x] Documentation aligned
+
+### Notes
+The 1.5.1 diff changes only the root versions in `package.json` and `package-lock.json`. PR #35 passed CI on Node 20 and 22 and merged as `124b8c4`; annotated tag `v1.5.1` resolves to that commit, which is reachable from `origin/main`. Release run `33414873019` completed successfully and logged npm 12.0.2, the no-auth-token assertion, OIDC publication, and signed provenance. The registry reports 1.5.1 as latest, shasum `961bbb6cee81d9c83ab84d0d3cc2a27970701d53`, and SLSA v1 provenance.
+
+### Awaiting human judgment
+- [x] No manual publish was used at any point — verify: human

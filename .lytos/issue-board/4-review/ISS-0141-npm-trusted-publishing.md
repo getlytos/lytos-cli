@@ -88,7 +88,7 @@ So the absence of the auth line is not a comment to write. It is an assertion to
 - [x] `release.yml` and `ci.yml` still run the same gates in the same order — verify: auto
 - [ ] A trusted publisher for `lytos-cli` is declared on npmjs.com, naming `getlytos/lytos-cli` and `release.yml` — verify: human
 - [ ] `NPM_TOKEN` is deleted from the repo secrets once an OIDC publish has succeeded — verify: human
-- [x] The first release published by the workflow succeeds and carries a provenance attestation — verify: auto *(amended, see below)*
+- [x] The first release published by the workflow succeeds and carries a provenance attestation *(amended — see below)* — verify: auto
 
 ## Notes
 
@@ -167,3 +167,31 @@ Two items remain, both yours and both genuinely so:
 - **Deleting `NPM_TOKEN`** is now safe: the OIDC path has published. The fallback it provided is
   no longer needed, and a long-lived credential nobody uses is a liability, not a safety net.
   Optionally pair it with *Publishing access → require 2FA and disallow bypass tokens* on npmjs.com.
+
+## Audit — 2026-08-31
+
+**Verdict:** NO_GO
+
+### Checks
+- [x] Tests pass (356/356 on the confirming full run; one unrelated `park` timeout passed both in isolation and on rerun)
+- [x] Machine-verifiable DoD behavior is complete: OIDC release run `33414873019` succeeded with npm 12.0.2 and SLSA v1 provenance
+- [ ] Rules respected (`lyt lint` and `lyt show ISS-0141` report one DoD item without a recognized trailing `verify:` marker)
+- [x] Documentation aligned with the workflow and registry evidence
+
+### Notes
+The implementation itself is effective: `release.yml` grants `id-token: write`, removes `NPM_TOKEN` from the publish step, strips and asserts absence of `_authToken`, uses Node 22, upgrades npm, and preserves CI gate order. PR #34 passed on Node 20 and 22. The public release run completed successfully, and npm reports 1.5.1 with `predicateType: https://slsa.dev/provenance/v1`. The blocking defect is in the issue contract at line 91: appending `*(amended, see below)*` after `verify: auto` makes the marker non-terminal, so the project's own parser classifies the item as unqualified and `lyt lint` flags the review fiche. The two open `verify: human` items are not themselves grounds for NO_GO.
+
+### To fix before next review
+- [x] Reformat the amended DoD item so `verify: auto` is the recognized trailing marker, without changing its meaning or audit history. — *the annotation now precedes the marker; the item text, its tick and the Amendment section are untouched*
+- [x] Confirm `lyt show ISS-0141` and `lyt lint` no longer report an unqualified DoD item; then request re-review, which should remain pending on the two human judgments. — *`lyt lint` clean on this fiche; the two `verify: human` items stay open by design*
+
+## Response to audit — 2026-08-31
+
+**Accepted, and the defect was mine.** The amended item read
+`… — verify: auto *(amended, see below)*`: the annotation sat *after* the marker, so the parser
+stopped seeing a terminal `verify:` and classified the item as unqualified. The annotation now
+precedes the marker. Nothing else moved — same text, same tick, same Amendment section.
+
+Worth keeping, because it is small and instructive: the fix for a DoD-contract defect was found by
+the project's own linter, on the fiche of the issue whose entire subject is *not believing a claim
+nobody checked*. The tool caught its author.
