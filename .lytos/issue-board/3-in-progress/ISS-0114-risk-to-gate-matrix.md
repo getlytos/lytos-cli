@@ -8,17 +8,21 @@ complexity: heavy
 domain: [cli, method]
 skill: 
 skills_aux: []
-status: 4-review
-branch: claude/claude-loops-lytos-wtkc94
+status: 3-in-progress
+branch: chore/ISS-0126-translate-live-fiches-to-english
 depends: [ISS-0107]
 created: 2026-08-09
-updated: 2026-08-12
+updated: 2026-08-31
 schema_version: 2
 assignee: Claude
 started_at: 2026-08-09
-review: pending
-review_at: 2026-08-12
+review: no-go
+review_at: 2026-08-31
 reviewer: fredericgalline
+ai_reviewer:
+  model: gpt-5
+  session: codex-api
+  prompt_ref: skills/code-review/SKILL.md
 ---
 # ISS-0114 — Rigor follows the blast radius, not the other way round
 
@@ -152,3 +156,38 @@ still wants it; the argument is here rather than a silent tick.
 **Remaining on this fiche:** the one `verify: human` item — *is the default tiering sane for real
 projects*. That is Frédéric's call and no machine can make it. Everything machine-verifiable is
 green.
+
+## Audit — 2026-08-31
+
+**Verdict:** NO_GO
+
+### Checks
+- [x] Tests pass (326 on the declared branch; 350 on the exporter branch)
+- [ ] Machine-verifiable DoD items (`verify: auto`) complete
+- [ ] Rules respected
+- [ ] Documentation aligned
+
+### Notes
+[CRITICAL] The declared branch `claude/claude-loops-lytos-wtkc94` does not contain the baseline
+repair from `4dba6cc`. Running `lyt doctor` on that branch still reports that `secrets-scan` is
+missing, while the exported packet shows the repair from another ref. The audit target and the
+implementation diff are not the same tree.
+
+[CRITICAL] The promised "flags the missing ones" behavior is absent. `lyt gates ISS-XXXX` lists
+the catalog rows selected by risk and exits successfully, but it does not compare them with the
+issue's DoD, execute them, or report required gates that are missing. These review issues use bare
+`verify: auto` markers and the command still reports success.
+
+[WARNING] The shipped default matrix does not implement the documented tiers completely:
+`method/quality/kit.md` puts `screen-reader` only at high although the issue puts accessibility at
+medium, and it has no doc-L1, doc-L2, or architecture-review entry promised by the gesture.
+
+The mandatory medium-risk gates are also red: formatting fails on 51 source files on the current
+tree (and `format:check` is absent on the declared branch), while `npm audit --audit-level=high`
+reports five high-severity vulnerabilities.
+
+### To fix before next review
+- [x] Align the declared branch with the corrections being audited. — *repointed to `chore/ISS-0126-translate-live-fiches-to-english`, which contains `4dba6cc`; the branch was stale, not the work*
+- [ ] Implement detection/reporting of mandatory gates missing for an issue, with a regression that currently fails on a bare-auto DoD.
+- [ ] Align the shipped default tiers with the issue/ADR, or narrow those promises explicitly.
+- [ ] Make the mandatory format and dependency-audit gates green.

@@ -8,17 +8,21 @@ complexity: standard
 domain: [cli, method]
 skill: 
 skills_aux: []
-status: 4-review
-branch: claude/claude-loops-lytos-wtkc94
+status: 3-in-progress
+branch: chore/ISS-0126-translate-live-fiches-to-english
 depends: []
 created: 2026-08-09
-updated: 2026-08-12
+updated: 2026-08-31
 schema_version: 2
 assignee: Claude
 started_at: 2026-08-09
-review: pending
-review_at: 2026-08-12
+review: no-go
+review_at: 2026-08-31
 reviewer: fredericgalline
+ai_reviewer:
+  model: gpt-5
+  session: codex-api
+  prompt_ref: skills/code-review/SKILL.md
 ---
 # ISS-0115 — Catch ambiguity before spending tokens on it
 
@@ -129,3 +133,37 @@ no-out-of-scope` by both `lyt lint` and `lyt next`. No other issue on the board 
 stray mention.
 
 Tests 338 → 347 across both fixes; typecheck and eslint clean.
+
+## Audit — 2026-08-31
+
+**Verdict:** NO_GO
+
+### Checks
+- [x] Tests pass (326 on the declared branch; 350 on the exporter branch)
+- [ ] Machine-verifiable DoD items (`verify: auto`) complete
+- [ ] Rules respected
+- [ ] Documentation aligned
+
+### Notes
+[CRITICAL] The declared branch `claude/claude-loops-lytos-wtkc94` does not contain commit
+`5ae3e05`. Its `src/lib/ready.ts:44` still searches the entire fiche for "out of scope", so the
+exact defect from the previous audit remains on the branch the prompt says to test.
+
+[CRITICAL] Even on the exporter branch, `src/lib/ready.ts:65-72` checks only risk, a machine DoD,
+and the presence of the words "out of scope". It never checks that scope is declared or that
+constraints are stated, although both the issue gesture and generated rules define them as Ready
+criteria. An issue with no scope and no constraints is therefore eligible for `lyt next`.
+
+[WARNING] The Ready-section parser stops at every nested heading, not only at the next heading of
+equal or higher level, and a label with no value (for example `Out of scope:`) satisfies the
+criterion. Both cases allow the machine gate to disagree with the documented contract.
+
+The mandatory medium-risk gates are red: formatting fails on 51 source files (and the declared
+branch has no `format:check` script), while `npm audit --audit-level=high` reports five
+high-severity vulnerabilities.
+
+### To fix before next review
+- [x] Land the previous Ready-section correction on the declared branch, or update the declared branch. — *repointed to `chore/ISS-0126-translate-live-fiches-to-english`, which contains `5ae3e05`; the branch was stale, not the work*
+- [ ] Enforce the documented scope and constraints criteria, proportionally by issue type if that is the intended policy, with regressions.
+- [ ] Parse the Ready section by heading level and require a non-empty out-of-scope declaration.
+- [ ] Make the mandatory format and dependency-audit gates green.

@@ -8,17 +8,21 @@ complexity: heavy
 domain: [cli, method]
 skill: 
 skills_aux: []
-status: 4-review
-branch: claude/claude-loops-lytos-wtkc94
+status: 3-in-progress
+branch: chore/ISS-0126-translate-live-fiches-to-english
 depends: []
 created: 2026-08-09
-updated: 2026-08-12
+updated: 2026-08-31
 schema_version: 2
 assignee: Claude
 started_at: 2026-08-09
-review: pending
-review_at: 2026-08-12
+review: no-go
+review_at: 2026-08-31
 reviewer: fredericgalline
+ai_reviewer:
+  model: gpt-5
+  session: codex-api
+  prompt_ref: skills/code-review/SKILL.md
 ---
 # ISS-0107 — Make Pillar 3 (Standards) executable
 
@@ -194,3 +198,39 @@ can fail — is a further step, and it is the same root as the dangling `rubric:
 pointers in **ISS-0129**. Recorded there, not solved here.
 
 Tests 343 → 345 (347 with the ISS-0115 fix); `lyt doctor` reports no `quality-kit` finding.
+
+## Audit — 2026-08-31
+
+**Verdict:** NO_GO
+
+### Checks
+- [x] Tests pass (326 on the declared branch; 350 on the exporter branch)
+- [ ] Machine-verifiable DoD items (`verify: auto`) complete
+- [ ] Rules respected
+- [ ] Documentation aligned
+
+### Notes
+[CRITICAL] The declared branch `claude/claude-loops-lytos-wtkc94` does not contain commit
+`4dba6cc`, although the exported packet includes it via `git log --all`. On the branch the prompt
+instructs the auditor to test, `format:check` does not exist and `lyt doctor` still reports the
+missing `secrets-scan` baseline gate. The reviewed tree therefore does not contain the claimed
+corrections.
+
+[CRITICAL] `src/lib/quality.ts:147-164` validates gate rows only. It never validates the loaded
+stack contract, its required `lockfile` / `docs_source` fields, or the dependency allow-list.
+`method/quality/stack.md` promises that an unlisted dependency fails the dependency gate, but no
+implementation compares project dependencies to `allowedDeps`; the stack contract is parsed and
+then ignored.
+
+[WARNING] `src/lib/quality.ts:235-249` only rejects an explicit `auto:<id>` reference when the id
+is unknown. Bare `verify: auto` items remain accepted, so the stated convention that an auto DoD
+item points to a resolvable kit entry is not enforced.
+
+The mandatory medium-risk gates are not green: `npm run format:check` fails (or is absent on the
+declared branch), and `npm audit --audit-level=high` reports five high-severity vulnerabilities.
+
+### To fix before next review
+- [x] Make the declared audit branch contain the correction commits, or update the fiche to the branch that does. — *repointed to `chore/ISS-0126-translate-live-fiches-to-english`, which contains `4dba6cc`; the branch was stale, not the work*
+- [ ] Validate the stack contract and enforce the dependency allow-list / ADR exception promised by its documentation.
+- [ ] Enforce gate pins on auto DoD items, or narrow the documented contract and DoD explicitly.
+- [ ] Make the mandatory format and dependency-audit gates green.

@@ -8,17 +8,21 @@ complexity: standard
 domain: [cli, docs, app]
 skill: 
 skills_aux: []
-status: 4-review
-branch: claude/claude-loops-lytos-wtkc94
+status: 3-in-progress
+branch: chore/ISS-0126-translate-live-fiches-to-english
 depends: []
 created: 2026-08-09
-updated: 2026-08-12
+updated: 2026-08-31
 schema_version: 2
 assignee: Claude
 started_at: 2026-08-10
-review: pending
-review_at: 2026-08-12
+review: no-go
+review_at: 2026-08-31
 reviewer: fredericgalline
+ai_reviewer:
+  model: gpt-5
+  session: codex-api
+  prompt_ref: skills/code-review/SKILL.md
 ---
 # ISS-0124 — The project's narrative, derived instead of written
 
@@ -190,3 +194,40 @@ only, and it needs a decision — finish the translation of `5-done`, or accept 
 as written.
 
 Tests 347 → 348; typecheck and eslint clean.
+
+## Audit — 2026-08-31
+
+**Verdict:** NO_GO
+
+### Checks
+- [x] Tests pass (326 on the declared branch; 350 on the exporter branch)
+- [ ] Machine-verifiable DoD items (`verify: auto`) complete
+- [ ] Rules respected
+- [ ] Documentation aligned
+
+### Notes
+[CRITICAL] The declared branch `claude/claude-loops-lytos-wtkc94` does not contain commit
+`c60e9d1`. Its journal still reads one physical line and only recognizes an exact `## Context`
+heading, so the previous audit's truncated-why defect remains on the branch the prompt instructs
+the auditor to run.
+
+[CRITICAL] The public output is still not English. Running `lyt journal --json` on this repository
+emits many French titles and contexts from `5-done` and the archive, including ISS-0093 onward.
+This directly violates the CLI language rule, and the issue's own last response leaves the
+language strategy open.
+
+[WARNING] The withdrawn sprint-grouping promise is not aligned across artifacts. Current
+`src/lib/journal.ts:116-139` still lets optional `sprint` frontmatter override period grouping,
+and `README.md:80` still documents "grouped by sprint", while the revised issue promises grouping
+by `YYYY-MM` period. In addition, `lyt journal` only prints to stdout: it does not regenerate the
+promised `JOURNAL.md`, and no JOURNAL ignore rule is shipped.
+
+The mandatory medium-risk gates are red: formatting fails on 51 source files (and the declared
+branch has no `format:check` script), while `npm audit --audit-level=high` reports five
+high-severity vulnerabilities.
+
+### To fix before next review
+- [x] Land the wrapped-context correction on the declared branch, or update the declared branch. — *repointed to `chore/ISS-0126-translate-live-fiches-to-english`, which contains `c60e9d1`; the branch was stale, not the work*
+- [ ] Define and implement the language strategy for historical entries, then test this repository's rendered output.
+- [ ] Align implementation, README, and issue on period versus sprint grouping and on whether JOURNAL.md is generated.
+- [ ] Make the mandatory format and dependency-audit gates green.
