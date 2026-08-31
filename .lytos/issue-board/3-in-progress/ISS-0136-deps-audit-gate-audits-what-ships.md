@@ -8,7 +8,7 @@ complexity: light
 domain: [cli, method]
 skill: 
 skills_aux: []
-status: 4-review
+status: 3-in-progress
 branch: fix/ISS-0133-audit-diff-scoped-to-the-issue
 depends: [ISS-0107]
 created: 2026-08-31
@@ -17,6 +17,13 @@ schema_version: 2
 risk: low
 assignee: Claude
 started_at: 2026-08-31
+review: no-go
+review_at: 2026-08-31
+reviewer: fredericgalline
+ai_reviewer:
+  model: gpt-5
+  session: codex-api
+  prompt_ref: skills/code-review/SKILL.md
 ---
 # ISS-0136 — Five high-severity findings, none of them reachable by a user
 
@@ -84,3 +91,24 @@ prose, so a project filling the kit in decides which question it is asking.
 - The waiver question that same audit raised is **ISS-0137**, deliberately separate: this fiche
   fixes a gate that was asking the wrong question, which is not the same as excusing a gate that
   is asking the right one.
+
+## Audit — 2026-08-31
+
+**Verdict:** NO_GO
+
+### Checks
+- [x] Tests pass (356/356)
+- [x] Machine-verifiable DoD items (`verify: auto`) complete
+- [ ] Rules respected: the mandatory `format` gate fails on 51 source files
+- [x] Documentation aligned
+
+### Notes
+The narrowed dependency audit is effective: `npm audit --omit=dev --audit-level=high` exits 0
+with no reported vulnerabilities. `lyt doctor --json` also exits 0 with no quality-kit baseline
+error, and typecheck, lint, secrets scan, and build all pass. The remaining human question is not
+a defect, but the review contract requires `NO_GO` while any mandatory gate is red. ISS-0137 is
+only a proposed waiver mechanism and does not waive the current failure.
+
+### To fix before next review
+- [ ] Make the mandatory `format` gate green, or return only after an explicit, valid waiver has
+  been implemented and granted for this issue.
