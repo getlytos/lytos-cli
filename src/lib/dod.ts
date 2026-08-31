@@ -126,6 +126,40 @@ export function extractDodItems(content: string): DodItem[] {
 }
 
 /**
+ * The text of the "Definition of done" section alone — fenced blocks excluded.
+ *
+ * Anything that reads the DoD as a *contract* must read it here rather than
+ * scanning the fiche. A fiche is mostly prose: context, audit blocks, responses
+ * quoting the very syntax they discuss. `ready.ts` learned this the hard way —
+ * a stray "out of scope" in a note made an issue look ready — and the gate-pin
+ * resolver reproduced it exactly: writing \`verify: reviewer:over-engineering\`
+ * inside an audit response silenced the flag that was reporting that same gate
+ * as carried by nobody. Prose about a pin is not a pin.
+ */
+export function dodSection(content: string): string {
+  const lines = content.split(/\r?\n/);
+  const kept: string[] = [];
+  let inDod = false;
+  let inFence = false;
+
+  for (const line of lines) {
+    if (FENCE_RE.test(line)) {
+      inFence = !inFence;
+      continue;
+    }
+    if (inFence) continue;
+    const heading = line.match(HEADING_RE);
+    if (heading) {
+      inDod = DOD_HEADING_RE.test(heading[1]);
+      continue;
+    }
+    if (inDod) kept.push(line);
+  }
+
+  return kept.join("\n");
+}
+
+/**
  * Analyze the DoD of an issue: counts, and loop-eligibility.
  */
 export function analyzeDod(content: string): DodAnalysis {

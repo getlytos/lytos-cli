@@ -12,6 +12,7 @@ import { locateIssue } from "../lib/issue-ops.js";
 import {
   loadKit,
   gatesForRisk,
+  gateCoverage,
   riskOf,
   type GateKind,
   type RiskTier,
@@ -19,6 +20,7 @@ import {
 import {
   ok,
   info,
+  warn,
   error,
   bold,
   cyan,
@@ -126,6 +128,8 @@ export const gatesCommand = new Command("gates")
     const reviewer = required.filter((g) => g.kind === "reviewer");
     const human = required.filter((g) => g.kind === "human");
 
+    const coverage = gateCoverage(required, issue.content);
+
     if (opts.json) {
       console.log(
         JSON.stringify(
@@ -137,6 +141,11 @@ export const gatesCommand = new Command("gates")
               auto: auto.length,
               reviewer: reviewer.length,
               human: human.length,
+            },
+            coverage: {
+              pinned: coverage.pinned.map((g) => g.id),
+              unpinnedButRun: coverage.unpinnedButRun.map((g) => g.id),
+              uncarried: coverage.uncarried.map((g) => g.id),
             },
           },
           null,
@@ -163,6 +172,24 @@ export const gatesCommand = new Command("gates")
           `    ${KIND_LABEL[g.kind](g.kind)} ${cyan(g.id)} ${dim(`— ${g.tool}`)}`
         );
     }
+    // "Resolve the gates due and flag the missing ones" (ISS-0114). Missing
+    // means: mandatory here, and nothing in the Definition of Done carries it.
+    // Only reviewer/human entries are flagged — CI runs a `gate` whether or not
+    // a DoD item names it, and pins stayed optional on purpose (ISS-0107).
+    if (coverage.uncarried.length > 0) {
+      console.error("");
+      warn(
+        `${coverage.uncarried.length} mandatory gate(s) no Definition-of-Done item carries:`
+      );
+      for (const g of coverage.uncarried)
+        console.error(
+          `    ${KIND_LABEL[g.kind](g.kind)} ${cyan(g.id)} ${dim(`— ${g.tool}`)}`
+        );
+      console.error(
+        `  ${dim(`No command runs these. Add a DoD item pinning each — \`— verify: ${coverage.uncarried[0].kind}:${coverage.uncarried[0].id}\` — or they are mandatory on paper and discharged by nobody.`)}`
+      );
+    }
+
     if (!issue.frontmatter.risk)
       info(`(no risk field — defaulted to ${bold("medium")})`);
     console.error("");
