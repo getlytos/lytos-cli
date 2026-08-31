@@ -12,11 +12,18 @@ status: 4-review
 branch: fix/ISS-0133-audit-diff-scoped-to-the-issue
 depends: []
 created: 2026-08-12
-updated: 2026-08-12
+updated: 2026-08-31
 schema_version: 2
 risk: medium
 assignee: fredericgalline
 started_at: 2026-08-12
+review: pending
+review_at: 2026-08-31
+reviewer: fredericgalline
+ai_reviewer:
+  model: gpt-5
+  session: codex-api
+  prompt_ref: skills/code-review/SKILL.md
 ---
 # ISS-0133 — Four auditors read the same 68 commits and guessed which findings belonged to whom
 
@@ -158,3 +165,91 @@ next generated directory does not require touching the walk.
 
 Tests 348 → 350; typecheck and eslint clean; `lyt doctor` reports no error on this repo for the
 first time in the session.
+
+## Audit — 2026-08-31
+
+**Verdict:** NO_GO
+
+### Checks
+- [x] Tests pass (350)
+- [ ] Machine-verifiable DoD items (`verify: auto`) complete
+- [ ] Rules respected
+- [x] Documentation aligned
+
+### Notes
+[CRITICAL] `src/lib/review.ts:168-203` collects matching commits from every ref, but
+`src/lib/review.ts:205-217` still commands the auditor to run all checks on the declared branch.
+Those can be different trees. The four packets this issue was created to repair demonstrate it:
+their correction commits (`4dba6cc`, `5ae3e05`, `c60e9d1`) appear in the exported diffs but are
+not reachable from `claude/claude-loops-lytos-wtkc94`; running the gates there reproduces the old
+defects. An auditor can therefore read fixed patches and test stale code, making the packet
+internally contradictory.
+
+[CRITICAL] `src/lib/review.ts:208-214` interpolates the unvalidated `branch:` value into shell
+commands that the prompt explicitly tells an auditor to execute. Git accepts branch names with a
+semicolon, and `issue-ops.ts` already provides `isValidBranchName()` for the prior command-
+injection fix, but review does not use it. A crafted fiche can inject a second shell command into
+the generated audit instructions.
+
+The mandatory medium-risk gates are red: `npm run format:check` fails on 51 source files and
+`npm audit --audit-level=high` reports five high-severity vulnerabilities. The remaining
+`verify: human` read-through is not the reason for this verdict.
+
+### To fix before next review
+- [x] Make the diff source and the tree used for checks identical, or state and verify an explicit integration ref that contains every selected commit.
+- [x] Validate or safely shell-quote the declared branch before embedding it in executable prompt instructions; add a malicious-branch regression.
+- [ ] Make the mandatory format and dependency-audit gates green. — *not mine to make green; ISS-0132 owns it and is blocked on PR #29, argued below*
+
+## Response to audit — 2026-08-31
+
+**Both [CRITICAL] findings accepted and fixed.** They were one defect wearing two faces: the
+export answers *"which commits belong to this issue"* by searching every ref, and answers *"where
+do I run the tests"* by reading `branch:` — two questions, two sources, never reconciled.
+
+### The diff and the tree are now cross-checked
+
+`auditTarget()` (`src/lib/review.ts`) resolves the SHAs of the commits the diff will carry and
+tests each one against the declared branch with `git merge-base --is-ancestor`. Three outcomes,
+and the prompt renders a different `**Where to audit:**` paragraph for each:
+
+- **contained** — unchanged behaviour, the plain checkout instruction ISS-0095 introduced.
+- **diverged** — the prompt says the declared branch does not contain the exported commits, names
+  the missing ones, states plainly that auditing there would make the packet contradict itself,
+  and offers the ref that *does* contain them all (intersection of `git branch -a --contains`).
+  When no ref contains them, it says so and tells the auditor to run the checks nowhere.
+- **unsafe** — below.
+
+Verified against the case that produced the finding. The four loop-B fiches now resolve to
+`diverged`, missing exactly `4dba6cc` / `5ae3e05` / `c60e9d1` — the three correction commits the
+auditor found in the patches but not in the tree — and the tool proposes
+`chore/ISS-0126-translate-live-fiches-to-english` on its own. It reproduces the audit's reasoning
+from the data, which is the strongest evidence I can offer that the check is the right one.
+
+### The branch name no longer reaches a shell fence
+
+`isValidBranchName()` was already in `issue-ops.ts`, added for the prior injection fix; review
+simply never called it. It does now, and the failure mode is *withholding*, not escaping: an
+invalid `branch:` is dropped from every command in the prompt, the audit falls back to the current
+tree, and the auditor is told to report the malformed field. `safeBranch` also replaces
+`declaredBranch` in the section 7 fallback, the other place the raw value was interpolated.
+
+**The regression is narrower than "the string must not appear", and deliberately so.** The value
+*does* still appear — section 6 quotes the fiche verbatim, and it must: the auditor cannot report a
+malformed field they cannot see. What must never happen is the prompt turning that data into an
+instruction. The test extracts every ```bash fence from the generated prompt and asserts none
+carries the payload. Writing the naive assertion first is what surfaced the distinction.
+
+Three cases added to `tests/commands/review.test.ts` (diverged, contained, unsafe): **353 tests**,
+up from 350. Typecheck and ESLint clean.
+
+### The third item is not this issue's to close
+
+The audit is right that `format:check` (51 files) and `npm audit` (5 high) are red, and right that
+they are mandatory at `risk: medium`. But **ISS-0132 already owns both**, and it carries a hard
+self-imposed constraint: *"after PR #29 has landed, never before"*. PR #29 is still open — 72
+files, 21 of them in `src/`. Sweeping now would force that PR through a wall of pure-whitespace
+conflicts, and it would bury this issue's own two-file diff under 51 reformatted files: the exact
+misattribution ISS-0133 exists to prevent, committed by the fix for it.
+
+So the item stays unticked here, on purpose, and its truth is recorded rather than traded away.
+`npm audit fix` is not blocked by #29 and goes to ISS-0132 alongside the sweep.
