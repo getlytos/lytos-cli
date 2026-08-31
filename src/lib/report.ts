@@ -16,7 +16,11 @@ import { existsSync, readFileSync, readdirSync } from "fs";
 import { join } from "path";
 import { analyzeDod, type DodItem } from "./dod.js";
 import { loadKit, gatesForRisk, riskOf, type QualityGate } from "./quality.js";
-import { computeBudget, readSprintCeiling, type BudgetReport } from "./budget.js";
+import {
+  computeBudget,
+  readSprintCeiling,
+  type BudgetReport,
+} from "./budget.js";
 import { parseFrontmatter } from "./frontmatter.js";
 import type { IssueLocation } from "./issue-ops.js";
 import type { FrontmatterValue } from "./frontmatter.js";
@@ -28,7 +32,7 @@ export interface ReviewPacket {
   risk: string;
   parked: { reason: string; at: string } | null;
   verdict: string;
-  human: DodItem[];       // verify: human — the review checklist
+  human: DodItem[]; // verify: human — the review checklist
   autoPending: DodItem[]; // machine items not yet green — these block
   autoDone: DodItem[];
   requiredGates: QualityGate[];
@@ -57,7 +61,10 @@ function nested(val: FrontmatterValue | undefined, key: string): string {
 }
 
 /** Commits + files touched for an issue, via `Refs: ISS-XXXX`. Empty on any git failure. */
-function gitChanges(issueId: string): { commits: { sha: string; subject: string }[]; files: string[] } {
+function gitChanges(issueId: string): {
+  commits: { sha: string; subject: string }[];
+  files: string[];
+} {
   try {
     const raw = execFileSync(
       "git",
@@ -71,10 +78,14 @@ function gitChanges(issueId: string): { commits: { sha: string; subject: string 
     });
     const files = new Set<string>();
     for (const c of commits) {
-      const names = execFileSync("git", ["show", "--name-only", "--pretty=format:", c.sha], {
-        encoding: "utf-8",
-        stdio: ["pipe", "pipe", "pipe"],
-      }).trim();
+      const names = execFileSync(
+        "git",
+        ["show", "--name-only", "--pretty=format:", c.sha],
+        {
+          encoding: "utf-8",
+          stdio: ["pipe", "pipe", "pipe"],
+        }
+      ).trim();
       for (const f of names.split("\n").filter(Boolean)) files.add(f);
     }
     return { commits, files: [...files] };
@@ -84,7 +95,10 @@ function gitChanges(issueId: string): { commits: { sha: string; subject: string 
 }
 
 /** Build the review packet for a located issue. */
-export function buildPacket(lytosDir: string, issue: IssueLocation): ReviewPacket {
+export function buildPacket(
+  lytosDir: string,
+  issue: IssueLocation
+): ReviewPacket {
   const fm = issue.frontmatter;
   const id = str(fm.id);
   const risk = riskOf(fm.risk);
@@ -137,11 +151,20 @@ export function renderPacket(p: ReviewPacket): string {
   let hasDoubt = false;
   if (p.parked) {
     hasDoubt = true;
-    out.push(`- **Parked**: ${p.parked.reason}${p.parked.at ? ` (since ${p.parked.at})` : ""}`);
+    out.push(
+      `- **Parked**: ${p.parked.reason}${p.parked.at ? ` (since ${p.parked.at})` : ""}`
+    );
   }
-  if (p.verdict === "no-go" || p.verdict === "pending" || p.verdict === "go-pending-human") {
+  if (
+    p.verdict === "no-go" ||
+    p.verdict === "pending" ||
+    p.verdict === "go-pending-human"
+  ) {
     hasDoubt = true;
-    const gloss = p.verdict === "go-pending-human" ? " — gates green, your judgment still owed" : "";
+    const gloss =
+      p.verdict === "go-pending-human"
+        ? " — gates green, your judgment still owed"
+        : "";
     out.push(`- **Reviewer verdict**: ${p.verdict}${gloss}`);
   }
   if (p.autoPending.length > 0) {
@@ -151,34 +174,52 @@ export function renderPacket(p: ReviewPacket): string {
   }
   if (p.human.length > 0) {
     hasDoubt = true;
-    out.push(`- **Human checklist** (${p.human.length}) — your judgment, not a gate:`);
+    out.push(
+      `- **Human checklist** (${p.human.length}) — your judgment, not a gate:`
+    );
     for (const i of p.human) out.push(`  - [${i.done ? "x" : " "}] ${i.text}`);
   }
-  out.push("- **Free look**: what is NOT covered here? Look beyond the checklist.");
-  if (!hasDoubt) out.push("*(no park, no pending gate, no reviewer objection — still do the free look)*");
+  out.push(
+    "- **Free look**: what is NOT covered here? Look beyond the checklist."
+  );
+  if (!hasDoubt)
+    out.push(
+      "*(no park, no pending gate, no reviewer objection — still do the free look)*"
+    );
   out.push("");
 
   // ── Changes ──────────────────────────────────────────────────
   out.push("## Changes");
-  if (p.changes.commits.length === 0) out.push("*(no commits found for this issue)*");
+  if (p.changes.commits.length === 0)
+    out.push("*(no commits found for this issue)*");
   for (const c of p.changes.commits) out.push(`- \`${c.sha}\` ${c.subject}`);
   if (p.changes.files.length > 0) {
     out.push("");
-    out.push(`Files (${p.changes.files.length}): ${p.changes.files.map((f) => `\`${f}\``).join(", ")}`);
+    out.push(
+      `Files (${p.changes.files.length}): ${p.changes.files.map((f) => `\`${f}\``).join(", ")}`
+    );
   }
   out.push("");
 
   // ── Green evidence (last, on purpose) ────────────────────────
   out.push("## Evidence (green)");
-  out.push(`- Gates required at risk **${p.risk}** (${p.requiredGates.length}): ${p.requiredGates.map((g) => g.id).join(", ") || "—"}`);
-  out.push(`- Machine DoD items done: ${p.autoDone.length}/${p.autoDone.length + p.autoPending.length}`);
+  out.push(
+    `- Gates required at risk **${p.risk}** (${p.requiredGates.length}): ${p.requiredGates.map((g) => g.id).join(", ") || "—"}`
+  );
+  out.push(
+    `- Machine DoD items done: ${p.autoDone.length}/${p.autoDone.length + p.autoPending.length}`
+  );
   out.push("");
 
   // ── Audit ────────────────────────────────────────────────────
   out.push("## Audit");
   const a = p.audit;
-  out.push(`- implementer: ${a.model || "—"} · reviewer: ${a.reviewer || "—"} · assignee: ${a.assignee || "—"}`);
-  out.push(`- cost: ${a.costUsd || "—"} USD · tokens: ${a.tokensIn || "—"} in / ${a.tokensOut || "—"} out`);
+  out.push(
+    `- implementer: ${a.model || "—"} · reviewer: ${a.reviewer || "—"} · assignee: ${a.assignee || "—"}`
+  );
+  out.push(
+    `- cost: ${a.costUsd || "—"} USD · tokens: ${a.tokensIn || "—"} in / ${a.tokensOut || "—"} out`
+  );
 
   return out.join("\n") + "\n";
 }
@@ -200,7 +241,12 @@ export interface SprintReport {
 /** Aggregate the in-flight pipeline + parked into a sprint-level view. */
 export function buildSprintReport(lytosDir: string): SprintReport {
   const boardDir = join(lytosDir, "issue-board");
-  const counts: Record<string, number> = { "2-sprint": 0, "3-in-progress": 0, "4-review": 0, parked: 0 };
+  const counts: Record<string, number> = {
+    "2-sprint": 0,
+    "3-in-progress": 0,
+    "4-review": 0,
+    parked: 0,
+  };
   const parkedByReason: Record<string, number> = {};
   let pendingHuman = 0;
   let done = 0;
@@ -209,7 +255,9 @@ export function buildSprintReport(lytosDir: string): SprintReport {
   for (const dir of [...PIPELINE, "parked"]) {
     const dirPath = join(boardDir, dir);
     if (!existsSync(dirPath)) continue;
-    for (const file of readdirSync(dirPath).filter((f) => f.startsWith("ISS-") && f.endsWith(".md"))) {
+    for (const file of readdirSync(dirPath).filter(
+      (f) => f.startsWith("ISS-") && f.endsWith(".md")
+    )) {
       const content = readFileSync(join(dirPath, file), "utf-8");
       const fm = parseFrontmatter(content);
       counts[dir] = (counts[dir] ?? 0) + 1;
@@ -218,20 +266,29 @@ export function buildSprintReport(lytosDir: string): SprintReport {
         parkedByReason[reason] = (parkedByReason[reason] ?? 0) + 1;
       }
       const dod = analyzeDod(content);
-      pendingHuman += dod.items.filter((i) => i.verify === "human" && !i.done).length;
+      pendingHuman += dod.items.filter(
+        (i) => i.verify === "human" && !i.done
+      ).length;
       done += dod.autoDone;
       total += dod.machine;
     }
   }
 
   const ceiling = readSprintCeiling(lytosDir);
-  const budget = computeBudget(lytosDir, { maxUsd: ceiling.maxUsd, maxIssues: ceiling.maxIssues });
+  const budget = computeBudget(lytosDir, {
+    maxUsd: ceiling.maxUsd,
+    maxIssues: ceiling.maxIssues,
+  });
 
   return {
     counts,
     parkedByReason,
     pendingHumanChecklists: pendingHuman,
-    coverage: { done, total, pct: total > 0 ? Math.round((done / total) * 100) : 0 },
+    coverage: {
+      done,
+      total,
+      pct: total > 0 ? Math.round((done / total) * 100) : 0,
+    },
     budget,
   };
 }
@@ -248,13 +305,20 @@ export function renderSprintReport(r: SprintReport): string {
     for (const [reason, n] of parkedEntries) out.push(`  - ${reason}: ${n}`);
   }
   out.push(`- **Human checklists pending**: ${r.pendingHumanChecklists}`);
-  if (r.budget.overBudget) for (const b of r.budget.breaches) out.push(`- **Over budget**: ${b}`);
+  if (r.budget.overBudget)
+    for (const b of r.budget.breaches) out.push(`- **Over budget**: ${b}`);
   out.push("");
   out.push("## Flow");
-  out.push(`- sprint ${r.counts["2-sprint"]} · in-progress ${r.counts["3-in-progress"]} · review ${r.counts["4-review"]} · parked ${r.counts.parked}`);
+  out.push(
+    `- sprint ${r.counts["2-sprint"]} · in-progress ${r.counts["3-in-progress"]} · review ${r.counts["4-review"]} · parked ${r.counts.parked}`
+  );
   out.push("");
   out.push("## Evidence (green)");
-  out.push(`- Machine DoD coverage: ${r.coverage.done}/${r.coverage.total} (${r.coverage.pct}%)`);
-  out.push(`- Budget: $${r.budget.costUsd.toFixed(2)} over ${r.budget.issues} issue(s)${r.budget.hasCeiling ? "" : " (no ceiling set)"}`);
+  out.push(
+    `- Machine DoD coverage: ${r.coverage.done}/${r.coverage.total} (${r.coverage.pct}%)`
+  );
+  out.push(
+    `- Budget: $${r.budget.costUsd.toFixed(2)} over ${r.budget.issues} issue(s)${r.budget.hasCeiling ? "" : " (no ceiling set)"}`
+  );
   return out.join("\n") + "\n";
 }

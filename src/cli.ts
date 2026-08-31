@@ -45,35 +45,77 @@ program.on("--help", () => {
   console.log("  lyt init --all-tools");
   console.log("  lyt board");
   console.log("  lyt board --all");
-  console.log("  lyt show                   # first call of every session: the real board state");
-  console.log("  lyt show ISS-0053          # one issue in detail, with its DoD progress");
-  console.log("  lyt journal                # derived logbook: the why of closed issues (chronological)");
+  console.log(
+    "  lyt show                   # first call of every session: the real board state"
+  );
+  console.log(
+    "  lyt show ISS-0053          # one issue in detail, with its DoD progress"
+  );
+  console.log(
+    "  lyt journal                # derived logbook: the why of closed issues (chronological)"
+  );
   console.log("  lyt start ISS-0053");
   console.log("  lyt move ISS-0053 4-review");
   console.log("  lyt close ISS-0053");
   console.log("  lyt close --dry-run");
-  console.log("  lyt claim ISS-0053         # take an issue (multi-user); lyt unclaim releases it");
-  console.log("  lyt lint                   # validate .lytos/ structure — usable in CI");
+  console.log(
+    "  lyt claim ISS-0053         # take an issue (multi-user); lyt unclaim releases it"
+  );
+  console.log(
+    "  lyt lint                   # validate .lytos/ structure — usable in CI"
+  );
   console.log("  lyt doctor                 # full diagnostic + health score");
-  console.log("  lyt archive --dry-run      # preview 5-done/ issues older than 7 days");
-  console.log("  lyt pull-notes --dry-run   # preview .lytos-only commits to repatriate from origin/main");
-  console.log("  lyt upgrade --dry-run      # preview method-file updates in .lytos/");
-  console.log("  lyt update                 # update lytos-cli itself to the latest version");
+  console.log(
+    "  lyt archive --dry-run      # preview 5-done/ issues older than 7 days"
+  );
+  console.log(
+    "  lyt pull-notes --dry-run   # preview .lytos-only commits to repatriate from origin/main"
+  );
+  console.log(
+    "  lyt upgrade --dry-run      # preview method-file updates in .lytos/"
+  );
+  console.log(
+    "  lyt update                 # update lytos-cli itself to the latest version"
+  );
   console.log("  lyt review                 # list pending reviews");
-  console.log("  lyt review ISS-0053        # print the audit prompt (use a FRESH AI session, ideally a different vendor)");
-  console.log("  lyt review ISS-0053 --verdict go-pending-human   # gates green, human judgment still owed");
-  console.log("  lyt migrate-frontmatter    # dry-run: backfill schema v2 fields on existing issues");
-  console.log("  lyt absorb                 # dry-run: merge the AI session journal into the active issue");
+  console.log(
+    "  lyt review ISS-0053        # print the audit prompt (use a FRESH AI session, ideally a different vendor)"
+  );
+  console.log(
+    "  lyt review ISS-0053 --verdict go-pending-human   # gates green, human judgment still owed"
+  );
+  console.log(
+    "  lyt migrate-frontmatter    # dry-run: backfill schema v2 fields on existing issues"
+  );
+  console.log(
+    "  lyt absorb                 # dry-run: merge the AI session journal into the active issue"
+  );
   console.log("");
-  console.log("  Loop primitives (ADR-0004) — the CLI exposes them; the wrapper/App orchestrate:");
-  console.log("  lyt next                   # the next loop-eligible issue in the sprint (read-only)");
-  console.log("  lyt park ISS-0053 --reason ambiguous-spec   # halt instead of guessing");
-  console.log("  lyt unpark ISS-0053        # return a parked issue to the sprint");
-  console.log("  lyt budget --max-usd 50    # aggregate pipeline cost vs a ceiling (non-zero exit when breached)");
-  console.log("  lyt gates ISS-0053         # the gates mandatory for an issue's risk level (ADR-0007)");
-  console.log("  lyt report ISS-0053        # the review packet for an issue (doubt-first)");
+  console.log(
+    "  Loop primitives (ADR-0004) — the CLI exposes them; the wrapper/App orchestrate:"
+  );
+  console.log(
+    "  lyt next                   # the next loop-eligible issue in the sprint (read-only)"
+  );
+  console.log(
+    "  lyt park ISS-0053 --reason ambiguous-spec   # halt instead of guessing"
+  );
+  console.log(
+    "  lyt unpark ISS-0053        # return a parked issue to the sprint"
+  );
+  console.log(
+    "  lyt budget --max-usd 50    # aggregate pipeline cost vs a ceiling (non-zero exit when breached)"
+  );
+  console.log(
+    "  lyt gates ISS-0053         # the gates mandatory for an issue's risk level (ADR-0007)"
+  );
+  console.log(
+    "  lyt report ISS-0053        # the review packet for an issue (doubt-first)"
+  );
   console.log("");
-  console.log('Use "lyt <command> --help" for command-specific options and arguments.');
+  console.log(
+    'Use "lyt <command> --help" for command-specific options and arguments.'
+  );
 });
 
 program.addCommand(initCommand);
@@ -109,7 +151,9 @@ program
     console.error(`\n  ${cyan(bold("Updating lytos-cli..."))}\n`);
     try {
       execSync("npm install -g lytos-cli@latest", { stdio: "inherit" });
-      const newVersion = execSync("lyt --version", { encoding: "utf-8" }).trim();
+      const newVersion = execSync("lyt --version", {
+        encoding: "utf-8",
+      }).trim();
       console.error("");
       ok(`Updated to ${green(newVersion)}`);
     } catch {

@@ -13,7 +13,9 @@ import { buildJournal, renderJournal } from "../lib/journal.js";
 import { error } from "../lib/output.js";
 
 export const journalCommand = new Command("journal")
-  .description("Derived logbook: the why of closed issues, chronological, linked (read-only)")
+  .description(
+    "Derived logbook: the why of closed issues, chronological, linked (read-only)"
+  )
   .option("--json", "Output as JSON", false)
   .action((opts: { json?: boolean }) => {
     const cwd = process.cwd();
@@ -25,5 +27,7 @@ export const journalCommand = new Command("journal")
     }
 
     const groups = buildJournal(lytosDir);
-    console.log(opts.json ? JSON.stringify(groups, null, 2) : renderJournal(groups));
+    console.log(
+      opts.json ? JSON.stringify(groups, null, 2) : renderJournal(groups)
+    );
   });

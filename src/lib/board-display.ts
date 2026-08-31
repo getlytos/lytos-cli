@@ -11,8 +11,7 @@ import { join } from "path";
 import type { BoardData, Issue } from "./board-generator.js";
 
 const noColor =
-  process.env.NO_COLOR !== undefined ||
-  process.argv.includes("--no-color");
+  process.env.NO_COLOR !== undefined || process.argv.includes("--no-color");
 
 function c(code: string, text: string): string {
   if (noColor) return text;
@@ -52,13 +51,20 @@ function colorStatus(status: string, count: number): string {
   const label = STATUS_DISPLAY[status] || status;
   const countStr = `(${count})`;
   switch (status) {
-    case "0-icebox": return dim(`▸ ${label} ${countStr}`);
-    case "1-backlog": return bold(white(`▸ ${label} ${countStr}`));
-    case "2-sprint": return boldCyan(`▸ ${label} ${countStr}`);
-    case "3-in-progress": return boldYellow(`▸ ${label} ${countStr}`);
-    case "4-review": return boldMagenta(`▸ ${label} ${countStr}`);
-    case "5-done": return boldGreen(`▸ ${label} ${countStr}`);
-    default: return `▸ ${label} ${countStr}`;
+    case "0-icebox":
+      return dim(`▸ ${label} ${countStr}`);
+    case "1-backlog":
+      return bold(white(`▸ ${label} ${countStr}`));
+    case "2-sprint":
+      return boldCyan(`▸ ${label} ${countStr}`);
+    case "3-in-progress":
+      return boldYellow(`▸ ${label} ${countStr}`);
+    case "4-review":
+      return boldMagenta(`▸ ${label} ${countStr}`);
+    case "5-done":
+      return boldGreen(`▸ ${label} ${countStr}`);
+    default:
+      return `▸ ${label} ${countStr}`;
   }
 }
 
@@ -100,7 +106,11 @@ function buildTree(issues: Issue[]): DisplayIssue[] {
 
   for (const issue of issues) {
     const deps = issue.frontmatter.depends;
-    const depList: string[] = Array.isArray(deps) ? deps : typeof deps === "string" && deps ? [deps] : [];
+    const depList: string[] = Array.isArray(deps)
+      ? deps
+      : typeof deps === "string" && deps
+        ? [deps]
+        : [];
     const parentInGroup = depList.find((d) => issueIds.has(d));
 
     if (parentInGroup) {
@@ -131,11 +141,16 @@ function buildTree(issues: Issue[]): DisplayIssue[] {
 /** Color a v2 review verdict marker (shown in 4-review section only). */
 function reviewMarker(verdict: string): string {
   switch (verdict) {
-    case "go":               return green("✓");
-    case "go-pending-human": return yellow("◐"); // gates green, human judgment owed
-    case "no-go":            return c("31", "✗");
-    case "pending":          return yellow("⌛");
-    default:                 return "";
+    case "go":
+      return green("✓");
+    case "go-pending-human":
+      return yellow("◐"); // gates green, human judgment owed
+    case "no-go":
+      return c("31", "✗");
+    case "pending":
+      return yellow("⌛");
+    default:
+      return "";
   }
 }
 
@@ -149,9 +164,8 @@ function formatIssue(di: DisplayIssue, section: string): string {
 
   // Truncate title if too long
   const maxTitle = 50;
-  const displayTitle = title.length > maxTitle
-    ? title.slice(0, maxTitle - 1) + "…"
-    : title;
+  const displayTitle =
+    title.length > maxTitle ? title.slice(0, maxTitle - 1) + "…" : title;
 
   // Build tree prefix
   let prefix = "  ";
@@ -161,14 +175,16 @@ function formatIssue(di: DisplayIssue, section: string): string {
     prefix = "  " + "   ".repeat(depth - 1) + (isLast ? "└── " : "├── ");
   }
 
-  const assignee = typeof issue.frontmatter.assignee === "string" && issue.frontmatter.assignee
-    ? `  ${dim("@" + issue.frontmatter.assignee)}`
-    : "";
+  const assignee =
+    typeof issue.frontmatter.assignee === "string" && issue.frontmatter.assignee
+      ? `  ${dim("@" + issue.frontmatter.assignee)}`
+      : "";
 
   // Review verdict marker (schema v2, ADR-0001). Only meaningful in 4-review.
-  const review = section === "4-review" && typeof issue.frontmatter.review === "string"
-    ? reviewMarker(issue.frontmatter.review)
-    : "";
+  const review =
+    section === "4-review" && typeof issue.frontmatter.review === "string"
+      ? reviewMarker(issue.frontmatter.review)
+      : "";
   const reviewSlot = review ? `  ${review}` : "";
 
   return `${prefix}${dim(id)}  ${colorPriority(priority)}  ${colorEffort(effort)}  ${displayTitle}${reviewSlot}${assignee}`;
@@ -209,9 +225,15 @@ export function displayBoard(data: BoardData): void {
   const padding = Math.max(0, innerWidth - titleText.length);
 
   console.log("");
-  console.log(`  ${boldCyan("╔")}${boldCyan("═".repeat(innerWidth))}${boldCyan("╗")}`);
-  console.log(`  ${boldCyan("║")}  ${bold("LYTOS BOARD")} — ${projectName}${" ".repeat(padding + 2)}${boldCyan("║")}`);
-  console.log(`  ${boldCyan("╚")}${boldCyan("═".repeat(innerWidth))}${boldCyan("╝")}`);
+  console.log(
+    `  ${boldCyan("╔")}${boldCyan("═".repeat(innerWidth))}${boldCyan("╗")}`
+  );
+  console.log(
+    `  ${boldCyan("║")}  ${bold("LYTOS BOARD")} — ${projectName}${" ".repeat(padding + 2)}${boldCyan("║")}`
+  );
+  console.log(
+    `  ${boldCyan("╚")}${boldCyan("═".repeat(innerWidth))}${boldCyan("╝")}`
+  );
   console.log("");
 
   // Count per status
@@ -221,7 +243,13 @@ export function displayBoard(data: BoardData): void {
   }
 
   // Display statuses in pipeline order
-  const displayOrder = ["0-icebox", "1-backlog", "2-sprint", "3-in-progress", "4-review"];
+  const displayOrder = [
+    "0-icebox",
+    "1-backlog",
+    "2-sprint",
+    "3-in-progress",
+    "4-review",
+  ];
 
   for (const status of displayOrder) {
     const issues = data.issues.filter((i) => i.status === status);
@@ -254,9 +282,13 @@ export function displayBoard(data: BoardData): void {
     `${bold(String(data.issues.length))} issues`,
     counts["1-backlog"] ? `${counts["1-backlog"]} backlog` : null,
     counts["2-sprint"] ? `${cyan(String(counts["2-sprint"]))} sprint` : null,
-    counts["3-in-progress"] ? `${yellow(String(counts["3-in-progress"]))} wip` : null,
+    counts["3-in-progress"]
+      ? `${yellow(String(counts["3-in-progress"]))} wip`
+      : null,
     counts["4-review"] ? `${magenta(String(counts["4-review"]))} review` : null,
-    counts["5-done"] ? `${green(String(counts["5-done"]))} done ${green("✓")}` : null,
+    counts["5-done"]
+      ? `${green(String(counts["5-done"]))} done ${green("✓")}`
+      : null,
   ].filter(Boolean);
   console.log(`  ${parts.join(dim(" · "))}`);
   console.log("");

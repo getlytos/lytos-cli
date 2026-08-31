@@ -15,7 +15,16 @@ import {
   type IssueDetail,
   type IssueSummary,
 } from "../lib/show.js";
-import { ok, error, bold, green, yellow, blue, cyan, dim } from "../lib/output.js";
+import {
+  ok,
+  error,
+  bold,
+  green,
+  yellow,
+  blue,
+  cyan,
+  dim,
+} from "../lib/output.js";
 
 function progressBar(percent: number, width: number = 20): string {
   const filled = Math.round((percent / 100) * width);
@@ -39,11 +48,17 @@ function statusLabel(status: string): string {
 
 function displayDetail(issue: IssueDetail): void {
   console.error("");
-  console.error(`  ${cyan(bold(issue.id))} ${dim("—")} ${cyan(bold(issue.title))}`);
-  console.error(`  ${statusLabel(issue.status)}  ${dim("·")}  ${blue("Effort:")} ${issue.effort}  ${dim("·")}  ${issue.daysOpen}d`);
+  console.error(
+    `  ${cyan(bold(issue.id))} ${dim("—")} ${cyan(bold(issue.title))}`
+  );
+  console.error(
+    `  ${statusLabel(issue.status)}  ${dim("·")}  ${blue("Effort:")} ${issue.effort}  ${dim("·")}  ${issue.daysOpen}d`
+  );
   if (issue.status === "parked" && issue.parkReason) {
     const since = issue.parkedAt ? ` ${dim(`(since ${issue.parkedAt})`)}` : "";
-    console.error(`  ${yellow("⏸ Parked:")} ${yellow(issue.parkReason)}${since}`);
+    console.error(
+      `  ${yellow("⏸ Parked:")} ${yellow(issue.parkReason)}${since}`
+    );
   }
   console.error("");
 
@@ -51,7 +66,9 @@ function displayDetail(issue: IssueDetail): void {
   if (issue.checklistTotal > 0) {
     const pct = issue.progress;
     const colorFn = pct === 100 ? green : pct >= 50 ? yellow : blue;
-    console.error(`  ${progressBar(pct)}  ${colorFn(bold(`${issue.checklistDone}/${issue.checklistTotal}`))} ${colorFn(`${pct}%`)}`);
+    console.error(
+      `  ${progressBar(pct)}  ${colorFn(bold(`${issue.checklistDone}/${issue.checklistTotal}`))} ${colorFn(`${pct}%`)}`
+    );
     console.error("");
 
     // Checklist
@@ -71,12 +88,18 @@ function displayDetail(issue: IssueDetail): void {
     const d = issue.dod;
     const counts = `${d.machine} auto${d.human > 0 ? ` · ${d.human} human` : ""}`;
     if (d.loopEligible) {
-      console.error(`  ${blue("Loop:")} ${green("éligible")} ${dim(`(DoD ${counts})`)}`);
+      console.error(
+        `  ${blue("Loop:")} ${green("éligible")} ${dim(`(DoD ${counts})`)}`
+      );
     } else {
-      console.error(`  ${blue("Loop:")} ${yellow("inéligible")} ${dim("(DoD 100% human — à traiter à la main)")}`);
+      console.error(
+        `  ${blue("Loop:")} ${yellow("inéligible")} ${dim("(DoD 100% human — à traiter à la main)")}`
+      );
     }
     if (d.unqualified > 0) {
-      console.error(`  ${dim(`↳ ${d.unqualified} item(s) de DoD sans marqueur verify: — 'lyt lint' le signale`)}`);
+      console.error(
+        `  ${dim(`↳ ${d.unqualified} item(s) de DoD sans marqueur verify: — 'lyt lint' le signale`)}`
+      );
     }
     console.error("");
   }
@@ -84,7 +107,8 @@ function displayDetail(issue: IssueDetail): void {
   // Metadata
   const meta: string[] = [];
   if (issue.skill) meta.push(`${blue("Skill:")} ${issue.skill}`);
-  if (issue.skillsAux.length > 0) meta.push(`${blue("Aux:")} ${issue.skillsAux.join(", ")}`);
+  if (issue.skillsAux.length > 0)
+    meta.push(`${blue("Aux:")} ${issue.skillsAux.join(", ")}`);
   if (issue.branch) meta.push(`${blue("Branch:")} ${issue.branch}`);
   if (issue.complexity) meta.push(`${blue("Complexity:")} ${issue.complexity}`);
   for (const m of meta) {
@@ -98,7 +122,9 @@ function displayDetail(issue: IssueDetail): void {
     for (const dep of issue.dependencies) {
       const icon = dep.done ? green("✓") : yellow("○");
       const status = dep.done ? green("done") : yellow("pending");
-      console.error(`    ${icon} ${dep.id} ${dim("—")} ${dep.title} ${dim("(")}${status}${dim(")")}`);
+      console.error(
+        `    ${icon} ${dep.id} ${dim("—")} ${dep.title} ${dim("(")}${status}${dim(")")}`
+      );
     }
   }
 
@@ -107,18 +133,23 @@ function displayDetail(issue: IssueDetail): void {
 
 function displaySummaries(summaries: IssueSummary[]): void {
   console.error("");
-  console.error(`  ${yellow(bold("In Progress"))} ${dim(`(${summaries.length})`)}`);
+  console.error(
+    `  ${yellow(bold("In Progress"))} ${dim(`(${summaries.length})`)}`
+  );
   console.error("");
 
   for (const s of summaries) {
     const pct = s.progress;
     const colorFn = pct === 100 ? green : pct >= 50 ? yellow : blue;
-    const progressStr = s.checklistTotal > 0
-      ? `${progressBar(pct, 15)}  ${colorFn(`${s.checklistDone}/${s.checklistTotal}`)} ${colorFn(`${pct}%`)}`
-      : dim("no checklist");
+    const progressStr =
+      s.checklistTotal > 0
+        ? `${progressBar(pct, 15)}  ${colorFn(`${s.checklistDone}/${s.checklistTotal}`)} ${colorFn(`${pct}%`)}`
+        : dim("no checklist");
 
     console.error(`  ${cyan(s.id)}  ${cyan(bold(s.title))}`);
-    console.error(`           ${progressStr}  ${dim(`·  ${s.effort}  ·  ${s.daysOpen}d`)}`);
+    console.error(
+      `           ${progressStr}  ${dim(`·  ${s.effort}  ·  ${s.daysOpen}d`)}`
+    );
     console.error("");
   }
 }

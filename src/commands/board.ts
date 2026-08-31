@@ -16,7 +16,11 @@ import {
   countArchived,
 } from "../lib/board-generator.js";
 import { displayBoard } from "../lib/board-display.js";
-import { discoverRepos, displayOverview, listSiblings } from "../lib/board-overview.js";
+import {
+  discoverRepos,
+  displayOverview,
+  listSiblings,
+} from "../lib/board-overview.js";
 import { ok, warn, error } from "../lib/output.js";
 
 function findBoardDir(cwd: string): string | null {
@@ -33,13 +37,13 @@ function findBoardDir(cwd: string): string | null {
 
 export const boardCommand = new Command("board")
   .description("Display board overview and regenerate BOARD.md")
+  .option("--check", "Check if BOARD.md is up to date (exit 1 if not)", false)
+  .option("--json", "Output board data as JSON", false)
   .option(
-    "--check",
-    "Check if BOARD.md is up to date (exit 1 if not)",
+    "--all",
+    "Show consolidated overview of sibling Lytos projects",
     false
   )
-  .option("--json", "Output board data as JSON", false)
-  .option("--all", "Show consolidated overview of sibling Lytos projects", false)
   .option(
     "--dirs <paths>",
     "Comma-separated list of directories to include in overview"
@@ -59,7 +63,10 @@ export const boardCommand = new Command("board")
     // Multi-repo overview mode
     if (opts.all || opts.dirs) {
       const candidates: string[] = opts.dirs
-        ? String(opts.dirs).split(",").map((p) => p.trim()).filter(Boolean)
+        ? String(opts.dirs)
+            .split(",")
+            .map((p) => p.trim())
+            .filter(Boolean)
         : listSiblings(cwd);
       const repos = discoverRepos(candidates);
 
@@ -87,9 +94,7 @@ export const boardCommand = new Command("board")
     const boardDir = findBoardDir(cwd);
 
     if (!boardDir) {
-      error(
-        "No issue-board/ directory found. Run `lytos init` first."
-      );
+      error("No issue-board/ directory found. Run `lytos init` first.");
       process.exit(2);
     }
 
@@ -131,9 +136,7 @@ export const boardCommand = new Command("board")
         ok("BOARD.md is up to date.");
         return;
       } else {
-        error(
-          "BOARD.md is outdated. Run `lytos board` to regenerate."
-        );
+        error("BOARD.md is outdated. Run `lytos board` to regenerate.");
         process.exit(1);
       }
     }
@@ -144,7 +147,5 @@ export const boardCommand = new Command("board")
     const boardPath = join(boardDir, "BOARD.md");
     writeFileSync(boardPath, newContent, "utf-8");
 
-    ok(
-      `BOARD.md regenerated`
-    );
+    ok(`BOARD.md regenerated`);
   });

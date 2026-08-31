@@ -25,7 +25,17 @@ import {
   type IssueLocation,
 } from "../lib/issue-ops.js";
 import { parseFrontmatter, type Frontmatter } from "../lib/frontmatter.js";
-import { ok, info, warn, error, bold, cyan, green, yellow, dim } from "../lib/output.js";
+import {
+  ok,
+  info,
+  warn,
+  error,
+  bold,
+  cyan,
+  green,
+  yellow,
+  dim,
+} from "../lib/output.js";
 
 interface CloseOptions {
   force?: boolean;
@@ -44,11 +54,17 @@ function buildCloseExtras(issue: IssueLocation): Frontmatter {
     updated: today(),
     schema_version: "2",
   };
-  const existingCompleted = typeof issue.frontmatter.completed_at === "string" ? issue.frontmatter.completed_at : "";
+  const existingCompleted =
+    typeof issue.frontmatter.completed_at === "string"
+      ? issue.frontmatter.completed_at
+      : "";
   if (!existingCompleted) {
     extras.completed_at = today();
   }
-  const branch = typeof issue.frontmatter.branch === "string" ? issue.frontmatter.branch : "";
+  const branch =
+    typeof issue.frontmatter.branch === "string"
+      ? issue.frontmatter.branch
+      : "";
   const commits = getBranchCommits(branch);
   if (commits.length > 0) {
     extras.commits = commits;
@@ -68,7 +84,10 @@ async function askConfirm(question: string): Promise<boolean> {
 
 export const closeCommand = new Command("close")
   .description("Close an issue — single (ISS-XXXX) or batch (all of 4-review)")
-  .argument("[issue-id]", "Issue ID (e.g. ISS-0029). Omit to batch-close every issue in 4-review/.")
+  .argument(
+    "[issue-id]",
+    "Issue ID (e.g. ISS-0029). Omit to batch-close every issue in 4-review/."
+  )
   .option("--force", "Close even with unchecked checklist items", false)
   .option("--yes", "Skip the batch confirmation prompt", false)
   .option("--dry-run", "Preview what would close, change nothing", false)
@@ -103,7 +122,11 @@ export const closeCommand = new Command("close")
 // Single-issue flow
 // ---------------------------------------------------------------------------
 
-async function closeSingle(lytosDir: string, issueId: string, opts: CloseOptions): Promise<void> {
+async function closeSingle(
+  lytosDir: string,
+  issueId: string,
+  opts: CloseOptions
+): Promise<void> {
   const issue = locateIssue(lytosDir, issueId);
   if (!issue) {
     error(`Issue ${issueId} not found on the board.`);
@@ -123,9 +146,16 @@ async function closeSingle(lytosDir: string, issueId: string, opts: CloseOptions
   // Edge case: not started
   if (issue.dir !== "3-in-progress" && issue.dir !== "4-review") {
     if (opts.json) {
-      console.log(JSON.stringify({ status: "error", message: "Cannot close an issue that hasn't been started" }));
+      console.log(
+        JSON.stringify({
+          status: "error",
+          message: "Cannot close an issue that hasn't been started",
+        })
+      );
     } else {
-      error(`Cannot close ${issueId} — it's in ${issue.dir}. Only in-progress or review issues can be closed.`);
+      error(
+        `Cannot close ${issueId} — it's in ${issue.dir}. Only in-progress or review issues can be closed.`
+      );
     }
     process.exit(1);
   }
@@ -135,24 +165,37 @@ async function closeSingle(lytosDir: string, issueId: string, opts: CloseOptions
 
   if (unchecked > 0 && !opts.force) {
     if (opts.json) {
-      console.log(JSON.stringify({
-        status: "blocked",
-        message: `${unchecked} unchecked items`,
-        unchecked,
-        total: checklist.total,
-      }));
+      console.log(
+        JSON.stringify({
+          status: "blocked",
+          message: `${unchecked} unchecked items`,
+          unchecked,
+          total: checklist.total,
+        })
+      );
       process.exit(1);
     }
     console.error("");
-    warn(`${cyan(bold(issueId))} has ${yellow(String(unchecked))} unchecked checklist item${unchecked > 1 ? "s" : ""} out of ${checklist.total}.`);
-    console.error(`  ${dim("Use")} ${cyan(bold("--force"))} ${dim("to close anyway, or complete the items first.")}`);
+    warn(
+      `${cyan(bold(issueId))} has ${yellow(String(unchecked))} unchecked checklist item${unchecked > 1 ? "s" : ""} out of ${checklist.total}.`
+    );
+    console.error(
+      `  ${dim("Use")} ${cyan(bold("--force"))} ${dim("to close anyway, or complete the items first.")}`
+    );
     console.error("");
     process.exit(1);
   }
 
   if (opts.dryRun) {
     if (opts.json) {
-      console.log(JSON.stringify({ status: "dry-run", id: issueId, from: issue.dir, to: "5-done" }));
+      console.log(
+        JSON.stringify({
+          status: "dry-run",
+          id: issueId,
+          from: issue.dir,
+          to: "5-done",
+        })
+      );
       return;
     }
     info(`Would close ${cyan(bold(issueId))} (${issue.dir} → 5-done)`);
@@ -163,18 +206,26 @@ async function closeSingle(lytosDir: string, issueId: string, opts: CloseOptions
   regenerateBoard(lytosDir);
 
   if (opts.json) {
-    console.log(JSON.stringify({
-      status: "closed",
-      id: issueId,
-      checklist: { done: checklist.done, total: checklist.total },
-    }, null, 2));
+    console.log(
+      JSON.stringify(
+        {
+          status: "closed",
+          id: issueId,
+          checklist: { done: checklist.done, total: checklist.total },
+        },
+        null,
+        2
+      )
+    );
     return;
   }
 
   console.error("");
   ok(`${cyan(bold(issueId))} closed`);
   if (checklist.total > 0) {
-    info(`Checklist: ${green(`${checklist.done}/${checklist.total}`)} items completed`);
+    info(
+      `Checklist: ${green(`${checklist.done}/${checklist.total}`)} items completed`
+    );
   }
   info("Board regenerated");
   console.error("");
@@ -196,7 +247,9 @@ async function closeBatch(lytosDir: string, opts: CloseOptions): Promise<void> {
   const candidates: ReviewCandidate[] = [];
 
   if (existsSync(reviewDir)) {
-    const files = readdirSync(reviewDir).filter((f) => f.startsWith("ISS-") && f.endsWith(".md"));
+    const files = readdirSync(reviewDir).filter(
+      (f) => f.startsWith("ISS-") && f.endsWith(".md")
+    );
     for (const fileName of files) {
       const filePath = join(reviewDir, fileName);
       const content = readFileSync(filePath, "utf-8");
@@ -204,7 +257,13 @@ async function closeBatch(lytosDir: string, opts: CloseOptions): Promise<void> {
       if (!fm) continue;
       const checklist = countChecklist(content);
       candidates.push({
-        issue: { filePath, fileName, dir: "4-review", content, frontmatter: fm },
+        issue: {
+          filePath,
+          fileName,
+          dir: "4-review",
+          content,
+          frontmatter: fm,
+        },
         done: checklist.done,
         total: checklist.total,
         unchecked: checklist.total - checklist.done,
@@ -233,11 +292,17 @@ async function closeBatch(lytosDir: string, opts: CloseOptions): Promise<void> {
     info(`Issues in 4-review (${candidates.length}):`);
     console.error("");
     for (const c of candidates) {
-      const id = String(c.issue.frontmatter.id ?? c.issue.fileName.replace(/\.md$/, ""));
-      const title = String(c.issue.frontmatter.title ?? "").replace(/^"|"$/g, "");
-      const checklistStr = c.total > 0
-        ? `${c.done}/${c.total} items${c.unchecked > 0 ? " " + yellow("⚠") : ""}`
-        : dim("(no checklist)");
+      const id = String(
+        c.issue.frontmatter.id ?? c.issue.fileName.replace(/\.md$/, "")
+      );
+      const title = String(c.issue.frontmatter.title ?? "").replace(
+        /^"|"$/g,
+        ""
+      );
+      const checklistStr =
+        c.total > 0
+          ? `${c.done}/${c.total} items${c.unchecked > 0 ? " " + yellow("⚠") : ""}`
+          : dim("(no checklist)");
       console.error(`  ${cyan(bold(id))}   ${title} — ${checklistStr}`);
     }
     console.error("");
@@ -245,14 +310,20 @@ async function closeBatch(lytosDir: string, opts: CloseOptions): Promise<void> {
 
   if (opts.dryRun) {
     if (opts.json) {
-      console.log(JSON.stringify({
-        status: "dry-run",
-        candidates: candidates.map((c) => ({
-          id: c.issue.frontmatter.id,
-          unchecked: c.unchecked,
-          wouldSkip: c.unchecked > 0 && !opts.force,
-        })),
-      }, null, 2));
+      console.log(
+        JSON.stringify(
+          {
+            status: "dry-run",
+            candidates: candidates.map((c) => ({
+              id: c.issue.frontmatter.id,
+              unchecked: c.unchecked,
+              wouldSkip: c.unchecked > 0 && !opts.force,
+            })),
+          },
+          null,
+          2
+        )
+      );
       return;
     }
     info("Dry run — no changes applied.");
@@ -261,7 +332,9 @@ async function closeBatch(lytosDir: string, opts: CloseOptions): Promise<void> {
 
   // Confirm (unless --yes)
   if (!opts.yes && !opts.json) {
-    const confirm = await askConfirm(`Promote all ${candidates.length} to 5-done? [y/N] `);
+    const confirm = await askConfirm(
+      `Promote all ${candidates.length} to 5-done? [y/N] `
+    );
     if (!confirm) {
       info("Cancelled.");
       return;
@@ -273,12 +346,19 @@ async function closeBatch(lytosDir: string, opts: CloseOptions): Promise<void> {
   const skipped: { id: string; reason: string }[] = [];
 
   for (const c of candidates) {
-    const id = String(c.issue.frontmatter.id ?? c.issue.fileName.replace(/\.md$/, ""));
+    const id = String(
+      c.issue.frontmatter.id ?? c.issue.fileName.replace(/\.md$/, "")
+    );
 
     if (c.unchecked > 0 && !opts.force) {
-      skipped.push({ id, reason: `${c.unchecked} unchecked checklist item${c.unchecked > 1 ? "s" : ""}` });
+      skipped.push({
+        id,
+        reason: `${c.unchecked} unchecked checklist item${c.unchecked > 1 ? "s" : ""}`,
+      });
       if (!opts.json) {
-        warn(`${cyan(bold(id))} skipped — ${c.unchecked} unchecked item${c.unchecked > 1 ? "s" : ""} (use --force to close anyway)`);
+        warn(
+          `${cyan(bold(id))} skipped — ${c.unchecked} unchecked item${c.unchecked > 1 ? "s" : ""} (use --force to close anyway)`
+        );
       }
       continue;
     }
@@ -296,11 +376,17 @@ async function closeBatch(lytosDir: string, opts: CloseOptions): Promise<void> {
   }
 
   if (opts.json) {
-    console.log(JSON.stringify({
-      status: "done",
-      closed,
-      skipped,
-    }, null, 2));
+    console.log(
+      JSON.stringify(
+        {
+          status: "done",
+          closed,
+          skipped,
+        },
+        null,
+        2
+      )
+    );
     return;
   }
 

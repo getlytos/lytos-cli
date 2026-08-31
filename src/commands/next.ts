@@ -10,15 +10,29 @@ import { Command } from "commander";
 import { existsSync } from "fs";
 import { resolve } from "path";
 import { selectNext } from "../lib/next.js";
-import { ok, warn, error, bold, cyan, green, yellow, blue, dim } from "../lib/output.js";
+import {
+  ok,
+  warn,
+  error,
+  bold,
+  cyan,
+  green,
+  yellow,
+  blue,
+  dim,
+} from "../lib/output.js";
 
 export const nextCommand = new Command("next")
   .description("Show the next loop-eligible issue in the sprint (read-only)")
   .option("--json", "Output as JSON", false)
   .on("--help", () => {
     console.log("");
-    console.log("An issue is loop-eligible when it is in the sprint, its dependencies");
-    console.log("are done, and its Definition of done has at least one verify: auto item.");
+    console.log(
+      "An issue is loop-eligible when it is in the sprint, its dependencies"
+    );
+    console.log(
+      "are done, and its Definition of done has at least one verify: auto item."
+    );
     console.log("An all-'verify: human' DoD is for a human, not the loop.");
   })
   .action((opts: { json?: boolean }) => {
@@ -42,21 +56,36 @@ export const nextCommand = new Command("next")
       const p = result.pick;
       const counts = `${p.dod.machine} auto${p.dod.human > 0 ? ` · ${p.dod.human} human` : ""}`;
       ok(`Next: ${cyan(bold(p.id))} ${dim("—")} ${cyan(bold(p.title))}`);
-      console.error(`  ${blue("Priority:")} ${p.priority}  ${dim("·")}  ${blue("Effort:")} ${p.effort}  ${dim("·")}  ${blue("DoD:")} ${counts}`);
-      console.error(`  ${dim(`→ start it with`)} ${green(`lyt start ${p.id}`)}`);
+      console.error(
+        `  ${blue("Priority:")} ${p.priority}  ${dim("·")}  ${blue("Effort:")} ${p.effort}  ${dim("·")}  ${blue("DoD:")} ${counts}`
+      );
+      console.error(
+        `  ${dim(`→ start it with`)} ${green(`lyt start ${p.id}`)}`
+      );
       if (result.eligible.length > 1) {
-        console.error(`  ${dim(`(${result.eligible.length - 1} other eligible: ${result.eligible.slice(1).map((e) => e.id).join(", ")})`)}`);
+        console.error(
+          `  ${dim(
+            `(${result.eligible.length - 1} other eligible: ${result.eligible
+              .slice(1)
+              .map((e) => e.id)
+              .join(", ")})`
+          )}`
+        );
       }
     } else {
       warn("No loop-eligible issue in the sprint.");
       if (result.blocked.length > 0) {
         console.error("");
         for (const b of result.blocked) {
-          console.error(`  ${yellow("○")} ${cyan(b.id)} ${dim("—")} ${b.title}`);
+          console.error(
+            `  ${yellow("○")} ${cyan(b.id)} ${dim("—")} ${b.title}`
+          );
           console.error(`    ${dim(`${b.reason}: ${b.detail}`)}`);
         }
       } else {
-        console.error(`  ${dim("The sprint is empty — commit issues with `lyt move ISS-X 2-sprint`.")}`);
+        console.error(
+          `  ${dim("The sprint is empty — commit issues with `lyt move ISS-X 2-sprint`.")}`
+        );
       }
     }
     console.error("");

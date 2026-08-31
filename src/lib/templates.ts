@@ -17,9 +17,20 @@ interface TemplateContext {
 }
 
 export function manifestTemplate(ctx: TemplateContext): string {
-  const stackLabels = ctx.lang === "fr"
-    ? { language: "Langage", framework: "Framework", database: "Base de données", tests: "Tests" }
-    : { language: "Language", framework: "Framework", database: "Database", tests: "Tests" };
+  const stackLabels =
+    ctx.lang === "fr"
+      ? {
+          language: "Langage",
+          framework: "Framework",
+          database: "Base de données",
+          tests: "Tests",
+        }
+      : {
+          language: "Language",
+          framework: "Framework",
+          database: "Database",
+          tests: "Tests",
+        };
 
   const stackRows = [
     `| ${stackLabels.language} | ${ctx.stack.language || ""} |`,
@@ -335,8 +346,7 @@ const cortexFiles: CortexFile[] = [
   {
     name: "business.md",
     title: "Business Context",
-    description:
-      "Load this file for any task involving business logic or UX.",
+    description: "Load this file for any task involving business logic or UX.",
     example: `### Business concept name
 
 **Rule**: What the business requires.
@@ -356,7 +366,8 @@ const cortexFilesFr: CortexFile[] = [
   {
     name: "architecture.md",
     title: "Architecture & Décisions techniques",
-    description: "Charger ce fichier pour toute tâche affectant la structure du projet.",
+    description:
+      "Charger ce fichier pour toute tâche affectant la structure du projet.",
     example: `### ${new Date().toISOString().slice(0, 10)} — Choix de base de données
 
 **Contexte** : Hésitation entre SQLite (simple) et PostgreSQL (robuste).
@@ -366,7 +377,8 @@ const cortexFilesFr: CortexFile[] = [
   {
     name: "backend.md",
     title: "Backend",
-    description: "Charger ce fichier pour toute tâche backend : API, base de données, services.",
+    description:
+      "Charger ce fichier pour toute tâche backend : API, base de données, services.",
     example: `### Fichiers clés
 
 | Fichier | Rôle |
@@ -378,7 +390,8 @@ const cortexFilesFr: CortexFile[] = [
   {
     name: "frontend.md",
     title: "Frontend",
-    description: "Charger ce fichier pour toute tâche frontend : UI, composants, styles.",
+    description:
+      "Charger ce fichier pour toute tâche frontend : UI, composants, styles.",
     example: `### Fichiers clés
 
 | Fichier | Rôle |
@@ -390,7 +403,8 @@ const cortexFilesFr: CortexFile[] = [
   {
     name: "patterns.md",
     title: "Patterns découverts",
-    description: "Charger ce fichier pour la code review, le refactoring ou l'écriture de nouveau code.",
+    description:
+      "Charger ce fichier pour la code review, le refactoring ou l'écriture de nouveau code.",
     example: `### Nom du pattern
 
 **Quoi** : Description en une phrase du pattern.
@@ -400,7 +414,8 @@ const cortexFilesFr: CortexFile[] = [
   {
     name: "bugs.md",
     title: "Problèmes récurrents & Solutions",
-    description: "Charger ce fichier avant de déboguer — le problème a peut-être déjà été résolu.",
+    description:
+      "Charger ce fichier avant de déboguer — le problème a peut-être déjà été résolu.",
     example: `| Problème | Cause | Solution |
 |----------|-------|----------|
 | Les tests échouent en CI mais passent en local | Variables d'env manquantes dans le pipeline | Ajouter les secrets dans les paramètres CI |`,
@@ -408,7 +423,8 @@ const cortexFilesFr: CortexFile[] = [
   {
     name: "business.md",
     title: "Contexte métier",
-    description: "Charger ce fichier pour toute tâche impliquant de la logique métier ou de l'UX.",
+    description:
+      "Charger ce fichier pour toute tâche impliquant de la logique métier ou de l'UX.",
     example: `### Nom du concept métier
 
 **Règle** : Ce que le métier exige.
@@ -418,7 +434,8 @@ const cortexFilesFr: CortexFile[] = [
   {
     name: "sprints.md",
     title: "Historique des sprints",
-    description: "Charger ce fichier au démarrage d'un sprint, en rétrospective ou en planification.",
+    description:
+      "Charger ce fichier au démarrage d'un sprint, en rétrospective ou en planification.",
     example: `| Sprint | Objectif | Résultat | Apprentissage clé |
 |--------|----------|----------|-------------------|`,
   },

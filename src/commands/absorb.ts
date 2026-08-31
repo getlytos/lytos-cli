@@ -14,17 +14,28 @@ import { execFileSync } from "child_process";
 import { locateIssue, moveIssue } from "../lib/issue-ops.js";
 import { readJournal, absorbPlan, type AbsorbResult } from "../lib/absorb.js";
 import { type Frontmatter } from "../lib/frontmatter.js";
-import { ok, info, warn, error, bold, cyan, green, dim } from "../lib/output.js";
+import {
+  ok,
+  info,
+  warn,
+  error,
+  bold,
+  cyan,
+  green,
+  dim,
+} from "../lib/output.js";
 
 const ISSUE_ID_RE = /ISS-\d{4}/i;
 
 /** Current git branch name, or null when not in a git repo. */
 function currentBranch(): string | null {
   try {
-    return execFileSync("git", ["rev-parse", "--abbrev-ref", "HEAD"], {
-      encoding: "utf-8",
-      stdio: "pipe",
-    }).trim() || null;
+    return (
+      execFileSync("git", ["rev-parse", "--abbrev-ref", "HEAD"], {
+        encoding: "utf-8",
+        stdio: "pipe",
+      }).trim() || null
+    );
   } catch {
     return null;
   }
@@ -42,7 +53,10 @@ function loneInProgressIssue(lytosDir: string): string | null {
 }
 
 /** Resolve the active issue: explicit arg → branch name → lone in-progress. */
-function resolveActiveIssue(lytosDir: string, explicit?: string): string | null {
+function resolveActiveIssue(
+  lytosDir: string,
+  explicit?: string
+): string | null {
   if (explicit) return explicit.toUpperCase();
 
   const branch = currentBranch();
@@ -54,7 +68,9 @@ function resolveActiveIssue(lytosDir: string, explicit?: string): string | null 
 
 function printReport(result: AbsorbResult, applied: boolean): void {
   console.error("");
-  console.error(`  ${cyan(bold(`Absorb ${result.issue}${applied ? "" : " (dry-run)"}`))}`);
+  console.error(
+    `  ${cyan(bold(`Absorb ${result.issue}${applied ? "" : " (dry-run)"}`))}`
+  );
   console.error("");
 
   const entries = Object.entries(result.delta);
@@ -80,22 +96,31 @@ function printReport(result: AbsorbResult, applied: boolean): void {
   console.error("");
   console.error(
     `  ${result.linesUsed} journal line${result.linesUsed === 1 ? "" : "s"} used${
-      result.malformed > 0 ? dim(` · ${result.malformed} malformed skipped`) : ""
+      result.malformed > 0
+        ? dim(` · ${result.malformed} malformed skipped`)
+        : ""
     }`
   );
   console.error("");
 }
 
 export const absorbCommand = new Command("absorb")
-  .description("Merge the AI-wrapper session journal into an issue's audit fields (dry-run by default)")
-  .argument("[issue-id]", "Issue to absorb into (default: resolved from branch or in-progress)")
+  .description(
+    "Merge the AI-wrapper session journal into an issue's audit fields (dry-run by default)"
+  )
+  .argument(
+    "[issue-id]",
+    "Issue to absorb into (default: resolved from branch or in-progress)"
+  )
   .option("--apply", "Write the changes (default is a dry run)", false)
   .option("--json", "Output the result as JSON", false)
   .on("--help", () => {
     console.log("");
     console.log("Examples:");
     console.log("  lyt absorb                 # dry-run on the active issue");
-    console.log("  lyt absorb --apply         # write audit fields to the active issue");
+    console.log(
+      "  lyt absorb --apply         # write audit fields to the active issue"
+    );
     console.log("  lyt absorb ISS-0076 --apply");
   })
   .action((issueArg: string | undefined, opts) => {
@@ -125,10 +150,20 @@ export const absorbCommand = new Command("absorb")
     const journal = readJournal(lytosDir);
     if (journal === null) {
       if (opts.json) {
-        console.log(JSON.stringify({ issue: issueId, delta: {}, linesUsed: 0, malformed: 0, applied: false }));
+        console.log(
+          JSON.stringify({
+            issue: issueId,
+            delta: {},
+            linesUsed: 0,
+            malformed: 0,
+            applied: false,
+          })
+        );
         return;
       }
-      warn(`No journal at .lytos/.runtime/session.jsonl — nothing to absorb for ${issueId}.`);
+      warn(
+        `No journal at .lytos/.runtime/session.jsonl — nothing to absorb for ${issueId}.`
+      );
       process.exit(0);
     }
 
@@ -137,7 +172,10 @@ export const absorbCommand = new Command("absorb")
 
     let applied = false;
     if (opts.apply && hasChanges) {
-      moveIssue(lytosDir, issue, issue.dir, { ...result.delta, updated: today() } as Frontmatter);
+      moveIssue(lytosDir, issue, issue.dir, {
+        ...result.delta,
+        updated: today(),
+      } as Frontmatter);
       applied = true;
     }
 

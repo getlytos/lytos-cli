@@ -63,12 +63,16 @@ export interface DodAnalysis {
 // the catalog. Only `auto` takes an id — `human:<something>` is not a documented
 // form, so it deliberately fails to match and the item is reported unqualified by
 // `lyt lint` rather than silently accepted.
-const VERIFY_RE = /[\s—–\-(*_]*verify\s*:\s*(?:(human)|(auto)(?::([a-z0-9][a-z0-9-]*))?)[\s*_)]*$/i;
+const VERIFY_RE =
+  /[\s—–\-(*_]*verify\s*:\s*(?:(human)|(auto)(?::([a-z0-9][a-z0-9-]*))?)[\s*_)]*$/i;
 
 /**
  * Split a raw checklist-item text into its display text and verify mode.
  */
-export function parseVerifyMode(raw: string): { text: string; verify: VerifyMode | null } {
+export function parseVerifyMode(raw: string): {
+  text: string;
+  verify: VerifyMode | null;
+} {
   const match = raw.match(VERIFY_RE);
   if (match && match.index !== undefined) {
     // Exactly one alternative matched: `human`, or `auto` (+ optional gate id).

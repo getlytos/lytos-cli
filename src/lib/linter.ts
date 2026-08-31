@@ -30,30 +30,70 @@ export interface LintResult {
 
 const REQUIRED_FILES = [
   { path: "manifest.md", fix: "Run `lyt init` to create the Lytos structure" },
-  { path: "LYTOS.md", fix: "Run `lyt init` or download from github.com/getlytos/lytos-method" },
-  { path: "memory/MEMORY.md", fix: "Create memory/MEMORY.md with a section index" },
-  { path: "rules/default-rules.md", fix: "Run `lyt init` to get the default rules" },
+  {
+    path: "LYTOS.md",
+    fix: "Run `lyt init` or download from github.com/getlytos/lytos-method",
+  },
+  {
+    path: "memory/MEMORY.md",
+    fix: "Create memory/MEMORY.md with a section index",
+  },
+  {
+    path: "rules/default-rules.md",
+    fix: "Run `lyt init` to get the default rules",
+  },
   { path: "issue-board/BOARD.md", fix: "Run `lyt board` to generate BOARD.md" },
 ];
 
 const REQUIRED_DIRS = [
   { path: "skills", fix: "Run `lyt init` to create the skills directory" },
   { path: "rules", fix: "Run `lyt init` to create the rules directory" },
-  { path: "memory/cortex", fix: "Run `lyt init` to create the cortex directory" },
+  {
+    path: "memory/cortex",
+    fix: "Run `lyt init` to create the cortex directory",
+  },
   { path: "issue-board", fix: "Run `lyt init` to create the issue board" },
 ];
 
 const MANIFEST_SECTIONS = [
-  { pattern: /## Identity/, name: "Identity", fix: "Add an ## Identity section with project name and description" },
-  { pattern: /## Why this project exists/, name: "Why this project exists", fix: "Add a ## Why this project exists section" },
-  { pattern: /## Tech stack/, name: "Tech stack", fix: "Add a ## Tech stack section with your technologies" },
+  {
+    pattern: /## Identity/,
+    name: "Identity",
+    fix: "Add an ## Identity section with project name and description",
+  },
+  {
+    pattern: /## Why this project exists/,
+    name: "Why this project exists",
+    fix: "Add a ## Why this project exists section",
+  },
+  {
+    pattern: /## Tech stack/,
+    name: "Tech stack",
+    fix: "Add a ## Tech stack section with your technologies",
+  },
 ];
 
 const PLACEHOLDER_PATTERNS = [
-  { pattern: /YYYY-MM-DD/, message: "Date placeholder not replaced", fix: "Replace YYYY-MM-DD with an actual date" },
-  { pattern: /\| Description \|\s*\|/, message: "Empty description in manifest", fix: "Fill in the project description" },
-  { pattern: /\| Owner \|\s*\|/, message: "Empty owner in manifest", fix: "Fill in the project owner" },
-  { pattern: /\*3-5 sentences\. The "why"/, message: "Template placeholder text still present", fix: "Replace the placeholder with your project's purpose" },
+  {
+    pattern: /YYYY-MM-DD/,
+    message: "Date placeholder not replaced",
+    fix: "Replace YYYY-MM-DD with an actual date",
+  },
+  {
+    pattern: /\| Description \|\s*\|/,
+    message: "Empty description in manifest",
+    fix: "Fill in the project description",
+  },
+  {
+    pattern: /\| Owner \|\s*\|/,
+    message: "Empty owner in manifest",
+    fix: "Fill in the project owner",
+  },
+  {
+    pattern: /\*3-5 sentences\. The "why"/,
+    message: "Template placeholder text still present",
+    fix: "Replace the placeholder with your project's purpose",
+  },
 ];
 
 const REQUIRED_FRONTMATTER_FIELDS = ["id", "title", "status", "priority"];
@@ -158,7 +198,10 @@ export function lint(lytosDir: string): LintResult {
 /**
  * Validate all issue files in the issue-board.
  */
-function lintIssues(lytosDir: string): { findings: LintFinding[]; filesChecked: number } {
+function lintIssues(lytosDir: string): {
+  findings: LintFinding[];
+  filesChecked: number;
+} {
   const findings: LintFinding[] = [];
   let filesChecked = 0;
 
@@ -166,8 +209,12 @@ function lintIssues(lytosDir: string): { findings: LintFinding[]; filesChecked: 
   if (!existsSync(boardDir)) return { findings, filesChecked };
 
   const statusDirs = [
-    "0-icebox", "1-backlog", "2-sprint",
-    "3-in-progress", "4-review", "5-done",
+    "0-icebox",
+    "1-backlog",
+    "2-sprint",
+    "3-in-progress",
+    "4-review",
+    "5-done",
     "parked", // side-state (ADR-0004 §3)
   ];
 
@@ -267,7 +314,11 @@ function validateV2Fields(
   if (!fm) return;
 
   const review = fm.review;
-  if (typeof review === "string" && review !== "" && !V2_REVIEW_VALUES.includes(review)) {
+  if (
+    typeof review === "string" &&
+    review !== "" &&
+    !V2_REVIEW_VALUES.includes(review)
+  ) {
     findings.push({
       severity: "error",
       file: relPath,
@@ -277,7 +328,11 @@ function validateV2Fields(
   }
 
   const risk = fm.risk;
-  if (typeof risk === "string" && risk !== "" && !V2_RISK_VALUES.includes(risk)) {
+  if (
+    typeof risk === "string" &&
+    risk !== "" &&
+    !V2_RISK_VALUES.includes(risk)
+  ) {
     findings.push({
       severity: "error",
       file: relPath,
@@ -300,7 +355,11 @@ function validateV2Fields(
   }
 
   const validation = fm.validation;
-  if (validation && typeof validation === "object" && !Array.isArray(validation)) {
+  if (
+    validation &&
+    typeof validation === "object" &&
+    !Array.isArray(validation)
+  ) {
     for (const subKey of V2_VALIDATION_KEYS) {
       const v = validation[subKey];
       if (v !== undefined && v !== "" && !V2_VALIDATION_VALUES.includes(v)) {

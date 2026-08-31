@@ -8,7 +8,13 @@ import { execFileSync } from "child_process";
 import { writeFileSync, renameSync } from "fs";
 import { join } from "path";
 import { existsSync } from "fs";
-import { locateIssue, ensureBranch, regenerateBoard, today, checkOriginFresh } from "../lib/issue-ops.js";
+import {
+  locateIssue,
+  ensureBranch,
+  regenerateBoard,
+  today,
+  checkOriginFresh,
+} from "../lib/issue-ops.js";
 import { serializeFrontmatter, type Frontmatter } from "../lib/frontmatter.js";
 import { ok, error, info, warn, cyan, bold } from "../lib/output.js";
 
@@ -19,7 +25,9 @@ function findLytosDir(cwd: string): string | null {
 
 function getGitUser(): string {
   try {
-    return execFileSync("git", ["config", "user.name"], { encoding: "utf-8" }).trim();
+    return execFileSync("git", ["config", "user.name"], {
+      encoding: "utf-8",
+    }).trim();
   } catch {
     return "unknown";
   }
@@ -55,10 +63,16 @@ export const claimCommand = new Command("claim")
   .action((issueId: string, opts: { force?: boolean }) => {
     const cwd = process.cwd();
     const lytosDir = findLytosDir(cwd);
-    if (!lytosDir) { error("No .lytos/ directory found. Run `lyt init` first."); process.exit(2); }
+    if (!lytosDir) {
+      error("No .lytos/ directory found. Run `lyt init` first.");
+      process.exit(2);
+    }
 
     const issue = locateIssue(lytosDir, issueId);
-    if (!issue) { error(`Issue ${issueId} not found.`); process.exit(1); }
+    if (!issue) {
+      error(`Issue ${issueId} not found.`);
+      process.exit(1);
+    }
 
     const currentAssignee = issue.frontmatter.assignee;
     const gitUser = getGitUser();
@@ -86,12 +100,25 @@ export const claimCommand = new Command("claim")
       }
     }
 
-    const branch = typeof issue.frontmatter.branch === "string"
-      ? issue.frontmatter.branch
-      : `feat/${issueId.toLowerCase()}-work`;
+    const branch =
+      typeof issue.frontmatter.branch === "string"
+        ? issue.frontmatter.branch
+        : `feat/${issueId.toLowerCase()}-work`;
 
-    const updatedFm = { ...issue.frontmatter, status: "3-in-progress", assignee: gitUser, updated: today() };
-    updateAndMove(lytosDir, issue.filePath, issue.fileName, issue.content, updatedFm, "3-in-progress");
+    const updatedFm = {
+      ...issue.frontmatter,
+      status: "3-in-progress",
+      assignee: gitUser,
+      updated: today(),
+    };
+    updateAndMove(
+      lytosDir,
+      issue.filePath,
+      issue.fileName,
+      issue.content,
+      updatedFm,
+      "3-in-progress"
+    );
     ensureBranch(branch);
     regenerateBoard(lytosDir);
 
@@ -100,7 +127,9 @@ export const claimCommand = new Command("claim")
   });
 
 export const unclaimCommand = new Command("unclaim")
-  .description("Remove your assignment from an issue and move it back to sprint")
+  .description(
+    "Remove your assignment from an issue and move it back to sprint"
+  )
   .argument("<issue-id>", "Issue ID (e.g. ISS-0012)")
   .option("--force", "Unclaim even if assigned to someone else")
   .on("--help", () => {
@@ -112,10 +141,16 @@ export const unclaimCommand = new Command("unclaim")
   .action((issueId: string, opts: { force?: boolean }) => {
     const cwd = process.cwd();
     const lytosDir = findLytosDir(cwd);
-    if (!lytosDir) { error("No .lytos/ directory found. Run `lyt init` first."); process.exit(2); }
+    if (!lytosDir) {
+      error("No .lytos/ directory found. Run `lyt init` first.");
+      process.exit(2);
+    }
 
     const issue = locateIssue(lytosDir, issueId);
-    if (!issue) { error(`Issue ${issueId} not found.`); process.exit(1); }
+    if (!issue) {
+      error(`Issue ${issueId} not found.`);
+      process.exit(1);
+    }
 
     const currentAssignee = issue.frontmatter.assignee;
     const gitUser = getGitUser();
@@ -131,7 +166,14 @@ export const unclaimCommand = new Command("unclaim")
     updatedFm.status = "2-sprint";
     updatedFm.updated = today();
 
-    updateAndMove(lytosDir, issue.filePath, issue.fileName, issue.content, updatedFm, "2-sprint");
+    updateAndMove(
+      lytosDir,
+      issue.filePath,
+      issue.fileName,
+      issue.content,
+      updatedFm,
+      "2-sprint"
+    );
     regenerateBoard(lytosDir);
 
     ok(`${cyan(bold(issueId))} unclaimed`);

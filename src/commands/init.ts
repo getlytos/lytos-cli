@@ -11,7 +11,18 @@ import { basename, resolve } from "path";
 import { createInterface } from "readline";
 import { detectStack } from "../lib/detect-stack.js";
 import { scaffold, ALL_BRIDGE_TOOLS, type LytosTool } from "../lib/scaffold.js";
-import { info, ok, warn, error, bold, green, blue, cyan, dim, yellow } from "../lib/output.js";
+import {
+  info,
+  ok,
+  warn,
+  error,
+  bold,
+  green,
+  blue,
+  cyan,
+  dim,
+  yellow,
+} from "../lib/output.js";
 import { checkForUpdates } from "../lib/update-check.js";
 import { createRequire } from "module";
 
@@ -89,65 +100,99 @@ export type Lang = "en" | "fr";
 
 function showBriefing(profile: Profile, lang: Lang): void {
   console.error("");
-  console.error(bold(green(lang === "fr" ? "Lytos est installé !" : "Lytos is installed!")));
+  console.error(
+    bold(green(lang === "fr" ? "Lytos est installé !" : "Lytos is installed!"))
+  );
   console.error("");
 
   if (profile === "vibe-coder") {
     if (lang === "fr") {
       console.error(cyan(bold("  L'IDÉE CLÉ")));
-      console.error("  Tout repose sur les issues — des tâches claires et précises.");
-      console.error("  Une bonne issue = ton IA sait exactement quoi construire.");
-      console.error("  Une issue vague = ton IA devine et produit du code générique.");
+      console.error(
+        "  Tout repose sur les issues — des tâches claires et précises."
+      );
+      console.error(
+        "  Une bonne issue = ton IA sait exactement quoi construire."
+      );
+      console.error(
+        "  Une issue vague = ton IA devine et produit du code générique."
+      );
       console.error("");
       console.error(cyan(bold("  COMMENT ÇA MARCHE")));
       console.error("");
       console.error(`  ${cyan(bold("Étape 1"))} — ${yellow("BRAINSTORM")}`);
       console.error("    Ouvre ton outil IA et décris ton idée de projet.");
-      console.error("    L'IA va t'aider à écrire un manifest (l'identité du projet)");
+      console.error(
+        "    L'IA va t'aider à écrire un manifest (l'identité du projet)"
+      );
       console.error("    et créer des issues (les tâches à accomplir).");
       console.error("");
       console.error(`  ${cyan(bold("Étape 2"))} — ${blue("ORGANISER")}`);
-      console.error("    L'IA trie les tâches par priorité dans un kanban board.");
+      console.error(
+        "    L'IA trie les tâches par priorité dans un kanban board."
+      );
       console.error("    Tu valides ce qu'on fait en premier.");
-      console.error(`    Lance : ${cyan(bold("lyt board"))} — pour voir ton board à tout moment.`);
+      console.error(
+        `    Lance : ${cyan(bold("lyt board"))} — pour voir ton board à tout moment.`
+      );
       console.error("");
       console.error(`  ${cyan(bold("Étape 3"))} — ${green("CONSTRUIRE")}`);
       console.error("    Travaille sur une issue à la fois avec ton IA.");
-      console.error("    Chaque issue a une checklist — suis-la étape par étape.");
-      console.error("    Quand le code est prêt, l'IA déplace l'issue en \"review\".");
-      console.error("    Le passage en \"done\" se fait ensuite explicitement après validation.");
+      console.error(
+        "    Chaque issue a une checklist — suis-la étape par étape."
+      );
+      console.error(
+        "    Quand le code est prêt, l'IA déplace l'issue en \"review\"."
+      );
+      console.error(
+        '    Le passage en "done" se fait ensuite explicitement après validation.'
+      );
       console.error("");
       console.error(`  ${cyan(bold("Étape 4"))} — ${dim("APPRENDRE")}`);
       console.error("    L'IA sauvegarde ce qu'elle a appris dans memory/.");
-      console.error("    À la prochaine session, elle se souvient de ton projet.");
+      console.error(
+        "    À la prochaine session, elle se souvient de ton projet."
+      );
       console.error("    Plus besoin de tout réexpliquer.");
       console.error("");
       console.error(cyan(bold("  PROCHAINE ÉTAPE")));
       console.error("  Ouvre ton outil IA et dis :");
-      console.error(`  ${cyan(bold("\"Aide-moi à configurer Lytos et planifier mon projet.\""))}`);
+      console.error(
+        `  ${cyan(bold('"Aide-moi à configurer Lytos et planifier mon projet."'))}`
+      );
     } else {
       console.error(cyan(bold("  THE KEY IDEA")));
       console.error("  Everything starts with issues — small, clear tasks.");
       console.error("  A good issue = your AI knows exactly what to build.");
-      console.error("  A vague issue = your AI guesses and produces generic code.");
+      console.error(
+        "  A vague issue = your AI guesses and produces generic code."
+      );
       console.error("");
       console.error(cyan(bold("  HOW IT WORKS")));
       console.error("");
       console.error(`  ${cyan(bold("Step 1"))} — ${yellow("BRAINSTORM")}`);
       console.error("    Open your AI tool and describe your project idea.");
-      console.error("    The AI will help you write a manifest (your project's identity)");
+      console.error(
+        "    The AI will help you write a manifest (your project's identity)"
+      );
       console.error("    and create issues (tasks to accomplish).");
       console.error("");
       console.error(`  ${cyan(bold("Step 2"))} — ${blue("ORGANIZE")}`);
       console.error("    The AI sorts tasks by priority in a kanban board.");
       console.error("    You validate what to do first.");
-      console.error(`    Run: ${cyan(bold("lyt board"))} — to see your board at any time.`);
+      console.error(
+        `    Run: ${cyan(bold("lyt board"))} — to see your board at any time.`
+      );
       console.error("");
       console.error(`  ${cyan(bold("Step 3"))} — ${green("BUILD")}`);
       console.error("    Work on one issue at a time with your AI.");
       console.error("    Each issue has a checklist — follow it step by step.");
-      console.error("    When the code is ready, the AI moves the issue to \"review\".");
-      console.error("    It only goes to \"done\" after an explicit validation step.");
+      console.error(
+        '    When the code is ready, the AI moves the issue to "review".'
+      );
+      console.error(
+        '    It only goes to "done" after an explicit validation step.'
+      );
       console.error("");
       console.error(`  ${cyan(bold("Step 4"))} — ${dim("LEARN")}`);
       console.error("    The AI saves what it learned in memory/.");
@@ -156,43 +201,67 @@ function showBriefing(profile: Profile, lang: Lang): void {
       console.error("");
       console.error(cyan(bold("  NEXT STEP")));
       console.error("  Open your AI tool and say:");
-      console.error(`  ${cyan(bold("\"Help me configure Lytos and plan my project.\""))}`);
+      console.error(
+        `  ${cyan(bold('"Help me configure Lytos and plan my project."'))}`
+      );
     }
   } else if (profile === "developer") {
     if (lang === "fr") {
       console.error(cyan(bold("  L'IDÉE CLÉ")));
       console.error("  La qualité du code de ton IA dépend de tes issues.");
-      console.error("  Une issue structurée avec contexte, checklist et definition of done");
+      console.error(
+        "  Une issue structurée avec contexte, checklist et definition of done"
+      );
       console.error("  = du code précis et testable du premier coup.");
-      console.error(`  Lance : ${cyan(bold("lyt board"))} — ton cockpit projet.`);
+      console.error(
+        `  Lance : ${cyan(bold("lyt board"))} — ton cockpit projet.`
+      );
       console.error("");
       console.error(cyan(bold("  STRUCTURE")));
       console.error("  .lytos/manifest.md      <- constitution du projet");
-      console.error("  .lytos/skills/           <- 9 procédures opérationnelles");
-      console.error("  .lytos/rules/            <- critères de qualité (appliqués)");
-      console.error("  .lytos/issue-board/      <- kanban board (source de vérité)");
+      console.error(
+        "  .lytos/skills/           <- 9 procédures opérationnelles"
+      );
+      console.error(
+        "  .lytos/rules/            <- critères de qualité (appliqués)"
+      );
+      console.error(
+        "  .lytos/issue-board/      <- kanban board (source de vérité)"
+      );
       console.error("  .lytos/memory/           <- savoir persistant");
       console.error("");
       console.error(cyan(bold("  PROCHAINE ÉTAPE")));
       console.error("  Ouvre ton outil IA et dis :");
-      console.error(`  ${cyan(bold("\"Aide-moi à configurer Lytos pour ce projet.\""))}`);
+      console.error(
+        `  ${cyan(bold('"Aide-moi à configurer Lytos pour ce projet."'))}`
+      );
     } else {
       console.error(cyan(bold("  THE KEY IDEA")));
       console.error("  The quality of your AI output depends on your issues.");
-      console.error("  A well-structured issue with context, checklist, and definition");
+      console.error(
+        "  A well-structured issue with context, checklist, and definition"
+      );
       console.error("  of done = precise, testable code on the first try.");
-      console.error(`  Run: ${cyan(bold("lyt board"))} — your project cockpit.`);
+      console.error(
+        `  Run: ${cyan(bold("lyt board"))} — your project cockpit.`
+      );
       console.error("");
       console.error(cyan(bold("  STRUCTURE")));
       console.error("  .lytos/manifest.md      <- project constitution");
       console.error("  .lytos/skills/           <- 9 operational procedures");
-      console.error("  .lytos/rules/            <- quality criteria (enforced)");
-      console.error("  .lytos/issue-board/      <- kanban board (source of truth)");
+      console.error(
+        "  .lytos/rules/            <- quality criteria (enforced)"
+      );
+      console.error(
+        "  .lytos/issue-board/      <- kanban board (source of truth)"
+      );
       console.error("  .lytos/memory/           <- persistent knowledge");
       console.error("");
       console.error(cyan(bold("  NEXT STEP")));
       console.error("  Open your AI tool and say:");
-      console.error(`  ${cyan(bold("\"Help me configure Lytos for this project.\""))}`);
+      console.error(
+        `  ${cyan(bold('"Help me configure Lytos for this project."'))}`
+      );
     }
   } else {
     // lead
@@ -203,19 +272,29 @@ function showBriefing(profile: Profile, lang: Lang): void {
       console.error("  - Les rules (critères de qualité que l'IA applique)");
       console.error("  - Le sprint (quoi construire et dans quel ordre)");
       console.error("");
-      console.error("  Ton équipe utilise " + cyan(bold("lyt board")) + " pour suivre l'avancement.");
+      console.error(
+        "  Ton équipe utilise " +
+          cyan(bold("lyt board")) +
+          " pour suivre l'avancement."
+      );
       console.error("  La qualité de leur production dépend de la qualité");
       console.error("  des issues que tu définis.");
       console.error("");
       console.error(cyan(bold("  FICHIERS CLÉS")));
-      console.error("  .lytos/manifest.md      <- le fichier le plus impactant");
-      console.error("  .lytos/rules/            <- ce que \"fini\" veut dire");
-      console.error("  .lytos/issue-board/      <- ton kanban (YAML = source de vérité)");
+      console.error(
+        "  .lytos/manifest.md      <- le fichier le plus impactant"
+      );
+      console.error('  .lytos/rules/            <- ce que "fini" veut dire');
+      console.error(
+        "  .lytos/issue-board/      <- ton kanban (YAML = source de vérité)"
+      );
       console.error("  .lytos/memory/           <- grandit à chaque sprint");
       console.error("");
       console.error(cyan(bold("  PROCHAINE ÉTAPE")));
       console.error("  Ouvre ton outil IA et dis :");
-      console.error(`  ${cyan(bold("\"Aide-moi à configurer Lytos et planifier le premier sprint.\""))}`);
+      console.error(
+        `  ${cyan(bold('"Aide-moi à configurer Lytos et planifier le premier sprint."'))}`
+      );
     } else {
       console.error(cyan(bold("  YOUR ROLE")));
       console.error("  You are the system architect. You define:");
@@ -223,19 +302,25 @@ function showBriefing(profile: Profile, lang: Lang): void {
       console.error("  - The rules (quality criteria your AI enforces)");
       console.error("  - The sprint (what to build and in what order)");
       console.error("");
-      console.error("  Your team uses " + cyan(bold("lyt board")) + " to track progress.");
+      console.error(
+        "  Your team uses " + cyan(bold("lyt board")) + " to track progress."
+      );
       console.error("  The quality of their output depends on the quality");
       console.error("  of the issues you define.");
       console.error("");
       console.error(cyan(bold("  KEY FILES")));
       console.error("  .lytos/manifest.md      <- highest-leverage file");
-      console.error("  .lytos/rules/            <- what \"done\" means");
-      console.error("  .lytos/issue-board/      <- your kanban (YAML = source of truth)");
+      console.error('  .lytos/rules/            <- what "done" means');
+      console.error(
+        "  .lytos/issue-board/      <- your kanban (YAML = source of truth)"
+      );
       console.error("  .lytos/memory/           <- grows with each sprint");
       console.error("");
       console.error(cyan(bold("  NEXT STEP")));
       console.error("  Open your AI tool and say:");
-      console.error(`  ${cyan(bold("\"Help me configure Lytos and plan the first sprint.\""))}`);
+      console.error(
+        `  ${cyan(bold('"Help me configure Lytos and plan the first sprint."'))}`
+      );
     }
   }
 
@@ -288,9 +373,7 @@ export const initCommand = new Command("init")
 
     // Check if .lytos already exists
     if (existsSync(lytosDir) && !opts.force) {
-      error(
-        ".lytos/ already exists. Use --force to override."
-      );
+      error(".lytos/ already exists. Use --force to override.");
       process.exit(2);
     }
 
@@ -298,7 +381,9 @@ export const initCommand = new Command("init")
     info("Detecting project stack...");
     const stack = detectStack(cwd);
     if (stack.language) {
-      ok(`Detected: ${stack.language}${stack.framework ? ` + ${stack.framework}` : ""}${stack.tests ? ` + ${stack.tests}` : ""}`);
+      ok(
+        `Detected: ${stack.language}${stack.framework ? ` + ${stack.framework}` : ""}${stack.tests ? ` + ${stack.tests}` : ""}`
+      );
     } else {
       info("No known stack detected — you can fill it in manually.");
     }
@@ -334,8 +419,7 @@ export const initCommand = new Command("init")
             ]
       );
       profile =
-        choice === "1" ? "vibe-coder" :
-        choice === "2" ? "developer" : "lead";
+        choice === "1" ? "vibe-coder" : choice === "2" ? "developer" : "lead";
     }
     profile = profile || "developer";
 
@@ -363,7 +447,9 @@ export const initCommand = new Command("init")
       }
     } else if (!opts.yes) {
       const choice = await promptChoice(
-        lang === "fr" ? "Quel outil IA utilises-tu ?" : "Which AI tool do you use?",
+        lang === "fr"
+          ? "Quel outil IA utilises-tu ?"
+          : "Which AI tool do you use?",
         [
           { key: "1", label: "Claude Code" },
           { key: "2", label: "Cursor" },
@@ -371,7 +457,10 @@ export const initCommand = new Command("init")
           { key: "4", label: "GitHub Copilot" },
           { key: "5", label: "Gemini CLI" },
           { key: "6", label: "Windsurf" },
-          { key: "7", label: lang === "fr" ? "Plusieurs (CSV)" : "Multiple (CSV)" },
+          {
+            key: "7",
+            label: lang === "fr" ? "Plusieurs (CSV)" : "Multiple (CSV)",
+          },
           { key: "8", label: lang === "fr" ? "Tous les outils" : "All tools" },
           { key: "9", label: lang === "fr" ? "Autre / Aucun" : "Other / None" },
         ]
@@ -392,12 +481,19 @@ export const initCommand = new Command("init")
         tools = [...ALL_BRIDGE_TOOLS];
       } else {
         const single =
-          choice === "1" ? "claude" :
-          choice === "2" ? "cursor" :
-          choice === "3" ? "codex" :
-          choice === "4" ? "copilot" :
-          choice === "5" ? "gemini" :
-          choice === "6" ? "windsurf" : "none";
+          choice === "1"
+            ? "claude"
+            : choice === "2"
+              ? "cursor"
+              : choice === "3"
+                ? "codex"
+                : choice === "4"
+                  ? "copilot"
+                  : choice === "5"
+                    ? "gemini"
+                    : choice === "6"
+                      ? "windsurf"
+                      : "none";
         tools = [single as LytosTool];
       }
     }
@@ -411,7 +507,11 @@ export const initCommand = new Command("init")
 
     // Scaffold
     console.error("");
-    info(lang === "fr" ? "Installation de Lytos dans .lytos/..." : "Installing Lytos in .lytos/...");
+    info(
+      lang === "fr"
+        ? "Installation de Lytos dans .lytos/..."
+        : "Installing Lytos in .lytos/..."
+    );
     console.error("");
 
     const result = scaffold({
@@ -430,9 +530,10 @@ export const initCommand = new Command("init")
       warn(w);
     }
 
-    const summary = lang === "fr"
-      ? `${result.filesCreated.length} fichiers créés${result.filesSkipped.length > 0 ? ` · ${result.filesSkipped.length} bridges préservés` : ""}`
-      : `${result.filesCreated.length} files created${result.filesSkipped.length > 0 ? ` · ${result.filesSkipped.length} bridges preserved` : ""}`;
+    const summary =
+      lang === "fr"
+        ? `${result.filesCreated.length} fichiers créés${result.filesSkipped.length > 0 ? ` · ${result.filesSkipped.length} bridges préservés` : ""}`
+        : `${result.filesCreated.length} files created${result.filesSkipped.length > 0 ? ` · ${result.filesSkipped.length} bridges preserved` : ""}`;
     ok(summary);
 
     // Show adapted briefing

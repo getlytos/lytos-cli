@@ -20,7 +20,17 @@ import {
   regenerateBoard,
   today,
 } from "../lib/issue-ops.js";
-import { ok, info, warn, error, bold, cyan, green, yellow, dim } from "../lib/output.js";
+import {
+  ok,
+  info,
+  warn,
+  error,
+  bold,
+  cyan,
+  green,
+  yellow,
+  dim,
+} from "../lib/output.js";
 
 /** Closed taxonomy of park reasons (ADR-0004 §3). */
 export const PARK_REASONS = [
@@ -37,9 +47,14 @@ const PARKED_DIR = "parked";
 const UNPARK_TARGET = "2-sprint";
 
 export const parkCommand = new Command("park")
-  .description("Park an issue out of the flow with a reason — the loop halts instead of guessing")
+  .description(
+    "Park an issue out of the flow with a reason — the loop halts instead of guessing"
+  )
   .argument("<issue-id>", "Issue ID (e.g. ISS-0042)")
-  .requiredOption("--reason <code>", `Why it is parked (${PARK_REASONS.join(", ")})`)
+  .requiredOption(
+    "--reason <code>",
+    `Why it is parked (${PARK_REASONS.join(", ")})`
+  )
   .option("--json", "Output result as JSON", false)
   .on("--help", () => {
     console.log("");
@@ -63,7 +78,15 @@ export const parkCommand = new Command("park")
     if (!(PARK_REASONS as readonly string[]).includes(reason)) {
       const message = `Unknown reason "${reason}". Valid reasons: ${PARK_REASONS.join(", ")}.`;
       if (opts.json) {
-        console.log(JSON.stringify({ status: "error", reason: "unknown-reason", value: reason, valid: PARK_REASONS, message }));
+        console.log(
+          JSON.stringify({
+            status: "error",
+            reason: "unknown-reason",
+            value: reason,
+            valid: PARK_REASONS,
+            message,
+          })
+        );
       } else {
         error(message);
       }
@@ -73,7 +96,13 @@ export const parkCommand = new Command("park")
     const issue = locateIssue(lytosDir, issueId);
     if (!issue) {
       if (opts.json) {
-        console.log(JSON.stringify({ status: "error", reason: "not-found", message: `Issue ${issueId} not found on the board.` }));
+        console.log(
+          JSON.stringify({
+            status: "error",
+            reason: "not-found",
+            message: `Issue ${issueId} not found on the board.`,
+          })
+        );
       } else {
         error(`Issue ${issueId} not found on the board.`);
       }
@@ -101,12 +130,16 @@ export const parkCommand = new Command("park")
     regenerateBoard(lytosDir);
 
     if (opts.json) {
-      console.log(JSON.stringify({ status: "parked", id: issueId, from, reason }, null, 2));
+      console.log(
+        JSON.stringify({ status: "parked", id: issueId, from, reason }, null, 2)
+      );
       return;
     }
 
     console.error("");
-    ok(`${cyan(bold(issueId))} parked ${dim(`(${from} →`)} ${yellow(PARKED_DIR)}${dim(")")}`);
+    ok(
+      `${cyan(bold(issueId))} parked ${dim(`(${from} →`)} ${yellow(PARKED_DIR)}${dim(")")}`
+    );
     info(`Reason: ${yellow(reason)}`);
     info("Board regenerated");
     console.error("");
@@ -128,7 +161,13 @@ export const unparkCommand = new Command("unpark")
     const issue = locateIssue(lytosDir, issueId);
     if (!issue) {
       if (opts.json) {
-        console.log(JSON.stringify({ status: "error", reason: "not-found", message: `Issue ${issueId} not found on the board.` }));
+        console.log(
+          JSON.stringify({
+            status: "error",
+            reason: "not-found",
+            message: `Issue ${issueId} not found on the board.`,
+          })
+        );
       } else {
         error(`Issue ${issueId} not found on the board.`);
       }
@@ -138,7 +177,14 @@ export const unparkCommand = new Command("unpark")
     if (issue.dir !== PARKED_DIR) {
       const message = `${issueId} is not parked (it is in ${issue.dir}).`;
       if (opts.json) {
-        console.log(JSON.stringify({ status: "error", reason: "not-parked", stage: issue.dir, message }));
+        console.log(
+          JSON.stringify({
+            status: "error",
+            reason: "not-parked",
+            stage: issue.dir,
+            message,
+          })
+        );
       } else {
         error(message);
       }
@@ -153,7 +199,13 @@ export const unparkCommand = new Command("unpark")
     regenerateBoard(lytosDir);
 
     if (opts.json) {
-      console.log(JSON.stringify({ status: "unparked", id: issueId, to: UNPARK_TARGET }, null, 2));
+      console.log(
+        JSON.stringify(
+          { status: "unparked", id: issueId, to: UNPARK_TARGET },
+          null,
+          2
+        )
+      );
       return;
     }
 

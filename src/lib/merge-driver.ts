@@ -18,7 +18,12 @@ export const MERGE_DRIVER_NAME = "lytos-issue";
 export const GITATTRIBUTES_LINE = `.lytos/issue-board/**/*.md merge=${MERGE_DRIVER_NAME}`;
 export const MERGE_DRIVER_COMMAND = "npx lyt _merge-issue %O %A %B";
 
-export type MergeDriverInstallResult = "installed" | "already" | "no-git" | "dry-run" | "error";
+export type MergeDriverInstallResult =
+  | "installed"
+  | "already"
+  | "no-git"
+  | "dry-run"
+  | "error";
 
 function isGitRepo(cwd: string): boolean {
   // A plain worktree has a .git directory; a linked worktree has a .git file.
@@ -49,7 +54,10 @@ function configuredDriver(cwd: string): string | null {
  * Install the merge driver: the .gitattributes mapping + the git config
  * entry. Idempotent — reruns of `lyt init` leave an installed driver alone.
  */
-export function installMergeDriver(cwd: string, dryRun: boolean): MergeDriverInstallResult {
+export function installMergeDriver(
+  cwd: string,
+  dryRun: boolean
+): MergeDriverInstallResult {
   if (!isGitRepo(cwd)) return "no-git";
   if (dryRun) return "dry-run";
 
@@ -60,13 +68,19 @@ export function installMergeDriver(cwd: string, dryRun: boolean): MergeDriverIns
   try {
     if (!attributesOk) {
       const path = join(cwd, ".gitattributes");
-      const header = "# Lytos: structural merge for issue fiches — frontmatter field by field,\n# body as the ordered union of ## sections (see `lyt _merge-issue`).\n";
+      const header =
+        "# Lytos: structural merge for issue fiches — frontmatter field by field,\n# body as the ordered union of ## sections (see `lyt _merge-issue`).\n";
       if (!existsSync(path)) {
         writeFileSync(path, header + GITATTRIBUTES_LINE + "\n", "utf-8");
       } else {
         const existing = readFileSync(path, "utf-8");
-        const separator = existing.endsWith("\n") || existing === "" ? "" : "\n";
-        appendFileSync(path, `${separator}${header}${GITATTRIBUTES_LINE}\n`, "utf-8");
+        const separator =
+          existing.endsWith("\n") || existing === "" ? "" : "\n";
+        appendFileSync(
+          path,
+          `${separator}${header}${GITATTRIBUTES_LINE}\n`,
+          "utf-8"
+        );
       }
     }
     if (!configOk) {
@@ -77,7 +91,11 @@ export function installMergeDriver(cwd: string, dryRun: boolean): MergeDriverIns
       );
       execFileSync(
         "git",
-        ["config", `merge.${MERGE_DRIVER_NAME}.name`, "Lytos issue-fiche structural merge"],
+        [
+          "config",
+          `merge.${MERGE_DRIVER_NAME}.name`,
+          "Lytos issue-fiche structural merge",
+        ],
         { cwd, stdio: "pipe" }
       );
     }

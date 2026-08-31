@@ -30,7 +30,11 @@ export interface NextCandidate {
   dod: DodAnalysis;
 }
 
-export type BlockedReason = "deps-pending" | "all-human-dod" | "no-dod" | "not-ready";
+export type BlockedReason =
+  | "deps-pending"
+  | "all-human-dod"
+  | "no-dod"
+  | "not-ready";
 
 export interface NextBlocked {
   id: string;
@@ -60,7 +64,10 @@ function str(val: FrontmatterValue | undefined): string {
 }
 
 /** Are all of an issue's dependencies (and child issues) done? */
-function pendingDeps(lytosDir: string, depends: FrontmatterValue | undefined): string[] {
+function pendingDeps(
+  lytosDir: string,
+  depends: FrontmatterValue | undefined
+): string[] {
   if (!Array.isArray(depends) || depends.length === 0) return [];
   const pending: string[] = [];
   for (const depId of depends) {
@@ -83,7 +90,9 @@ export function selectNext(lytosDir: string): NextResult {
     return { pick: null, eligible, blocked };
   }
 
-  const files = readdirSync(sprintDir).filter((f) => f.startsWith("ISS-") && f.endsWith(".md"));
+  const files = readdirSync(sprintDir).filter(
+    (f) => f.startsWith("ISS-") && f.endsWith(".md")
+  );
 
   for (const file of files) {
     const content = readFileSync(join(sprintDir, file), "utf-8");
@@ -96,22 +105,42 @@ export function selectNext(lytosDir: string): NextResult {
 
     // Structural ineligibility first (never loop work), then temporary (deps).
     if (!dod.hasDod) {
-      blocked.push({ id, title, reason: "no-dod", detail: "no Definition of done to gate the work" });
+      blocked.push({
+        id,
+        title,
+        reason: "no-dod",
+        detail: "no Definition of done to gate the work",
+      });
       continue;
     }
     if (!dod.loopEligible) {
-      blocked.push({ id, title, reason: "all-human-dod", detail: "DoD is 100% verify: human — for a human, not the loop" });
+      blocked.push({
+        id,
+        title,
+        reason: "all-human-dod",
+        detail: "DoD is 100% verify: human — for a human, not the loop",
+      });
       continue;
     }
     // Definition of Ready (ADR-0007 §3): entry gate beyond the DoD.
     const ready = analyzeReady(content, fm);
     if (!ready.ready) {
-      blocked.push({ id, title, reason: "not-ready", detail: `not ready: ${ready.missing.join(", ")}` });
+      blocked.push({
+        id,
+        title,
+        reason: "not-ready",
+        detail: `not ready: ${ready.missing.join(", ")}`,
+      });
       continue;
     }
     const pending = pendingDeps(lytosDir, fm.depends);
     if (pending.length > 0) {
-      blocked.push({ id, title, reason: "deps-pending", detail: `waiting on ${pending.join(", ")}` });
+      blocked.push({
+        id,
+        title,
+        reason: "deps-pending",
+        detail: `waiting on ${pending.join(", ")}`,
+      });
       continue;
     }
 

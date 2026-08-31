@@ -42,12 +42,21 @@ export function parseFrontmatter(content: string): Frontmatter | null {
 
     // Skip blank lines, comment lines, and stray indented lines at top level
     const trimmed = line.trim();
-    if (trimmed === "" || trimmed.startsWith("#")) { i++; continue; }
+    if (trimmed === "" || trimmed.startsWith("#")) {
+      i++;
+      continue;
+    }
     const isIndented = /^\s/.test(line);
-    if (isIndented) { i++; continue; }
+    if (isIndented) {
+      i++;
+      continue;
+    }
 
     const colonIndex = line.indexOf(":");
-    if (colonIndex === -1) { i++; continue; }
+    if (colonIndex === -1) {
+      i++;
+      continue;
+    }
 
     const key = line.slice(0, colonIndex).trim();
     const rawValue = line.slice(colonIndex + 1).trim();
@@ -59,10 +68,16 @@ export function parseFrontmatter(content: string): Frontmatter | null {
       while (j < lines.length) {
         const sub = lines[j];
         const subTrim = sub.trim();
-        if (subTrim === "" || subTrim.startsWith("#")) { j++; continue; }
+        if (subTrim === "" || subTrim.startsWith("#")) {
+          j++;
+          continue;
+        }
         if (!/^\s/.test(sub)) break;
         const subColon = sub.indexOf(":");
-        if (subColon === -1) { j++; continue; }
+        if (subColon === -1) {
+          j++;
+          continue;
+        }
         const subKey = sub.slice(0, subColon).trim();
         const subRaw = sub.slice(subColon + 1).trim();
         obj[subKey] = stripQuotes(subRaw);
@@ -94,7 +109,9 @@ export function serializeFrontmatter(data: Frontmatter): string {
 
   for (const [key, value] of Object.entries(data)) {
     if (Array.isArray(value)) {
-      lines.push(value.length === 0 ? `${key}: []` : `${key}: [${value.join(", ")}]`);
+      lines.push(
+        value.length === 0 ? `${key}: []` : `${key}: [${value.join(", ")}]`
+      );
     } else if (typeof value === "object" && value !== null) {
       lines.push(`${key}:`);
       for (const [subKey, subValue] of Object.entries(value)) {

@@ -10,10 +10,21 @@
  * Companion command at src/commands/review.ts drives the UX.
  */
 
-import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFileSync } from "fs";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  renameSync,
+  writeFileSync,
+} from "fs";
 import { execFileSync } from "child_process";
 import { join, dirname } from "path";
-import { parseFrontmatter, serializeFrontmatter, type Frontmatter } from "./frontmatter.js";
+import {
+  parseFrontmatter,
+  serializeFrontmatter,
+  type Frontmatter,
+} from "./frontmatter.js";
 import { currentGitUser, isValidBranchName, today } from "./issue-ops.js";
 
 export interface PendingReview {
@@ -45,8 +56,9 @@ export function listPendingReviews(boardDir: string): PendingReview[] {
     const filePath = join(reviewDir, file);
     const content = readFileSync(filePath, "utf-8");
     const fm = parseFrontmatter(content);
-    const id = (fm && typeof fm.id === "string" ? fm.id : file.replace(/\.md$/, ""));
-    const title = (fm && typeof fm.title === "string" ? fm.title : "?");
+    const id =
+      fm && typeof fm.id === "string" ? fm.id : file.replace(/\.md$/, "");
+    const title = fm && typeof fm.title === "string" ? fm.title : "?";
     const hasAudit = /^##\s+Audit\s+—\s+\d{4}-\d{2}-\d{2}/m.test(content);
     out.push({ id, title, filePath, hasAudit });
   }
@@ -57,7 +69,10 @@ export function listPendingReviews(boardDir: string): PendingReview[] {
  * Resolve the issue file for a given ID inside 4-review/.
  * Returns null if no match is found (issue might be in another column).
  */
-export function findReviewIssue(boardDir: string, issueId: string): string | null {
+export function findReviewIssue(
+  boardDir: string,
+  issueId: string
+): string | null {
   const reviewDir = join(boardDir, "4-review");
   if (!existsSync(reviewDir)) return null;
   for (const file of readdirSync(reviewDir)) {
@@ -109,22 +124,35 @@ export type BranchAuditStatus =
   | { kind: "none" }
   | { kind: "declared"; branch: string; onOrigin: boolean | "unknown" };
 
-export function checkDeclaredBranch(cwd: string, issueFilePath: string): BranchAuditStatus {
+export function checkDeclaredBranch(
+  cwd: string,
+  issueFilePath: string
+): BranchAuditStatus {
   const branch = issueBranch(safeRead(issueFilePath));
   if (!branch) return { kind: "none" };
 
   try {
-    execFileSync("git", ["rev-parse", "--is-inside-work-tree"], { cwd, stdio: "pipe" });
-    execFileSync("git", ["remote", "get-url", "origin"], { cwd, stdio: "pipe" });
+    execFileSync("git", ["rev-parse", "--is-inside-work-tree"], {
+      cwd,
+      stdio: "pipe",
+    });
+    execFileSync("git", ["remote", "get-url", "origin"], {
+      cwd,
+      stdio: "pipe",
+    });
   } catch {
     return { kind: "declared", branch, onOrigin: "unknown" };
   }
 
   try {
-    execFileSync("git", ["rev-parse", "--verify", `refs/remotes/origin/${branch}`], {
-      cwd,
-      stdio: "pipe",
-    });
+    execFileSync(
+      "git",
+      ["rev-parse", "--verify", `refs/remotes/origin/${branch}`],
+      {
+        cwd,
+        stdio: "pipe",
+      }
+    );
     return { kind: "declared", branch, onOrigin: true };
   } catch {
     return { kind: "declared", branch, onOrigin: false };
@@ -169,7 +197,14 @@ function tryScopedDiff(cwd: string, issueId: string): string {
   try {
     return execFileSync(
       "git",
-      ["log", "--all", "--no-merges", "--reverse", `--grep=Refs: ${issueId}`, "-p"],
+      [
+        "log",
+        "--all",
+        "--no-merges",
+        "--reverse",
+        `--grep=Refs: ${issueId}`,
+        "-p",
+      ],
       { cwd, encoding: "utf-8", maxBuffer: 20 * 1024 * 1024 }
     ).trim();
   } catch {
@@ -221,7 +256,10 @@ interface AuditRef {
 /** True when the project is a git repo with an `origin` remote. */
 function hasOrigin(cwd: string): boolean {
   try {
-    execFileSync("git", ["remote", "get-url", "origin"], { cwd, stdio: "pipe" });
+    execFileSync("git", ["remote", "get-url", "origin"], {
+      cwd,
+      stdio: "pipe",
+    });
     return true;
   } catch {
     return false;
@@ -230,7 +268,10 @@ function hasOrigin(cwd: string): boolean {
 
 function refExists(cwd: string, ref: string): boolean {
   try {
-    execFileSync("git", ["rev-parse", "--verify", `${ref}^{commit}`], { cwd, stdio: "pipe" });
+    execFileSync("git", ["rev-parse", "--verify", `${ref}^{commit}`], {
+      cwd,
+      stdio: "pipe",
+    });
     return true;
   } catch {
     return false;
@@ -241,7 +282,10 @@ function refExists(cwd: string, ref: string): boolean {
 function containsAll(cwd: string, ref: string, shas: string[]): string[] {
   return shas.filter((sha) => {
     try {
-      execFileSync("git", ["merge-base", "--is-ancestor", sha, ref], { cwd, stdio: "pipe" });
+      execFileSync("git", ["merge-base", "--is-ancestor", sha, ref], {
+        cwd,
+        stdio: "pipe",
+      });
       return false;
     } catch {
       return true;
@@ -265,10 +309,14 @@ function refsContainingAll(cwd: string, shas: string[]): AuditRef[] {
   for (const sha of shas) {
     let refs: string[];
     try {
-      refs = execFileSync("git", ["branch", "-a", "--format=%(refname:short)", "--contains", sha], {
-        cwd,
-        encoding: "utf-8",
-      })
+      refs = execFileSync(
+        "git",
+        ["branch", "-a", "--format=%(refname:short)", "--contains", sha],
+        {
+          cwd,
+          encoding: "utf-8",
+        }
+      )
         .split("\n")
         .map((l) => l.trim())
         .filter((l) => l.length > 0 && !l.includes("HEAD ->"));
@@ -322,7 +370,12 @@ export type AuditTarget =
   | { kind: "unsafe"; branch: string }
   | { kind: "contained"; branch: string; onOrigin: boolean; commits: number }
   | { kind: "unpushed"; branch: string; missing: string[] }
-  | { kind: "diverged"; branch: string; missing: string[]; candidates: AuditRef[] };
+  | {
+      kind: "diverged";
+      branch: string;
+      missing: string[];
+      candidates: AuditRef[];
+    };
 
 export function auditTarget(
   cwd: string,
@@ -330,7 +383,8 @@ export function auditTarget(
   declaredBranch: string | null
 ): AuditTarget {
   if (!declaredBranch) return { kind: "none" };
-  if (!isValidBranchName(declaredBranch)) return { kind: "unsafe", branch: declaredBranch };
+  if (!isValidBranchName(declaredBranch))
+    return { kind: "unsafe", branch: declaredBranch };
 
   const shas = scopedCommitShas(cwd, issueId);
   const remoteRef = `origin/${declaredBranch}`;
@@ -340,27 +394,47 @@ export function auditTarget(
   // Nothing to cross-check: no scoped commits (the loud fallback in
   // section 7 owns that case) or no reachable ref at all.
   if (shas.length === 0 || (!onOrigin && !localExists)) {
-    return { kind: "contained", branch: declaredBranch, onOrigin, commits: shas.length };
+    return {
+      kind: "contained",
+      branch: declaredBranch,
+      onOrigin,
+      commits: shas.length,
+    };
   }
 
   // The ref the auditor will actually retrieve.
   const auditRef = onOrigin ? remoteRef : declaredBranch;
   const missing = containsAll(cwd, auditRef, shas);
   if (missing.length === 0) {
-    return { kind: "contained", branch: declaredBranch, onOrigin, commits: shas.length };
+    return {
+      kind: "contained",
+      branch: declaredBranch,
+      onOrigin,
+      commits: shas.length,
+    };
   }
 
   // Present locally but not on origin: not a wrong branch, an unpushed one.
   // Different defect, different remedy — say which.
-  if (onOrigin && localExists && containsAll(cwd, declaredBranch, shas).length === 0) {
-    return { kind: "unpushed", branch: declaredBranch, missing: missing.map((s) => s.slice(0, 7)) };
+  if (
+    onOrigin &&
+    localExists &&
+    containsAll(cwd, declaredBranch, shas).length === 0
+  ) {
+    return {
+      kind: "unpushed",
+      branch: declaredBranch,
+      missing: missing.map((s) => s.slice(0, 7)),
+    };
   }
 
   return {
     kind: "diverged",
     branch: declaredBranch,
     missing: missing.map((sha) => sha.slice(0, 7)),
-    candidates: refsContainingAll(cwd, shas).filter((r) => r.name !== declaredBranch),
+    candidates: refsContainingAll(cwd, shas).filter(
+      (r) => r.name !== declaredBranch
+    ),
   };
 }
 
@@ -405,13 +479,20 @@ Fetching and auditing \`${target.branch}\` gets you the tree *before* those comm
     case "diverged": {
       const best = target.candidates[0];
       const missingList = target.missing.map((s) => `\`${s}\``).join(", ");
-      const others = target.candidates.slice(1, 4).map((c) => `\`${c.name}\``).join(", ");
+      const others = target.candidates
+        .slice(1, 4)
+        .map((c) => `\`${c.name}\``)
+        .join(", ");
       const fallback = best
         ? `The commits below are all reachable from \`${best.name}\`. **Audit there**, and note the substitution in your Notes:
 
-${checkoutBlock(best, issueId)}${others ? `
+${checkoutBlock(best, issueId)}${
+            others
+              ? `
 
-Other refs that also contain them: ${others}.` : ""}`
+Other refs that also contain them: ${others}.`
+              : ""
+          }`
         : `**No ref in this repository contains all of them.** Do not run the checks anywhere: report this as a defect — the fiche points at work that cannot be tested as exported.`;
 
       return `**Where to audit:** ⚠️ **the declared branch does not contain this issue's commits.** The fiche declares \`${target.branch}\`, but ${target.missing.length} of the commits in the diff below (${missingList}) are not reachable from it.
@@ -424,7 +505,6 @@ Either way, **report the stale \`branch:\` field itself** — the fiche is lying
     }
   }
 }
-
 
 export interface BuildPromptOptions {
   /** Project root that contains .lytos/ */
@@ -447,7 +527,8 @@ export function buildPrompt(opts: BuildPromptOptions): string {
   const declaredBranch = issueBranch(issueBody);
   const target = auditTarget(opts.cwd, opts.issueId, declaredBranch);
   // An unusable branch name never reaches a git command or a shell fence.
-  const safeBranch = target.kind === "none" || target.kind === "unsafe" ? null : target.branch;
+  const safeBranch =
+    target.kind === "none" || target.kind === "unsafe" ? null : target.branch;
   const diffRef = safeBranch || "HEAD";
   // Prefer the issue's own commits; fall back to the branch range, loudly.
   const scoped = tryScopedDiff(opts.cwd, opts.issueId);
@@ -501,13 +582,17 @@ ${manifest || "(manifest.md not found — proceed with general software-engineer
 \`\`\`markdown
 ${defaultRules || "(no default-rules.md in this project)"}
 \`\`\`
-${cliRules ? `
+${
+  cliRules
+    ? `
 ### cli-rules.md
 
 \`\`\`markdown
 ${cliRules}
 \`\`\`
-` : ""}
+`
+    : ""
+}
 ## 5 — Review skill to follow
 
 \`\`\`markdown
@@ -522,11 +607,13 @@ ${issueBody}
 
 ## 7 — Implementation diff
 
-${diffIsScoped
-  ? `Below are **only the commits that reference ${opts.issueId}** (\`Refs: ${opts.issueId}\`), oldest first, with their messages — not the whole branch. Other issues delivered on the same branch are deliberately absent: findings about them are out of scope for this audit.`
-  : safeBranch
-    ? `⚠️ **Scoping unreliable.** No commit references \`Refs: ${opts.issueId}\`, so the diff below falls back to the whole branch (\`git diff main...${safeBranch}\`) and **may contain work belonging to other issues delivered on it**. Attribute findings with care, and state in your Notes that the diff was not scoped to this issue.`
-    : `⚠️ **Scoping unreliable.** No commit references \`Refs: ${opts.issueId}\`, and **No branch is declared** in the issue frontmatter — the diff below is the current \`HEAD\` (\`git diff main...HEAD\`), i.e. the tree this prompt was exported from. It **may contain work belonging to other issues**; state that in your Notes.`}
+${
+  diffIsScoped
+    ? `Below are **only the commits that reference ${opts.issueId}** (\`Refs: ${opts.issueId}\`), oldest first, with their messages — not the whole branch. Other issues delivered on the same branch are deliberately absent: findings about them are out of scope for this audit.`
+    : safeBranch
+      ? `⚠️ **Scoping unreliable.** No commit references \`Refs: ${opts.issueId}\`, so the diff below falls back to the whole branch (\`git diff main...${safeBranch}\`) and **may contain work belonging to other issues delivered on it**. Attribute findings with care, and state in your Notes that the diff was not scoped to this issue.`
+      : `⚠️ **Scoping unreliable.** No commit references \`Refs: ${opts.issueId}\`, and **No branch is declared** in the issue frontmatter — the diff below is the current \`HEAD\` (\`git diff main...HEAD\`), i.e. the tree this prompt was exported from. It **may contain work belonging to other issues**; state that in your Notes.`
+}
 
 \`\`\`diff
 ${diff}
@@ -585,15 +672,21 @@ Do not mix the two modes.
  */
 export function parseAuditResponse(raw: string): ParsedAudit {
   // Strip outer code fence if the model wrapped the block in ```markdown …```
-  const unwrapped = raw.replace(/^```(?:markdown)?\n([\s\S]*?)\n```\s*$/m, "$1");
+  const unwrapped = raw.replace(
+    /^```(?:markdown)?\n([\s\S]*?)\n```\s*$/m,
+    "$1"
+  );
 
-  const match = unwrapped.match(/(^|\n)(##\s+Audit\s+—\s+\d{4}-\d{2}-\d{2}[\s\S]*?)$/);
+  const match = unwrapped.match(
+    /(^|\n)(##\s+Audit\s+—\s+\d{4}-\d{2}-\d{2}[\s\S]*?)$/
+  );
   const block = match ? match[2].trim() : unwrapped.trim();
 
   // Order matters: GO_PENDING_HUMAN must be tested before the bare GO, whose
   // `\b` would otherwise swallow a hyphenated spelling of the longer verdict.
   let verdict: AuditVerdict = "UNKNOWN";
-  if (/\*\*Verdict:\*\*\s*GO[_\s-]?PENDING[_\s-]?HUMAN\b/i.test(block)) verdict = "GO_PENDING_HUMAN";
+  if (/\*\*Verdict:\*\*\s*GO[_\s-]?PENDING[_\s-]?HUMAN\b/i.test(block))
+    verdict = "GO_PENDING_HUMAN";
   else if (/\*\*Verdict:\*\*\s*NO[_\s-]?GO\b/i.test(block)) verdict = "NO_GO";
   else if (/\*\*Verdict:\*\*\s*GO\b/i.test(block)) verdict = "GO";
 
@@ -654,7 +747,11 @@ export function applyAudit(options: ApplyAuditOptions): ApplyAuditResult {
     replacedExisting = true;
   } else {
     // Append: normalize spacing so the new block sits on its own.
-    const separator = original.endsWith("\n\n") ? "" : original.endsWith("\n") ? "\n" : "\n\n";
+    const separator = original.endsWith("\n\n")
+      ? ""
+      : original.endsWith("\n")
+        ? "\n"
+        : "\n\n";
     rewritten = original + separator + parsed.block + "\n";
   }
 

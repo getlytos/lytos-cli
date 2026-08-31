@@ -53,7 +53,9 @@ export function computeBudget(
   for (const dir of scope) {
     const dirPath = join(boardDir, dir);
     if (!existsSync(dirPath)) continue;
-    const files = readdirSync(dirPath).filter((f) => f.startsWith("ISS-") && f.endsWith(".md"));
+    const files = readdirSync(dirPath).filter(
+      (f) => f.startsWith("ISS-") && f.endsWith(".md")
+    );
     for (const file of files) {
       const fm = parseFrontmatter(readFileSync(join(dirPath, file), "utf-8"));
       if (!fm) continue;
@@ -70,7 +72,9 @@ export function computeBudget(
 
   const breaches: string[] = [];
   if (maxUsd !== null && costUsd > maxUsd) {
-    breaches.push(`cost $${costUsd.toFixed(2)} exceeds ceiling $${maxUsd.toFixed(2)}`);
+    breaches.push(
+      `cost $${costUsd.toFixed(2)} exceeds ceiling $${maxUsd.toFixed(2)}`
+    );
   }
   if (maxIssues !== null && issues > maxIssues) {
     breaches.push(`${issues} issues exceed ceiling of ${maxIssues}`);
@@ -91,11 +95,16 @@ export function computeBudget(
 /**
  * Read `budget_usd:` / `budget_issues:` from sprint.md (flags override these).
  */
-export function readSprintCeiling(lytosDir: string): { maxUsd: number | null; maxIssues: number | null } {
+export function readSprintCeiling(lytosDir: string): {
+  maxUsd: number | null;
+  maxIssues: number | null;
+} {
   const sprintPath = join(lytosDir, "sprint.md");
   if (!existsSync(sprintPath)) return { maxUsd: null, maxIssues: null };
   const content = readFileSync(sprintPath, "utf-8");
-  const usd = content.match(/budget[_ ]?usd\s*[:=]\s*\$?([0-9]+(?:\.[0-9]+)?)/i);
+  const usd = content.match(
+    /budget[_ ]?usd\s*[:=]\s*\$?([0-9]+(?:\.[0-9]+)?)/i
+  );
   const iss = content.match(/budget[_ ]?issues\s*[:=]\s*([0-9]+)/i);
   return {
     maxUsd: usd ? Number(usd[1]) : null,

@@ -94,7 +94,9 @@ function collectClosed(lytosDir: string): { path: string; rel: string }[] {
   const push = (dir: string) => {
     const dirPath = join(boardDir, dir);
     if (!existsSync(dirPath)) return;
-    for (const f of readdirSync(dirPath).filter((f) => f.startsWith("ISS-") && f.endsWith(".md"))) {
+    for (const f of readdirSync(dirPath).filter(
+      (f) => f.startsWith("ISS-") && f.endsWith(".md")
+    )) {
       out.push({ path: join(dirPath, f), rel: `issue-board/${dir}/${f}` });
     }
   };
@@ -106,7 +108,9 @@ function collectClosed(lytosDir: string): { path: string; rel: string }[] {
       const qp = join(archive, q);
       try {
         if (statSync(qp).isDirectory()) push(join("archive", q));
-      } catch { /* skip */ }
+      } catch {
+        /* skip */
+      }
     }
   }
   return out;
@@ -138,10 +142,14 @@ export function buildJournal(lytosDir: string): JournalGroup[] {
     byGroup.set(groupKey, list);
   }
 
-  const groups: JournalGroup[] = [...byGroup.entries()].map(([key, entries]) => ({
-    key,
-    entries: entries.sort((a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id)),
-  }));
+  const groups: JournalGroup[] = [...byGroup.entries()].map(
+    ([key, entries]) => ({
+      key,
+      entries: entries.sort(
+        (a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id)
+      ),
+    })
+  );
   groups.sort((a, b) => b.key.localeCompare(a.key)); // newest first
   return groups;
 }
@@ -155,7 +163,9 @@ export function renderJournal(groups: JournalGroup[]): string {
     out.push("");
     for (const e of g.entries) {
       const why = e.why ? ` — ${e.why}` : "";
-      out.push(`- **${e.id}** ${e.title}${why} _(${e.verdict})_ · [detail](${e.link})`);
+      out.push(
+        `- **${e.id}** ${e.title}${why} _(${e.verdict})_ · [detail](${e.link})`
+      );
     }
     out.push("");
   }

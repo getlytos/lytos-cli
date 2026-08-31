@@ -29,7 +29,8 @@ export interface ReadyAnalysis {
   missing: ReadyGap[];
 }
 
-const OUT_OF_SCOPE_RE = /hors[\s-]?(?:du\s+)?scope|out[\s-]?of[\s-]?scope|out\s+of\s+scope/i;
+const OUT_OF_SCOPE_RE =
+  /hors[\s-]?(?:du\s+)?scope|out[\s-]?of[\s-]?scope|out\s+of\s+scope/i;
 const HEADING_RE = /^#{1,6}[ \t]+(.*)$/;
 const READY_HEADING_RE = /^ready\b/i;
 
@@ -67,7 +68,8 @@ export function analyzeReady(content: string, fm: Frontmatter): ReadyAnalysis {
 
   if (!riskExplicitlySet(fm)) missing.push("risk-unset");
   if (!analyzeDod(content).loopEligible) missing.push("dod-not-testable");
-  if (!OUT_OF_SCOPE_RE.test(readySection(content))) missing.push("no-out-of-scope");
+  if (!OUT_OF_SCOPE_RE.test(readySection(content)))
+    missing.push("no-out-of-scope");
 
   return { ready: missing.length === 0, missing };
 }

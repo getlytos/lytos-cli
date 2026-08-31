@@ -25,10 +25,7 @@ import type { DetectedStack } from "./detect-stack.js";
 import { installPreCommitHook } from "./hooks.js";
 import { installMergeDriver } from "./merge-driver.js";
 
-const METHOD_DIR = join(
-  dirname(fileURLToPath(import.meta.url)),
-  "method"
-);
+const METHOD_DIR = join(dirname(fileURLToPath(import.meta.url)), "method");
 
 // session-start is a Lytos bootstrap protocol, kept as a flat file at
 // .lytos/skills/session-start.md and read at the start of every session.
@@ -352,7 +349,9 @@ export function scaffold(options: ScaffoldOptions): ScaffoldResult {
   } else if (hookResult === "updated") {
     result.filesCreated.push(join(options.cwd, ".git/hooks/pre-commit"));
   } else if (hookResult === "no-git") {
-    result.warnings.push("No .git/ directory found — pre-commit hook not installed. Run `git init` first.");
+    result.warnings.push(
+      "No .git/ directory found — pre-commit hook not installed. Run `git init` first."
+    );
   }
 
   // Install the lytos-issue merge driver (.gitattributes + git config) so
@@ -361,7 +360,9 @@ export function scaffold(options: ScaffoldOptions): ScaffoldResult {
   if (mergeResult === "installed" || mergeResult === "dry-run") {
     result.filesCreated.push(join(options.cwd, ".gitattributes"));
   } else if (mergeResult === "error") {
-    result.warnings.push("Could not install the lytos-issue merge driver — check .gitattributes and `git config merge.lytos-issue.driver` by hand.");
+    result.warnings.push(
+      "Could not install the lytos-issue merge driver — check .gitattributes and `git config merge.lytos-issue.driver` by hand."
+    );
   }
   // "no-git" already warned above for the hook; "already" is silent.
 

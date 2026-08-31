@@ -140,7 +140,9 @@ export function loadKit(lytosDir: string): QualityKit | null {
   if (!existsSync(kitPath)) return null;
   const gates = parseGates(readFileSync(kitPath, "utf-8"));
   const stackPath = join(dir, "stack.md");
-  const stack = existsSync(stackPath) ? parseStack(readFileSync(stackPath, "utf-8")) : null;
+  const stack = existsSync(stackPath)
+    ? parseStack(readFileSync(stackPath, "utf-8"))
+    : null;
   return { gates, stack };
 }
 
@@ -151,15 +153,22 @@ export function validateKit(kit: QualityKit): string[] {
   for (const g of kit.gates) {
     if (seen.has(g.id)) problems.push(`duplicate gate id: ${g.id}`);
     seen.add(g.id);
-    if (!KIND_VALUES.includes(g.kind)) problems.push(`gate ${g.id}: invalid kind "${g.kind}" (gate|reviewer|human)`);
+    if (!KIND_VALUES.includes(g.kind))
+      problems.push(
+        `gate ${g.id}: invalid kind "${g.kind}" (gate|reviewer|human)`
+      );
     if (g.tiers.length === 0) problems.push(`gate ${g.id}: no risk tiers`);
     for (const t of g.tiers) {
-      if (!TIER_VALUES.includes(t)) problems.push(`gate ${g.id}: invalid tier "${t}" (low|medium|high)`);
+      if (!TIER_VALUES.includes(t))
+        problems.push(`gate ${g.id}: invalid tier "${t}" (low|medium|high)`);
     }
     // "A rule with no `tool` binding is not a rule — it is a wish" (method/quality/kit.md).
     // A `gate` binds to a command; `reviewer`/`human` bind to a `rubric:`/`checklist:` pointer.
     // Either way the column must say *what* decides the rule, or the row only looks enforced.
-    if (!g.tool.trim()) problems.push(`gate ${g.id}: no tool binding (a gate with no checker is a wish)`);
+    if (!g.tool.trim())
+      problems.push(
+        `gate ${g.id}: no tool binding (a gate with no checker is a wish)`
+      );
   }
   return problems;
 }
@@ -187,7 +196,11 @@ const BASELINE_LOW: readonly string[] = [
 ];
 
 /** Kind strength — a baseline gate may not be downgraded to a softer kind. */
-const KIND_STRENGTH: Record<GateKind, number> = { gate: 3, reviewer: 2, human: 1 };
+const KIND_STRENGTH: Record<GateKind, number> = {
+  gate: 3,
+  reviewer: 2,
+  human: 1,
+};
 
 /**
  * Ways a project kit loosens the ADR-0007 floor (empty = the contract holds).
@@ -202,17 +215,21 @@ export function baselineViolations(kit: QualityKit): string[] {
   for (const id of BASELINE_LOW) {
     const gate = byId.get(id);
     if (!gate) {
-      violations.push(`baseline gate "${id}" is missing — mandatory at every risk tier`);
+      violations.push(
+        `baseline gate "${id}" is missing — mandatory at every risk tier`
+      );
       continue;
     }
     const dropped = TIER_VALUES.filter((t) => !gate.tiers.includes(t));
     if (dropped.length > 0) {
       violations.push(
-        `baseline gate "${id}" no longer applies at ${dropped.join(", ")} — a project may tighten the floor, never loosen it`,
+        `baseline gate "${id}" no longer applies at ${dropped.join(", ")} — a project may tighten the floor, never loosen it`
       );
     }
     if (KIND_STRENGTH[gate.kind] < KIND_STRENGTH.gate) {
-      violations.push(`baseline gate "${id}" was downgraded to "${gate.kind}" — it must stay a machine gate`);
+      violations.push(
+        `baseline gate "${id}" was downgraded to "${gate.kind}" — it must stay a machine gate`
+      );
     }
   }
 
@@ -224,8 +241,11 @@ export function baselineViolations(kit: QualityKit): string[] {
  * `medium` as the safe default when absent or invalid.
  */
 export function riskOf(risk: FrontmatterValue | undefined): RiskTier {
-  const value = typeof risk === "string" ? (risk.trim().toLowerCase() as RiskTier) : "";
-  return TIER_VALUES.includes(value as RiskTier) ? (value as RiskTier) : "medium";
+  const value =
+    typeof risk === "string" ? (risk.trim().toLowerCase() as RiskTier) : "";
+  return TIER_VALUES.includes(value as RiskTier)
+    ? (value as RiskTier)
+    : "medium";
 }
 
 /**

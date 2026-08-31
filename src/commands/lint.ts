@@ -9,12 +9,23 @@ import { Command } from "commander";
 import { existsSync } from "fs";
 import { resolve } from "path";
 import { lint, type LintResult } from "../lib/linter.js";
-import { ok, error, bold, red, yellow, cyan, green, dim } from "../lib/output.js";
+import {
+  ok,
+  error,
+  bold,
+  red,
+  yellow,
+  cyan,
+  green,
+  dim,
+} from "../lib/output.js";
 
 function displayResults(result: LintResult): void {
   if (result.findings.length === 0) {
     console.error("");
-    ok(`${green(bold("All checks passed"))} — ${result.filesChecked} files checked`);
+    ok(
+      `${green(bold("All checks passed"))} — ${result.filesChecked} files checked`
+    );
     console.error("");
     return;
   }
@@ -46,7 +57,9 @@ function displayResults(result: LintResult): void {
     parts.push(red(`${result.errors} error${result.errors > 1 ? "s" : ""}`));
   }
   if (result.warnings > 0) {
-    parts.push(yellow(`${result.warnings} warning${result.warnings > 1 ? "s" : ""}`));
+    parts.push(
+      yellow(`${result.warnings} warning${result.warnings > 1 ? "s" : ""}`)
+    );
   }
   console.error(`  ${parts.join(dim(" · "))}`);
   console.error("");

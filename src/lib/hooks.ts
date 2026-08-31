@@ -6,7 +6,13 @@
  * The hook is a shell script — zero dependencies, instant execution.
  */
 
-import { existsSync, readFileSync, writeFileSync, mkdirSync, chmodSync } from "fs";
+import {
+  existsSync,
+  readFileSync,
+  writeFileSync,
+  mkdirSync,
+  chmodSync,
+} from "fs";
 import { join } from "path";
 
 const LYTOS_HOOK_START = "# --- lytos pre-commit hook start ---";

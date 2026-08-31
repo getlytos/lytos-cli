@@ -13,8 +13,18 @@
 import { existsSync, readFileSync, readdirSync, statSync } from "fs";
 import { join, relative } from "path";
 import { parseFrontmatter } from "./frontmatter.js";
-import { checkMergeDriver, GITATTRIBUTES_LINE, MERGE_DRIVER_COMMAND, MERGE_DRIVER_NAME } from "./merge-driver.js";
-import { loadKit, validateKit, baselineViolations, unresolvedGateRefs } from "./quality.js";
+import {
+  checkMergeDriver,
+  GITATTRIBUTES_LINE,
+  MERGE_DRIVER_COMMAND,
+  MERGE_DRIVER_NAME,
+} from "./merge-driver.js";
+import {
+  loadKit,
+  validateKit,
+  baselineViolations,
+  unresolvedGateRefs,
+} from "./quality.js";
 
 export type DiagnosticSeverity = "error" | "warning" | "info";
 
@@ -94,14 +104,16 @@ export function diagnose(lytosDir: string): DiagnosticResult {
 /**
  * Check all markdown files for internal links pointing to non-existent files.
  */
-function checkBrokenLinks(
-  lytosDir: string
-): { findings: DiagnosticFinding[]; filesChecked: number } {
+function checkBrokenLinks(lytosDir: string): {
+  findings: DiagnosticFinding[];
+  filesChecked: number;
+} {
   const findings: DiagnosticFinding[] = [];
   let filesChecked = 0;
 
-  const mdFiles = collectMarkdownFiles(lytosDir)
-    .filter((f) => !f.includes("/templates/"));
+  const mdFiles = collectMarkdownFiles(lytosDir).filter(
+    (f) => !f.includes("/templates/")
+  );
   // Match markdown links: [text](path) — skip http/https/mailto links and placeholders
   const linkPattern = /\[([^\]]*)\]\((?!https?:\/\/|mailto:)([^)]+)\)/g;
 
@@ -142,9 +154,10 @@ function checkBrokenLinks(
 /**
  * Check memory/cortex/ for stale files (not modified in STALE_DAYS days).
  */
-function checkStaleMemory(
-  lytosDir: string
-): { findings: DiagnosticFinding[]; filesChecked: number } {
+function checkStaleMemory(lytosDir: string): {
+  findings: DiagnosticFinding[];
+  filesChecked: number;
+} {
   const findings: DiagnosticFinding[] = [];
   let filesChecked = 0;
 
@@ -181,9 +194,10 @@ function checkStaleMemory(
 /**
  * Check issues for skill references that don't exist in skills/.
  */
-function checkMissingSkills(
-  lytosDir: string
-): { findings: DiagnosticFinding[]; filesChecked: number } {
+function checkMissingSkills(lytosDir: string): {
+  findings: DiagnosticFinding[];
+  filesChecked: number;
+} {
   const findings: DiagnosticFinding[] = [];
   let filesChecked = 0;
 
@@ -210,8 +224,11 @@ function checkMissingSkills(
   }
 
   const statusDirs = [
-    "0-icebox", "1-backlog", "2-sprint",
-    "3-in-progress", "4-review",
+    "0-icebox",
+    "1-backlog",
+    "2-sprint",
+    "3-in-progress",
+    "4-review",
   ];
 
   for (const dir of statusDirs) {
@@ -267,9 +284,10 @@ function checkMissingSkills(
 /**
  * Check that frontmatter status matches the folder the issue is in.
  */
-function checkStatusMismatches(
-  lytosDir: string
-): { findings: DiagnosticFinding[]; filesChecked: number } {
+function checkStatusMismatches(lytosDir: string): {
+  findings: DiagnosticFinding[];
+  filesChecked: number;
+} {
   const findings: DiagnosticFinding[] = [];
   let filesChecked = 0;
 
@@ -277,8 +295,12 @@ function checkStatusMismatches(
   if (!existsSync(boardDir)) return { findings, filesChecked };
 
   const statusDirs = [
-    "0-icebox", "1-backlog", "2-sprint",
-    "3-in-progress", "4-review", "5-done",
+    "0-icebox",
+    "1-backlog",
+    "2-sprint",
+    "3-in-progress",
+    "4-review",
+    "5-done",
   ];
 
   for (const dir of statusDirs) {
@@ -317,9 +339,10 @@ function checkStatusMismatches(
 /**
  * Check that issue dependencies reference existing issues.
  */
-function checkOrphanDependencies(
-  lytosDir: string
-): { findings: DiagnosticFinding[]; filesChecked: number } {
+function checkOrphanDependencies(lytosDir: string): {
+  findings: DiagnosticFinding[];
+  filesChecked: number;
+} {
   const findings: DiagnosticFinding[] = [];
   let filesChecked = 0;
 
@@ -329,8 +352,12 @@ function checkOrphanDependencies(
   // Collect all issue IDs
   const allIssueIds = new Set<string>();
   const statusDirs = [
-    "0-icebox", "1-backlog", "2-sprint",
-    "3-in-progress", "4-review", "5-done",
+    "0-icebox",
+    "1-backlog",
+    "2-sprint",
+    "3-in-progress",
+    "4-review",
+    "5-done",
   ];
 
   for (const dir of statusDirs) {
@@ -401,16 +428,19 @@ function checkOrphanDependencies(
  * Emits an `info` finding per issue — informational only, no score penalty.
  * Active boards (icebox → review) are checked; done/archive are not.
  */
-function checkSchemaVersion(
-  lytosDir: string
-): { findings: DiagnosticFinding[] } {
+function checkSchemaVersion(lytosDir: string): {
+  findings: DiagnosticFinding[];
+} {
   const findings: DiagnosticFinding[] = [];
   const boardDir = join(lytosDir, "issue-board");
   if (!existsSync(boardDir)) return { findings };
 
   const activeStatusDirs = [
-    "0-icebox", "1-backlog", "2-sprint",
-    "3-in-progress", "4-review",
+    "0-icebox",
+    "1-backlog",
+    "2-sprint",
+    "3-in-progress",
+    "4-review",
   ];
 
   for (const dir of activeStatusDirs) {
@@ -495,7 +525,8 @@ function checkQualityKit(lytosDir: string): DiagnosticFinding[] {
       severity: "info",
       category: "quality-kit",
       file: "quality/",
-      message: "No quality kit — gates and the risk matrix have nothing to select from",
+      message:
+        "No quality kit — gates and the risk matrix have nothing to select from",
       fix: "Add `.lytos/quality/kit.md` (gate catalog) and `stack.md` (stack contract), or re-run `lyt init`",
     });
     return findings;
@@ -525,12 +556,25 @@ function checkQualityKit(lytosDir: string): DiagnosticFinding[] {
 
   // DoD items may pin a gate (`verify: auto:<id>`) — flag refs the kit can't resolve.
   const boardDir = join(lytosDir, "issue-board");
-  const statusDirs = ["0-icebox", "1-backlog", "2-sprint", "3-in-progress", "4-review", "5-done", "parked"];
+  const statusDirs = [
+    "0-icebox",
+    "1-backlog",
+    "2-sprint",
+    "3-in-progress",
+    "4-review",
+    "5-done",
+    "parked",
+  ];
   for (const dir of statusDirs) {
     const dirPath = join(boardDir, dir);
     if (!existsSync(dirPath)) continue;
-    for (const file of readdirSync(dirPath).filter((f) => f.startsWith("ISS-") && f.endsWith(".md"))) {
-      const unresolved = unresolvedGateRefs(readFileSync(join(dirPath, file), "utf-8"), kit);
+    for (const file of readdirSync(dirPath).filter(
+      (f) => f.startsWith("ISS-") && f.endsWith(".md")
+    )) {
+      const unresolved = unresolvedGateRefs(
+        readFileSync(join(dirPath, file), "utf-8"),
+        kit
+      );
       if (unresolved.length > 0) {
         findings.push({
           severity: "warning",
@@ -566,7 +610,7 @@ function checkCliInterfaceSection(lytosDir: string): DiagnosticFinding[] {
       file: "rules/",
       message:
         "Rules never declare the CLI as THE interface to the board — agents reading them will do transitions by hand (frontmatter edits, git mv) even though the verbs exist",
-      fix: "Add the \"The CLI Is the Interface\" section (npx lyt verb table + never-edit-by-hand rule) to rules/default-rules.md, or re-run `lyt init` to regenerate the rules",
+      fix: 'Add the "The CLI Is the Interface" section (npx lyt verb table + never-edit-by-hand rule) to rules/default-rules.md, or re-run `lyt init` to regenerate the rules',
     });
   }
   return findings;
@@ -643,7 +687,10 @@ function collectMarkdownFiles(dir: string): string[] {
  * - info: -0 points
  * Floor at 0.
  */
-function computeScore(findings: DiagnosticFinding[], filesChecked: number): number {
+function computeScore(
+  findings: DiagnosticFinding[],
+  filesChecked: number
+): number {
   if (filesChecked === 0) return 0;
 
   let score = 100;
