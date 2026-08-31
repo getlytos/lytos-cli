@@ -7,6 +7,13 @@ bound to a machine checker is declared `reviewer` or `human`, never silently enf
 
 Columns: `id` · `kind` (gate | reviewer | human) · `tiers` (comma-separated: low,medium,high) · `tool` (per-stack binding).
 
+**A binding decides which question the gate asks.** `deps-audit` is the clearest case: audit
+everything installed, or only what the project ships? A library that publishes a bundle with two
+runtime dependencies (`npm audit --omit=dev`) and an application deployed from source with its
+build tooling are asking different questions, and both are legitimate — but a gate bound to the
+wrong one goes permanently red on findings nobody can act on, and teaches the team that red is
+survivable. Choose deliberately, and write the reason next to the row.
+
 | id | kind | tiers | tool |
 |----|------|-------|------|
 | tests-unit | gate | low,medium,high | <your test command, e.g. npm test> |

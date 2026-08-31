@@ -8,7 +8,7 @@ complexity: standard
 domain: [cli]
 skill: 
 skills_aux: []
-status: 3-in-progress
+status: parked
 branch: fix/ISS-0133-audit-diff-scoped-to-the-issue
 depends: []
 created: 2026-08-12
@@ -24,6 +24,8 @@ ai_reviewer:
   model: gpt-5
   session: codex-api
   prompt_ref: skills/code-review/SKILL.md
+park_reason: external-blocker
+parked_at: 2026-08-31
 ---
 # ISS-0133 — Four auditors read the same 68 commits and guessed which findings belonged to whom
 
@@ -287,7 +289,7 @@ issue.
 ### To fix before next review
 - [x] Cross-check against the remote-retrievable audit ref (and add a stale-local / fresh-origin plus fresh-local / stale-origin regression).
 - [x] Render remote-tracking candidates with a valid fetch/checkout sequence.
-- [ ] Make the mandatory format and dependency-audit gates green, or add and apply an explicit, auditable waiver mechanism. — *escalated: this needs a decision, not a commit; see below*
+- [ ] Make the mandatory format and dependency-audit gates green, or add and apply an explicit, auditable waiver mechanism. — *`deps-audit` is green: **ISS-0136** rebound it to what the package ships. `format` stays red behind ISS-0132, itself blocked on PR #29; the waiver mechanism is **ISS-0137**. This fiche is parked `external-blocker` rather than spending a fourth audit round on a known answer.*
 
 ## Response to re-review — 2026-08-31
 

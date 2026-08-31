@@ -13,7 +13,7 @@ risk matrix (ADR-0007) selects from here.*
 | format | gate | low,medium,high | npm run format:check |
 | build-reproducible | gate | low,medium,high | package-lock.json committed; CI runs the same |
 | doc-L0 | gate | low,medium,high | every command/lib has a header doc comment |
-| deps-audit | gate | medium,high | npm audit --audit-level=high |
+| deps-audit | gate | medium,high | npm audit --omit=dev --audit-level=high |
 | tests-negative | gate | medium,high | error-path tests (bad input → exit code + message) |
 | doc-L3 | gate | medium,high | frontmatter schema doc ↔ parser (ADR-0001) |
 | over-engineering | reviewer | medium,high | rubric:over-engineering (diff vs effort, new deps) |
