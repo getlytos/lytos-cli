@@ -8,7 +8,7 @@ complexity: standard
 domain: [ci]
 skill: 
 skills_aux: []
-status: 3-in-progress
+status: 4-review
 branch: fix/ISS-0141-npm-trusted-publishing
 depends: [ISS-0140]
 created: 2026-08-31
@@ -88,7 +88,7 @@ So the absence of the auth line is not a comment to write. It is an assertion to
 - [x] `release.yml` and `ci.yml` still run the same gates in the same order — verify: auto
 - [ ] A trusted publisher for `lytos-cli` is declared on npmjs.com, naming `getlytos/lytos-cli` and `release.yml` — verify: human
 - [ ] `NPM_TOKEN` is deleted from the repo secrets once an OIDC publish has succeeded — verify: human
-- [ ] The first release published by the workflow succeeds and carries a provenance attestation — verify: auto *(amended, see below)*
+- [x] The first release published by the workflow succeeds and carries a provenance attestation — verify: auto *(amended, see below)*
 
 ## Notes
 
@@ -145,3 +145,25 @@ has run.
 Also worth recording: the 1.5.0 currently on npm has **no provenance attestation** — a hand
 publish from npm 10.9.8 cannot produce one. 1.5.1 will be the first artifact of this package that
 is cryptographically traceable to this repository.
+
+## Proven — 2026-08-31
+
+The amended criterion is met. `v1.5.1` published through this workflow
+([run 33414873019](https://github.com/getlytos/lytos-cli/actions/runs/33414873019)), with npm
+12.0.2, the OIDC assertion passing, and a SLSA v1 provenance attestation on the registry. Details
+in ISS-0142.
+
+The assertion step earned its place on the first run: `setup-node` **did** write the `_authToken`
+line, and the step stripped it. Without it, npm would have read an empty credential, skipped the
+OIDC exchange, and answered the same `404` that hid a dead token for four months. The trap this
+issue was written around is real, and the workflow met it on its very first publish.
+
+Two items remain, both yours and both genuinely so:
+
+- **The trusted publisher declaration** is confirmed (`getlytos/lytos-cli`, `release.yml`,
+  permission `npm publish`) and the publish itself is now retroactive proof of it. Worth logging
+  for ISS-0127: this item was marked `verify: human`, and it turned out to be machine-provable —
+  a successful OIDC publish cannot happen without it. Another assertion filed as judgment.
+- **Deleting `NPM_TOKEN`** is now safe: the OIDC path has published. The fallback it provided is
+  no longer needed, and a long-lived credential nobody uses is a liability, not a safety net.
+  Optionally pair it with *Publishing access → require 2FA and disallow bypass tokens* on npmjs.com.
