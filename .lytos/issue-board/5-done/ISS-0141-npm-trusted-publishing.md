@@ -8,7 +8,7 @@ complexity: standard
 domain: [ci]
 skill: 
 skills_aux: []
-status: 4-review
+status: 5-done
 branch: main
 depends: [ISS-0140]
 created: 2026-08-31
@@ -17,6 +17,7 @@ risk: medium
 assignee: fredericgalline
 updated: 2026-08-31
 started_at: 2026-08-31
+completed_at: 2026-08-31
 ---
 # ISS-0141 — The credential died six days after it was created, and nobody was told
 
@@ -86,8 +87,8 @@ So the absence of the auth line is not a comment to write. It is an assertion to
 - [x] A step fails the workflow when an `_authToken` line survives in `.npmrc` — verify: auto
 - [x] The release job runs Node 22 and installs npm ≥ 11.5.1, printing the version — verify: auto
 - [x] `release.yml` and `ci.yml` still run the same gates in the same order — verify: auto
-- [ ] A trusted publisher for `lytos-cli` is declared on npmjs.com, naming `getlytos/lytos-cli` and `release.yml` — verify: human
-- [ ] `NPM_TOKEN` is deleted from the repo secrets once an OIDC publish has succeeded — verify: human
+- [x] A trusted publisher for `lytos-cli` is declared on npmjs.com, naming `getlytos/lytos-cli` and `release.yml` — verify: human
+- [x] `NPM_TOKEN` is deleted from the repo secrets once an OIDC publish has succeeded — verify: human
 - [x] The first release published by the workflow succeeds and carries a provenance attestation *(amended — see below)* — verify: auto
 
 ## Notes
@@ -170,20 +171,20 @@ Two items remain, both yours and both genuinely so:
 
 ## Audit — 2026-08-31
 
-**Verdict:** NO_GO
+**Verdict:** GO_PENDING_HUMAN
 
 ### Checks
-- [x] Tests pass (356/356 on the fresh re-review run)
+- [x] Tests pass (356/356 on the latest source-equivalent re-review run)
 - [x] Machine-verifiable DoD items (`verify: auto`) complete
-- [ ] Rules respected (the declared audit branch does not contain the corrective commit)
+- [x] Rules respected (terminal DoD marker recognized; declared audit ref contains every scoped commit)
 - [x] Documentation aligned
 
 ### Notes
-The original finding is fixed: at line 91 the amendment annotation now precedes the terminal `verify: auto` marker, and `lyt show ISS-0141` plus `lyt lint` no longer report an unqualified item for this fiche. The OIDC implementation and release proof remain green. The audit packet correctly substituted `fix/ISS-0141-terminal-verify-marker`, because corrective commit `c1409d8` is reachable from that branch and from `main`, but not from the fiche's declared `fix/ISS-0141-npm-trusted-publishing` branch (which still resolves to `0bea3a4`). A fresh auditor following the declared branch would reproduce the pre-fix state, so the issue's auditable location is false. The two unchecked `verify: human` items are not grounds for this NO_GO.
+Both prior findings are resolved. The amended provenance item ends with the recognized `verify: auto` marker, and `lyt lint` reports no warning for ISS-0141. The fiche now declares `main`; `origin/main` contains the OIDC delivery commits, corrective commit `c1409d8`, and branch-field correction `301ed8b`, so `npx lyt review ISS-0141` emits no stale-branch substitution warning and sends the auditor to a tree containing the exported patches. The OIDC implementation remains proven by successful release run `33414873019` with npm 12.0.2 and SLSA v1 provenance. No machine-verifiable defect remains.
 
-### To fix before next review
-- [ ] Update the fiche's `branch:` field to the auditable branch that contains all ISS-0141 commits: `fix/ISS-0141-terminal-verify-marker`.
-- [ ] Confirm `npx lyt review ISS-0141` no longer emits a stale-branch substitution warning, then request re-review; absent another defect, the expected next verdict is GO_PENDING_HUMAN.
+### Awaiting human judgment
+- [x] A trusted publisher for `lytos-cli` is declared on npmjs.com, naming `getlytos/lytos-cli` and `release.yml` — verify: human
+- [x] `NPM_TOKEN` is deleted from the repo secrets once an OIDC publish has succeeded — verify: human
 
 ## Response to audit — 2026-08-31
 

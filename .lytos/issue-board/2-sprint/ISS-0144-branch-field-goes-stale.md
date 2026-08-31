@@ -1,6 +1,6 @@
 ---
 id: ISS-0144
-title: The audit stops on a metadata field, not on the work — `branch:` goes stale by design
+title: "The audit stops on a metadata field, not on the work — `branch:` goes stale by design"
 type: fix
 priority: P1-high
 effort: S
@@ -8,14 +8,14 @@ complexity: standard
 domain: [cli, method]
 skill: 
 skills_aux: []
-status: 1-backlog
-branch: ""
+status: 2-sprint
+branch: 
 depends: []
 created: 2026-08-31
 schema_version: 2
 risk: low
+updated: 2026-08-31
 ---
-
 # ISS-0144 — Five fiches returned in one round for a field, not for a defect
 
 ## Context — measured, five times on the same day
