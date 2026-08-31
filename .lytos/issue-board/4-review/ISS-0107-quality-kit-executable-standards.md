@@ -8,7 +8,7 @@ complexity: heavy
 domain: [cli, method]
 skill: 
 skills_aux: []
-status: 3-in-progress
+status: 4-review
 branch: feat/ISS-0107-enforce-the-stack-contract
 depends: []
 created: 2026-08-09
