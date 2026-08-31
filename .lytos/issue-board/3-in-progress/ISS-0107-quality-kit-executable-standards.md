@@ -9,7 +9,7 @@ domain: [cli, method]
 skill: 
 skills_aux: []
 status: 3-in-progress
-branch: chore/ISS-0126-translate-live-fiches-to-english
+branch: feat/ISS-0107-enforce-the-stack-contract
 depends: []
 created: 2026-08-09
 updated: 2026-08-31
@@ -51,7 +51,7 @@ abstractions.
 - [x] `.lytos/quality/` structure + stack contract schema — *verify: auto*
 - [x] ADR-0007's folded-in dimensions present as checkers (secrets, repro, deps audit, perf, observability, compat, doc L0/L3) — *verify: auto*
 - [x] `lyt doctor` checks the kit's presence and coherence — *verify: auto*
-- [x] Convention: a `verify: auto` item references a resolvable kit entry — *verify: auto*
+- [x] Convention: a `verify: auto:<id>` pin resolves to a kit entry, and `lyt doctor` flags one that does not *(narrowed — see the audit response)* — *verify: auto*
 - [x] Non-gatable rules explicitly classified reviewer/human, and both kinds actually used in the shipped kit — *verify: auto*
 - [x] Docs: how to add an executable rule to the kit — *verify: auto*
 
@@ -231,6 +231,61 @@ declared branch), and `npm audit --audit-level=high` reports five high-severity 
 
 ### To fix before next review
 - [x] Make the declared audit branch contain the correction commits, or update the fiche to the branch that does. — *repointed to `chore/ISS-0126-translate-live-fiches-to-english`, which contains `4dba6cc`; the branch was stale, not the work*
-- [ ] Validate the stack contract and enforce the dependency allow-list / ADR exception promised by its documentation.
-- [ ] Enforce gate pins on auto DoD items, or narrow the documented contract and DoD explicitly.
-- [ ] Make the mandatory format and dependency-audit gates green.
+- [x] Validate the stack contract and enforce the dependency allow-list / ADR exception promised by its documentation. — *`validateStack()` + `unlistedDependencies()`, wired into `lyt doctor`, 11 regressions*
+- [x] Enforce gate pins on auto DoD items, or narrow the documented contract and DoD explicitly. — *narrowed, in both `kit.md` copies and in the DoD item itself*
+- [x] Make the mandatory format and dependency-audit gates green. — *both green: `format:check` clean since ISS-0132, `npm audit --omit=dev` at 0; the dev-side advisories are ISS-0143*
+
+## Response to audit — 2026-08-31
+
+All three points accepted. Two were real defects; the third was a promise the fiche made and the
+code never made.
+
+### 1. The stack contract was parsed and then ignored — fixed
+
+The audit was exact: `validateKit()` validated gate rows and nothing else, so `stack.md` was read
+into a struct no caller consulted. Its own text promises *"anything outside this list fails the
+dependency gate"*, and nothing compared anything.
+
+Two functions in `src/lib/quality.ts`, both wired into `lyt doctor`:
+
+- **`validateStack()`** — reports a contract with no `lockfile:` (it calls the lockfile the truth
+  for pinned versions and then names no file), no `docs_source:` (ADR-0005 §3 has nowhere to
+  inject from), an empty allow-list, or an allow-list still holding only the `lyt init`
+  placeholder. That last case matters: the scaffold ships
+  `- <list your runtime dependencies here…>`, and a parser that took it literally would
+  allow-list a sentence.
+- **`unlistedDependencies()`** — compares `package.json` **runtime** dependencies against the
+  allow-list, tolerating a bullet that documents itself (`- \`commander\` — the CLI framework`
+  resolves to `commander`).
+
+Two deliberate limits, both written into the code:
+
+- **Runtime only.** `stack.md` allow-lists what *ships*. Dev dependencies are the build toolchain,
+  they answer to the `deps-audit` gate (`npm audit --omit=dev`, ISS-0136), and allow-listing eight
+  of them would be the bureaucracy ADR-0007 exists to prevent.
+- **Silence off npm.** No `package.json` → no finding. The kit is language-agnostic by design;
+  this is its npm implementation, and a Rust or Python project simply has none yet. A warning
+  nobody can act on teaches people to ignore warnings.
+
+On this repository the checks pass and say nothing, which is the correct output: `commander` is
+the only runtime dependency and the contract allows it. The 11 regressions in
+`tests/lib/quality.test.ts` are what prove they would speak up.
+
+### 2. Gate pins on auto items — narrowed, not enforced
+
+The audit offered both doors, and enforcement is the wrong one. Most `verify: auto` items are
+assertions written for a single issue — *"the publish step has no \`env:\` block"* — that no
+catalog gate covers and none should. Forcing every one to name a kit entry would push exactly
+those assertions out of Definitions of Done, back into the human queue ISS-0127 measured.
+
+So the claim is narrowed where it was made. The DoD item above now says what the code does — a
+**pin**, once written, resolves — and both `kit.md` copies state the optionality outright, so the
+next reader does not re-derive an obligation that was never there. The behaviour is unchanged;
+what changed is that the fiche stops promising more than the tool delivers.
+
+### 3. The mandatory gates — green
+
+`format:check` passes on every source file (red at audit time, swept by ISS-0132 the same day).
+`npm audit --omit=dev --audit-level=high`, which is what the `deps-audit` row binds since
+ISS-0136, reports **0 vulnerabilities**. The five high advisories the audit cited are dev-toolchain
+only; they are ISS-0143, with the cost of fixing them measured there.
