@@ -9,7 +9,7 @@ domain: [ci]
 skill: 
 skills_aux: []
 status: 4-review
-branch: fix/ISS-0141-npm-trusted-publishing
+branch: main
 depends: [ISS-0140]
 created: 2026-08-31
 schema_version: 2
@@ -173,17 +173,17 @@ Two items remain, both yours and both genuinely so:
 **Verdict:** NO_GO
 
 ### Checks
-- [x] Tests pass (356/356 on the confirming full run; one unrelated `park` timeout passed both in isolation and on rerun)
-- [x] Machine-verifiable DoD behavior is complete: OIDC release run `33414873019` succeeded with npm 12.0.2 and SLSA v1 provenance
-- [ ] Rules respected (`lyt lint` and `lyt show ISS-0141` report one DoD item without a recognized trailing `verify:` marker)
-- [x] Documentation aligned with the workflow and registry evidence
+- [x] Tests pass (356/356 on the fresh re-review run)
+- [x] Machine-verifiable DoD items (`verify: auto`) complete
+- [ ] Rules respected (the declared audit branch does not contain the corrective commit)
+- [x] Documentation aligned
 
 ### Notes
-The implementation itself is effective: `release.yml` grants `id-token: write`, removes `NPM_TOKEN` from the publish step, strips and asserts absence of `_authToken`, uses Node 22, upgrades npm, and preserves CI gate order. PR #34 passed on Node 20 and 22. The public release run completed successfully, and npm reports 1.5.1 with `predicateType: https://slsa.dev/provenance/v1`. The blocking defect is in the issue contract at line 91: appending `*(amended, see below)*` after `verify: auto` makes the marker non-terminal, so the project's own parser classifies the item as unqualified and `lyt lint` flags the review fiche. The two open `verify: human` items are not themselves grounds for NO_GO.
+The original finding is fixed: at line 91 the amendment annotation now precedes the terminal `verify: auto` marker, and `lyt show ISS-0141` plus `lyt lint` no longer report an unqualified item for this fiche. The OIDC implementation and release proof remain green. The audit packet correctly substituted `fix/ISS-0141-terminal-verify-marker`, because corrective commit `c1409d8` is reachable from that branch and from `main`, but not from the fiche's declared `fix/ISS-0141-npm-trusted-publishing` branch (which still resolves to `0bea3a4`). A fresh auditor following the declared branch would reproduce the pre-fix state, so the issue's auditable location is false. The two unchecked `verify: human` items are not grounds for this NO_GO.
 
 ### To fix before next review
-- [x] Reformat the amended DoD item so `verify: auto` is the recognized trailing marker, without changing its meaning or audit history. — *the annotation now precedes the marker; the item text, its tick and the Amendment section are untouched*
-- [x] Confirm `lyt show ISS-0141` and `lyt lint` no longer report an unqualified DoD item; then request re-review, which should remain pending on the two human judgments. — *`lyt lint` clean on this fiche; the two `verify: human` items stay open by design*
+- [ ] Update the fiche's `branch:` field to the auditable branch that contains all ISS-0141 commits: `fix/ISS-0141-terminal-verify-marker`.
+- [ ] Confirm `npx lyt review ISS-0141` no longer emits a stale-branch substitution warning, then request re-review; absent another defect, the expected next verdict is GO_PENDING_HUMAN.
 
 ## Response to audit — 2026-08-31
 
@@ -195,3 +195,36 @@ precedes the marker. Nothing else moved — same text, same tick, same Amendment
 Worth keeping, because it is small and instructive: the fix for a DoD-contract defect was found by
 the project's own linter, on the fiche of the issue whose entire subject is *not believing a claim
 nobody checked*. The tool caught its author.
+
+## Response to audit — 2026-08-31 (branch field)
+
+**Accepted.** `branch:` said `fix/ISS-0141-npm-trusted-publishing`, which carries the OIDC
+work but not `c1409d8`, the marker fix — that landed on
+`fix/ISS-0141-terminal-verify-marker`. The auditor was sent to a tree missing a third of the
+issue, and was right to stop.
+
+It now declares **`main`**, which is the only ref that contains all three `Refs: ISS-0141`
+commits and the only one that cannot go stale again:
+
+| Commit | | on `main` |
+|---|---|---|
+| `93d9294` | the release path publishes by OIDC | ✅ |
+| `1fe2092` | the proof moves to the next release | ✅ |
+| `c1409d8` | the amended DoD marker is terminal again | ✅ |
+
+Both feature branches are merged; the work lives on `main` now, and saying so is more accurate
+than naming either half. The audit packet is unaffected in the way that matters: `lyt review`
+scopes the diff by `--grep=Refs: ISS-0141` across all refs
+(`src/lib/review.ts:196-212`), so the three commits and their patches are exported whatever the
+declared ref — the field only decides *where the auditor is sent to check them*.
+
+### The pattern, third instance
+
+This is the third time in this audit round that a fiche was returned for its `branch:` field
+rather than for its work — ISS-0107, ISS-0114, ISS-0115 and ISS-0124 all took a [CRITICAL] on
+2026-08-31 for a declared branch that did not contain their corrections, and now this one. The
+field holds a single value for work that legitimately spans branches: the original delivery, then
+the audit response, then the metadata fix. `review.ts` already says so in a doc comment — *"a
+fiche routinely declares one branch while its fixes land on another"* — and already computes the
+refs that do contain every commit (`refsContainingAll`). It just does not use that to unblock the
+audit. Logged as **ISS-0144**.
