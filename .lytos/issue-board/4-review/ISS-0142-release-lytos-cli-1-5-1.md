@@ -8,7 +8,7 @@ complexity: light
 domain: [cli, ci]
 skill: 
 skills_aux: []
-status: 3-in-progress
+status: 4-review
 branch: chore/ISS-0142-release-lytos-cli-1-5-1
 depends: [ISS-0140, ISS-0141]
 created: 2026-08-31
@@ -51,11 +51,11 @@ code change is otherwise the kind of thing nobody can explain six months later.
 ## Definition of done
 
 - [x] `package.json` and `package-lock.json` declare 1.5.1, with no other source change — verify: auto
-- [ ] The release PR passes CI on Node 20 and 22 and is merged into `main` — verify: auto
-- [ ] Tag `v1.5.1` points to the versioned commit on `origin/main` — verify: auto
-- [ ] The release workflow run succeeds, and its log shows npm ≥ 11.5.1 and the OIDC assertion passing — verify: auto
-- [ ] npm reports `1.5.1` as `latest` — verify: auto
-- [ ] `npm view lytos-cli@1.5.1` reports a provenance attestation — verify: auto
+- [x] The release PR passes CI on Node 20 and 22 and is merged into `main` — verify: auto
+- [x] Tag `v1.5.1` points to the versioned commit on `origin/main` — verify: auto
+- [x] The release workflow run succeeds, and its log shows npm ≥ 11.5.1 and the OIDC assertion passing — verify: auto
+- [x] npm reports `1.5.1` as `latest` — verify: auto
+- [x] `npm view lytos-cli@1.5.1` reports a provenance attestation — verify: auto
 - [ ] No manual publish was used at any point — verify: human
 
 ## Notes
@@ -66,3 +66,42 @@ code change is otherwise the kind of thing nobody can explain six months later.
 - `NPM_TOKEN` stays in the repo secrets until this release succeeds — it is the only way back.
   Deleting it is the last DoD item of ISS-0141, not of this issue.
 - If this publishes cleanly, ISS-0141 can move to review: its amended criterion is this release.
+
+## Delivered — 2026-08-31
+
+**The workflow published. First time since v0.8.9 on 2026-04-19.**
+
+Run [33414873019](https://github.com/getlytos/lytos-cli/actions/runs/33414873019), tag `v1.5.1` →
+`124b8c4`, the same commit as `origin/main`, declaring 1.5.1.
+
+Every step of the OIDC path is in the log, in order:
+
+```
+Upgrade npm …           12.0.2                     (floor: 11.5.1)
+Assert no auth token …  no auth token configured; the publish will
+                        authenticate via OIDC
+Publish to npm          Publishing to https://registry.npmjs.org/ with tag
+                        latest and public access
+                        Signed provenance statement with source and build
+                        information from GitHub Actions
+                        + lytos-cli@1.5.1
+```
+
+And on the registry side:
+
+| Check | Result |
+|---|---|
+| `npm view lytos-cli version` | `1.5.1` |
+| provenance | `predicateType: https://slsa.dev/provenance/v1` |
+| shasum | `961bbb6cee81d9c83ab84d0d3cc2a27970701d53` |
+
+The `+ lytos-cli@1.5.1` line is the whole point of this release: it was printed by a workflow that
+holds no credential. Nothing here can expire.
+
+Worth noting what the assertion step actually proved. `setup-node` did write its `_authToken` line
+— the step found one and stripped it. Had it not been there, npm would have read an empty
+credential, skipped the OIDC exchange, and failed with the same misleading `404` that hid a dead
+token for four months. The failure mode was real, and it was met.
+
+The last item is human by design: **no manual publish was used at any point** — true from where
+this session sits, and yours to confirm.
