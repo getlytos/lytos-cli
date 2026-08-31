@@ -1,7 +1,11 @@
 # CI pipeline — runs on every push and pull request.
 #
-# Steps: install deps → lint → typecheck → build → test → verify binary.
+# Steps: install deps → format → lint → typecheck → secrets → build → test → verify binary.
 # Build runs before test because tests execute the compiled binary.
+#
+# `format:check` and `secrets:scan` are gates in .lytos/quality/kit.md that ran
+# nowhere for months (ISS-0132). A gate nothing executes is not a gate, and
+# `format` proved it: src/ had never been formatted at all.
 
 name: CI
 
@@ -37,11 +41,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Format check
+        run: npm run format:check
+
       - name: Lint
         run: npm run lint
 
       - name: Type check
         run: npm run typecheck
+
+      - name: Secrets scan
+        run: npm run secrets:scan
 
       - name: Build
         run: npm run build

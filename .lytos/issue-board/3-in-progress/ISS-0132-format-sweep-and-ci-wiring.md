@@ -105,11 +105,11 @@ Whichever branch is taken, it must be taken. This issue is closed by a decision,
 ## Definition of done
 
 - [x] The sweep branch contains PR #29's head — the constraint's purpose, stated checkably — verify: auto
-- [ ] `npm run format:check` exits 0 — verify: auto
-- [ ] The sweep is a single commit containing only formatting changes; test count unchanged before and after — verify: auto
-- [ ] `.git-blame-ignore-revs` exists and names the sweep commit — verify: auto
-- [ ] `ci.yml` runs `format:check` and `secrets:scan` — verify: auto
-- [ ] Or, if the alternative is chosen: the `format` row is removed from the kit and the reason recorded here — verify: auto
+- [x] `npm run format:check` exits 0 — verify: auto
+- [x] The sweep is a single commit containing only formatting changes; test count unchanged before and after — verify: auto
+- [x] `.git-blame-ignore-revs` exists and names the sweep commit — verify: auto
+- [x] `ci.yml` runs `format:check` and `secrets:scan` — verify: auto
+- [ ] Or, if the alternative is chosen: the `format` row is removed from the kit and the reason recorded here *(not applicable — the sweep was chosen, so `format` stays in the kit at `low,medium,high`)* — verify: auto
 - [ ] The other unmerged `fix/` branches rebase cleanly, or the conflicts are resolved — verify: human
 
 ## Notes
@@ -121,3 +121,36 @@ Whichever branch is taken, it must be taken. This issue is closed by a decision,
   empty-tool check would never have caught it.
 - If #29 drags, do not let this sit. The alternative above is the fallback, and it is not a
   failure — it is proportionality applied to a gate the project added to itself.
+
+## Delivered — 2026-08-31
+
+Three commits, deliberately separate so the sweep stays reviewable by inspection:
+
+1. `3b7c6f9` — the premise change above, `.lytos/` only.
+2. `51b27ef` — `npm run format`, **51 files, all inside `src/`, nothing else in the commit**.
+3. this one — `.git-blame-ignore-revs` and the CI wiring.
+
+**Evidence the sweep changed no behaviour:** 356 tests passing before and 356 after, same count,
+plus typecheck, lint and build green on both sides. `npm run format:check` exits 0.
+
+`git diff -w` is *not* empty on the sweep, and that is expected rather than alarming: Prettier
+reflows lines, and `-w` collapses whitespace *within* a line, not a line that was split or joined.
+The test count is the check this fiche asked for, and it is the one that means something.
+
+**The blame file is verified, not just written.** `git blame --ignore-revs-file
+.git-blame-ignore-revs src/lib/ready.ts` attributes line 1 to `230ad0d1`, its original author,
+instead of the sweep. The file carries a note that only provably formatting-free rewrites may be
+listed — a wrong entry makes blame lie in the other direction.
+
+CI now runs `format:check` before lint and `secrets:scan` before build, with a header comment
+recording why: both were gates in the kit that executed nowhere, and `format` proved what that
+costs — `src/` had never been formatted at all.
+
+### One thing found while reading, not folded in
+
+`src/lib/merge-issue.ts` contains **literal NUL bytes** — a raw byte written into a template
+literal as a section-key separator, rather than a `\0` escape. Git classifies the file as binary
+and will not diff it as text, which is how it surfaced (`Bin 11423 -> 11719 bytes` in the sweep's
+stat). **It predates this sweep** — the same bytes are in the committed version at lines 157, 217
+and 223. Out of scope here per this fiche's own instruction to open an issue rather than fold it
+in; opened as ISS-0138.

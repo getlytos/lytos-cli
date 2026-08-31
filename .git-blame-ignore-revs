@@ -1,0 +1,14 @@
+# Revisions to skip when running `git blame`.
+#
+# GitHub honours this file automatically. Locally, either pass it once —
+#   git blame --ignore-revs-file .git-blame-ignore-revs <file>
+# — or configure it for good:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+#
+# Only whole-codebase, behaviour-free rewrites belong here. A commit listed
+# below must be provably formatting-only, or blame starts lying in the other
+# direction.
+
+# style: prettier sweep — formatting only, no logic change (ISS-0132)
+# src/ had never been prettier-formatted; the gate that checks it had never run.
+51b27ef75ebf0c0d30cb4ccb4548ad4e1a39d68c
