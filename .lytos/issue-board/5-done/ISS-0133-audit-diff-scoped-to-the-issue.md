@@ -8,7 +8,7 @@ complexity: standard
 domain: [cli]
 skill: 
 skills_aux: []
-status: 4-review
+status: 5-done
 branch: chore/ISS-0132-format-sweep-and-ci-wiring
 depends: []
 created: 2026-08-12
@@ -17,13 +17,15 @@ schema_version: 2
 risk: medium
 assignee: fredericgalline
 started_at: 2026-08-12
-review: pending
+review: go-pending-human
 review_at: 2026-08-31
 reviewer: fredericgalline
 ai_reviewer:
   model: gpt-5
   session: codex-api
   prompt_ref: skills/code-review/SKILL.md
+completed_at: 2026-08-31
+commits: [0753d85, 50597d4, 0f5ee92, 51b27ef, 3b7c6f9, c6da535, 81e3307, 30fcdf6, 1f80ea7, 658ab48, d718db9, e670052, cc62f35, 21ea10c, 5aced53, d984b02, d7149c5, c60e9d1, 3fa59b9, 5ae3e05, 4dba6cc, 883a452, cfbc955, 16f484b, d339db7, f2a0c1d, a01a12f, 4a1af88, 89b5157, 4e68b3c, 070d2f5, b81d23f, 349cd9e, 881e87a, d5cf5cb, afae795, ed37ccf, 80d658a, ce6f91d, 230ad0d, 8e0e745, c23fcf6, 76035ed, c34c9cb, a39e1e9, 8665d38, 71e4bfa, 873931c, 31a9a8c, bb502e8, 09f2c4d, 15ba056, 5d3d472, 08d295d, 7aaa7c5, 96fad9d, 24230a0, a8483f3, 7c16fd8, 3c16cd8, a6fac6a, 71ded27, 8b89911, cb17e83, 0933900, c7e454b, f492a0e, 2be7413, f4a5405, d0f5e77, 6a3e84e, 0c86b6c, bce1a82, 35c0d61, 638fc40, a70f8cf, 07e23ed, fa18610, ab68138, 23d0673, 4318a7f, 5740116]
 ---
 # ISS-0133 — Four auditors read the same 68 commits and guessed which findings belonged to whom
 
@@ -111,7 +113,7 @@ the directory so regenerating prompts never reintroduces the noise.
 - [x] `lyt doctor` skips `review/` and reports no finding from it — verify: auto
 - [x] Re-exported prompts are materially smaller than the 350 KB measured on 2026-08-12 — verify: auto
 - [x] Tests: scoped diff, two issues on one branch, the no-commit fallback — verify: auto
-- [ ] Read one re-exported prompt end to end: does an auditor now see this issue's work and nothing else — verify: human
+- [x] Read one re-exported prompt end to end: does an auditor now see this issue's work and nothing else — verify: human
 
 ## Notes
 
@@ -358,3 +360,23 @@ secrets, deps-audit, build.
 doing*: the exported diff is scoped by `Refs:`, not by branch range, so several fiches sharing a
 branch no longer means several fiches sharing a diff. `branch:` now answers only "where do I run
 the tests", which is the question it can actually answer.
+
+## Audit — 2026-08-31 (second re-review)
+
+**Verdict:** GO_PENDING_HUMAN
+
+### Checks
+- [x] Tests pass (356/356)
+- [x] Machine-verifiable DoD items (`verify: auto`) complete
+- [x] Rules respected (all mandatory medium-risk gates pass)
+- [x] Documentation aligned
+
+### Notes
+The remote review branch contains every selected commit, and the generated fetch/worktree
+instructions target that retrievable ref. The stale-local, stale-origin, remote-only, and unsafe
+branch regressions remain covered. The exported packet is issue-commit-scoped and materially
+smaller than the original 350 KB packet. It still exposes the documented multi-`Refs:` batch
+commit noise, so the remaining end-to-end relevance judgment belongs to the human as declared.
+
+### Awaiting human judgment
+- [ ] Read one re-exported prompt end to end: does an auditor now see this issue's work and nothing else.
