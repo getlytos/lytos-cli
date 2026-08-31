@@ -817,3 +817,117 @@ updated: 2026-08-31
     expect(result.stdout).not.toContain("git checkout main; curl");
   });
 });
+
+describe("lyt review — the audit ref is the one an auditor can retrieve (ISS-0133)", () => {
+  /**
+   * A repo with an `origin` remote whose refs we set by hand — the same
+   * trick the ISS-0095 fixture uses. `git update-ref refs/remotes/origin/x`
+   * is what "origin has x at this sha" looks like locally, and it lets a
+   * test put local and origin deliberately out of step in either direction.
+   */
+  function setupRemoteFixture(cwd: string): { seed: string; fix: string } {
+    git(["init", "-b", "main"], cwd);
+    git(["config", "user.name", "Lytos Test"], cwd);
+    git(["config", "user.email", "test@example.com"], cwd);
+    writeFileSync(join(cwd, "seed.txt"), "seed\n", "utf-8");
+    git(["add", "."], cwd);
+    git(["commit", "-m", "chore: seed"], cwd);
+    const seed = revParse(cwd, "HEAD");
+    git(["remote", "add", "origin", "https://example.invalid/repo.git"], cwd);
+
+    git(["checkout", "-b", "feat/ISS-9500-work"], cwd);
+    writeFileSync(join(cwd, "seed.txt"), "fixed\n", "utf-8");
+    git(["add", "."], cwd);
+    git(["commit", "-m", "fix: the correction\n\nRefs: ISS-9500"], cwd);
+    const fix = revParse(cwd, "HEAD");
+    git(["checkout", "main"], cwd);
+    return { seed, fix };
+  }
+
+  function revParse(cwd: string, ref: string): string {
+    const r = spawnSync("git", ["rev-parse", ref], { cwd, encoding: "utf-8" });
+    return (r.stdout || "").trim();
+  }
+
+  function writeIssue(cwd: string, branchLine: string): void {
+    const dir = join(cwd, ".lytos", "issue-board", "4-review");
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(
+      join(dir, "ISS-9500-remote.md"),
+      `---
+id: ISS-9500
+title: "Remote issue"
+type: fix
+priority: P2-normal
+effort: S
+status: 4-review
+${branchLine}
+depends: []
+created: 2026-08-31
+updated: 2026-08-31
+---
+
+# ISS-9500 — Remote issue
+`,
+      "utf-8"
+    );
+  }
+
+  it("refuses the audit when the fix is local-only and origin is behind", () => {
+    fixture = createEmptyBoardFixture();
+    const { seed } = setupRemoteFixture(fixture.cwd);
+    // Local feat/ISS-9500-work has the fix; origin's copy stops at the seed.
+    git(["update-ref", "refs/remotes/origin/feat/ISS-9500-work", seed], fixture.cwd);
+    writeIssue(fixture.cwd, 'branch: "feat/ISS-9500-work"');
+
+    const result = run("review ISS-9500", fixture.cwd);
+
+    expect(result.exitCode).toBe(0);
+    // Local agreement is not evidence: the auditor fetches origin.
+    expect(result.stdout).toContain("exist only on someone's local machine");
+    expect(result.stdout).toContain("were never pushed");
+    expect(result.stdout).toContain("Do not run the checks");
+    // And it must not hand over the reassuring plain-checkout paragraph.
+    expect(result.stdout).not.toContain("Run every check (tests, file reads, greps) against that branch.");
+  });
+
+  it("accepts the audit when origin has the fix and the local copy is the stale one", () => {
+    fixture = createEmptyBoardFixture();
+    const { fix } = setupRemoteFixture(fixture.cwd);
+    // The mirror image: origin carries the fix, local lags behind.
+    git(["update-ref", "refs/remotes/origin/feat/ISS-9500-work", fix], fixture.cwd);
+    git(["branch", "-f", "feat/ISS-9500-work", "main"], fixture.cwd);
+    writeIssue(fixture.cwd, 'branch: "feat/ISS-9500-work"');
+
+    const result = run("review ISS-9500", fixture.cwd);
+
+    expect(result.exitCode).toBe(0);
+    // origin is authoritative, so this is a normal audit…
+    expect(result.stdout).toContain("Run every check (tests, file reads, greps) against that branch.");
+    expect(result.stdout).not.toContain("were never pushed");
+    // …and the auditor is sent to the fetched ref, not to their stale local one.
+    expect(result.stdout).toContain("git fetch origin feat/ISS-9500-work");
+    expect(result.stdout).toContain("git worktree add /tmp/audit-ISS-9500 origin/feat/ISS-9500-work");
+  });
+
+  it("renders a remote-only candidate as a fetchable branch name, not origin/origin/x", () => {
+    fixture = createEmptyBoardFixture();
+    const { seed, fix } = setupRemoteFixture(fixture.cwd);
+    // The fix lives only as a remote-tracking ref under another name…
+    git(["update-ref", "refs/remotes/origin/chore/landed-elsewhere", fix], fixture.cwd);
+    git(["branch", "-D", "feat/ISS-9500-work"], fixture.cwd);
+    // …and the declared branch, on origin, stops before it.
+    git(["update-ref", "refs/remotes/origin/claude/session-abc", seed], fixture.cwd);
+    writeIssue(fixture.cwd, 'branch: "claude/session-abc"');
+
+    const result = run("review ISS-9500", fixture.cwd);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("the declared branch does not contain this issue's commits");
+    // `git fetch origin origin/chore/…` asks for a branch of that literal
+    // name and fails — the prefix belongs to the checkout, not the fetch.
+    expect(result.stdout).toContain("git fetch origin chore/landed-elsewhere");
+    expect(result.stdout).not.toContain("git fetch origin origin/");
+    expect(result.stdout).toContain("git worktree add /tmp/audit-ISS-9500 origin/chore/landed-elsewhere");
+  });
+});

@@ -8,7 +8,7 @@ complexity: standard
 domain: [cli]
 skill: 
 skills_aux: []
-status: 4-review
+status: 3-in-progress
 branch: fix/ISS-0133-audit-diff-scoped-to-the-issue
 depends: []
 created: 2026-08-12
@@ -17,7 +17,7 @@ schema_version: 2
 risk: medium
 assignee: fredericgalline
 started_at: 2026-08-12
-review: pending
+review: no-go
 review_at: 2026-08-31
 reviewer: fredericgalline
 ai_reviewer:
@@ -253,3 +253,95 @@ misattribution ISS-0133 exists to prevent, committed by the fix for it.
 
 So the item stays unticked here, on purpose, and its truth is recorded rather than traded away.
 `npm audit fix` is not blocked by #29 and goes to ISS-0132 alongside the sweep.
+
+## Audit — 2026-08-31 (re-review)
+
+**Verdict:** NO_GO
+
+### Checks
+- [x] Tests pass (353)
+- [ ] Machine-verifiable DoD items (`verify: auto`) complete
+- [ ] Rules respected
+- [x] Documentation aligned
+
+### Notes
+[CRITICAL] `src/lib/review.ts:209-219` prefers the local branch over its remote-tracking ref,
+while the generated instructions tell a fresh auditor to run `git fetch origin` and audit that
+branch. In the current repository the local `fix/ISS-0133-audit-diff-scoped-to-the-issue` is at
+`1f80ea7`, but `origin/fix/ISS-0133-audit-diff-scoped-to-the-issue` is still at `d718db9` and does
+not contain correction commit `658ab48`. `auditTarget()` nevertheless returns `contained`, so the
+exported packet again tells a fresh auditor to retrieve and test a tree that lacks the fixes they
+are reading. The cross-check must use the ref an auditor can actually retrieve, or explicitly
+declare a local-only audit target.
+
+[WARNING] `src/lib/review.ts:223-242` may return a remote-tracking candidate such as
+`origin/feature/x`, but `renderWhereToAudit()` renders it as `git fetch origin origin/feature/x`.
+That asks the remote for a branch literally named `origin/feature/x` and fails. Normalize remote
+candidates for the fetch command, while retaining the remote-tracking ref for checkout.
+
+The mandatory medium-risk gates remain red: `npm run format:check` fails on 51 source files and
+`npm audit --audit-level=high` still reports five high-severity vulnerabilities. Tracking them in
+ISS-0132 explains the sequencing but does not make the mandatory gates pass or waive them for this
+issue.
+
+### To fix before next review
+- [x] Cross-check against the remote-retrievable audit ref (and add a stale-local / fresh-origin plus fresh-local / stale-origin regression).
+- [x] Render remote-tracking candidates with a valid fetch/checkout sequence.
+- [ ] Make the mandatory format and dependency-audit gates green, or add and apply an explicit, auditable waiver mechanism. — *escalated: this needs a decision, not a commit; see below*
+
+## Response to re-review — 2026-08-31
+
+**The [CRITICAL] is the sharpest possible instance of this issue's own thesis, and I committed
+it.** ISS-0133 exists because the export answered *"which commits"* and *"which tree"* from two
+sources that had silently diverged. I wrote `auditTarget()` to reconcile them — and pointed it at
+the **local** ref while the prompt it feeds tells the auditor to `git fetch origin`. Same defect,
+one level up, inside the fix for it.
+
+The concrete proof is this repository: local `fix/ISS-0133-…` was at `1f80ea7`, origin at
+`d718db9`, and `auditTarget()` returned `contained`. It waved through a packet that sent a fresh
+clone to a tree without `658ab48`.
+
+`origin/<branch>` is now the audit ref whenever origin has it; the local branch is no longer
+evidence of anything. Three outcomes where there were two:
+
+- **contained** — the retrievable ref carries every exported commit. The checkout block now targets
+  `origin/<branch>`, the thing just fetched, so a stale local copy cannot be audited by accident.
+- **unpushed** — local has them, origin does not. Deliberately its own state and not `diverged`:
+  the fiche is not lying about where the work lives, the work simply never left the machine. The
+  remedy is one command by the implementer, so the prompt says *do not run the checks* and names
+  it, rather than sending the auditor hunting for a better branch.
+- **diverged** — unchanged.
+
+Verified on this repo: `auditTarget()` now returns `unpushed` for ISS-0133 itself, naming
+`658ab48`. The check catches its own author.
+
+**The [WARNING] was a plain rendering bug.** `git branch -a` lists `chore/x` and `origin/chore/x`
+as two entries for one branch; I passed the second to `git fetch origin` and produced
+`git fetch origin origin/chore/x`, a request for a branch of that literal name. Candidates are now
+deduplicated to short names carrying an `onOrigin` flag, and `checkoutBlock()` puts the prefix
+where it belongs — `git fetch origin <name>` then `git worktree add … origin/<name>`. A local-only
+candidate gets no fetch line at all and an explicit warning that a fresh clone cannot reach it.
+
+Three regressions, both directions of the skew: local-ahead/origin-behind must refuse the audit,
+origin-ahead/local-behind must accept it (proving origin is read, not local), and a remote-only
+candidate must render a fetchable name. **356 tests**, up from 353.
+
+### The third item is escalated, not deferred
+
+The auditor is right that pointing at ISS-0132 "explains the sequencing but does not make the
+mandatory gates pass or waive them", and right to ask for a waiver mechanism rather than a
+promise. I am not inventing one inside this issue — a waiver format is a change to the quality kit
+contract, which is ISS-0107's and ISS-0114's territory, and inventing it here would be the
+over-engineering the matrix exists to prevent.
+
+One fact that should inform whoever decides. `npm audit --audit-level=high` reports 5 high, and
+**all five are dev-only transitives**: eslint→js-yaml, tsup→postcss→nanoid, vitest→vite/esbuild.
+The package publishes `files: ["dist"]` — a bundle whose only runtime dependency is `commander`.
+`npm audit --omit=dev --audit-level=high` returns **0 vulnerabilities**. The gate as written is red
+on code that cannot reach a user of `lytos-cli`, and `npm audit fix` would pull vite 7 (rolldown,
+lightningcss) to fix an exposure that does not exist.
+
+That is the same shape as ISS-0132's argument about `format`, applied to a second gate: a gate
+that is permanently red teaches that red is survivable. Two honest exits — correct the tool binding
+to `--omit=dev`, or accept the toolchain bump — and both are the human's call, which is why this
+item is escalated rather than ticked.
