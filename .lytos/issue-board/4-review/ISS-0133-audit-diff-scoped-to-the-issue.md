@@ -8,8 +8,8 @@ complexity: standard
 domain: [cli]
 skill: 
 skills_aux: []
-status: parked
-branch: fix/ISS-0133-audit-diff-scoped-to-the-issue
+status: 4-review
+branch: chore/ISS-0132-format-sweep-and-ci-wiring
 depends: []
 created: 2026-08-12
 updated: 2026-08-31
@@ -17,15 +17,13 @@ schema_version: 2
 risk: medium
 assignee: fredericgalline
 started_at: 2026-08-12
-review: no-go
+review: pending
 review_at: 2026-08-31
 reviewer: fredericgalline
 ai_reviewer:
   model: gpt-5
   session: codex-api
   prompt_ref: skills/code-review/SKILL.md
-park_reason: external-blocker
-parked_at: 2026-08-31
 ---
 # ISS-0133 — Four auditors read the same 68 commits and guessed which findings belonged to whom
 
@@ -347,3 +345,16 @@ That is the same shape as ISS-0132's argument about `format`, applied to a secon
 that is permanently red teaches that red is survivable. Two honest exits — correct the tool binding
 to `--omit=dev`, or accept the toolchain bump — and both are the human's call, which is why this
 item is escalated rather than ticked.
+
+## Unblocked — 2026-08-31
+
+Parked `external-blocker` because `format` was red on 51 files this fiche does not own. **ISS-0132
+paid it**: the sweep ran, `format:check` exits 0, and the gate is wired into CI so it cannot rot
+again. Every mandatory gate at `risk: medium` is now green — tests 356, typecheck, lint, format,
+secrets, deps-audit, build.
+
+`branch:` is repointed to `chore/ISS-0132-format-sweep-and-ci-wiring`, a strict descendant of
+`fix/ISS-0133-…` carrying the same commits plus the sweep. That this is safe is *this issue's own
+doing*: the exported diff is scoped by `Refs:`, not by branch range, so several fiches sharing a
+branch no longer means several fiches sharing a diff. `branch:` now answers only "where do I run
+the tests", which is the question it can actually answer.

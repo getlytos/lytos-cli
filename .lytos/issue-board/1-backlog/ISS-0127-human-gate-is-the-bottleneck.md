@@ -43,12 +43,13 @@ fails when a CLI verb has no `--help` example; the identical shape — "the READ
 
 ## Two structural causes, not carelessness
 
-**1. The DoD marker has two values; the quality kit has three.** The kit (ISS-0107) separates
+**1. The DoD marker had two values; the quality kit has three.** The kit (ISS-0107) separates
 `gate` / `reviewer` / `human`, where `reviewer` means *no command can decide it, but a model
 reading the diff can rule on it against a written rubric* — no human required. The DoD marker
-(ADR-0004 §4) only knows `auto | human`, so everything non-mechanical falls to `human` for lack
-of anywhere else to go. This is the same design error we just fixed on audit verdicts: two values
-where the domain has three, and the missing third becomes a queue on a person.
+knew only `auto | human`, so everything non-mechanical fell to `human` for lack of anywhere else
+to go. This is the same design error we just fixed on audit verdicts: two values where the domain
+has three, and the missing third becomes a queue on a person. **ADR-0004 §4 now defines the three
+modes and the rule that decides between them; this issue makes the tooling match.**
 
 **2. ADR-0007 promises to route human judgment by risk. The code does not.** ADR-0007 §Consequences
 states: *"Does not remove human judgment — it routes it by risk (reviewer/human on high, cheap
@@ -112,9 +113,12 @@ makes a correct behavioural change with green gates.
 
 ## Notes
 
-- Refines ADR-0004 §4 (verification modes) and ADR-0007 (risk-proportional rigor). Probably wants
-  its own ADR or an amendment — the two-value taxonomy is written into ADR-0004 and cannot be
-  changed silently.
+- **ADR-0004 §4 has been revised in place** (2026-08-10) to define the three modes, the rule that
+  decides between them, and the risk-tiering of human items. No superseding ADR: §4 was `Proposed`
+  throughout and never accepted, so a revision is the proposal surviving contact with its own
+  dogfooding — which is what `Proposed` is for. This issue **implements** the revised §4; it does
+  not argue against it. The two-value version is preserved inside §4 as the record of why the
+  third mode exists.
 - Field origin: Frédéric, at the gate, after sprints #04–#06 landed together in `4-review`. The
   criterion in lever 4 is his wording.
 - Once the modes exist, re-mark the 34 existing items. Expect roughly 17 to become `auto` and 6

@@ -8,8 +8,8 @@ complexity: light
 domain: [cli, method]
 skill: 
 skills_aux: []
-status: 3-in-progress
-branch: fix/ISS-0133-audit-diff-scoped-to-the-issue
+status: 4-review
+branch: chore/ISS-0132-format-sweep-and-ci-wiring
 depends: [ISS-0107]
 created: 2026-08-31
 updated: 2026-08-31
@@ -17,7 +17,7 @@ schema_version: 2
 risk: low
 assignee: Claude
 started_at: 2026-08-31
-review: no-go
+review: pending
 review_at: 2026-08-31
 reviewer: fredericgalline
 ai_reviewer:
@@ -112,3 +112,19 @@ only a proposed waiver mechanism and does not waive the current failure.
 ### To fix before next review
 - [ ] Make the mandatory `format` gate green, or return only after an explicit, valid waiver has
   been implemented and granted for this issue.
+
+## Response to audit — 2026-08-31
+
+**No defect was found in this fiche, and none is answered here.** The audit confirmed the narrowed
+dependency gate works — `npm audit --omit=dev --audit-level=high` exits 0 — and found typecheck,
+lint, secrets, build, `lyt doctor` and 356/356 tests green. The NO_GO was `format`, red on 51
+files this issue does not touch.
+
+It was the third such verdict in a row (ISS-0133 twice, then this one), which is what made the
+deadlock legible: `format` sits at `low,medium,high`, so it blocked *every* issue at *every* risk
+tier. **ISS-0132 has now paid it** — sweep committed, `format:check` green, both unwired gates
+added to CI.
+
+`branch:` is repointed to `chore/ISS-0132-format-sweep-and-ci-wiring`, which carries this fiche's
+commit plus the sweep. Nothing in `src/` changed for this issue since the audit; only the tree it
+is audited on.
