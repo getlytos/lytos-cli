@@ -4,9 +4,27 @@
 #   npm version patch    # bumps 0.1.0 → 0.1.1 (or minor/major)
 #   git push --tags      # triggers this workflow
 #
-# Uses npm Trusted Publishing (provenance) — no token needed.
-# The GitHub Actions OIDC token proves to npm that this is a
-# legitimate publish from this repo.
+# Gates: they mirror ci.yml, in the same order, on purpose. This workflow
+# has the larger blast radius — it puts bytes on npm that anyone can
+# install — so it must not validate less than the workflow that gates a
+# pull request (ISS-0140).
+#
+# AUTHENTICATION: this publishes with the NPM_TOKEN secret. `--provenance`
+# signs the artefact via OIDC; it does not authenticate the publish.
+#
+# An earlier version of this comment claimed npm Trusted Publishing and
+# "no token needed". That was never true here, and the belief cost four
+# months: every tag from v0.9.0 to v1.5.0 failed on `404 Not Found - PUT`
+# — npm's answer instead of 401 for an existing package — while releases
+# went out by hand and nobody read the red workflow.
+#
+# Adopting Trusted Publishing for real needs BOTH:
+#   1. npm >= 11.5.1 — the Node 20 pinned below bundles npm 10.x, which
+#      has no Trusted Publishing at all;
+#   2. a trusted publisher declared for lytos-cli on npmjs.com, naming
+#      this repo and this workflow file.
+# And NODE_AUTH_TOKEN must then be REMOVED — a token takes precedence and
+# would silently keep the old path alive.
 
 name: Release
 
@@ -37,11 +55,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Format check
+        run: npm run format:check
+
       - name: Lint
         run: npm run lint
 
       - name: Type check
         run: npm run typecheck
+
+      - name: Secrets scan
+        run: npm run secrets:scan
 
       - name: Build
         run: npm run build
