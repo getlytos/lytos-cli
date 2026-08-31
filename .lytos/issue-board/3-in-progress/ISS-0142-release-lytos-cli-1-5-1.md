@@ -8,14 +8,16 @@ complexity: light
 domain: [cli, ci]
 skill: 
 skills_aux: []
-status: 1-backlog
+status: 3-in-progress
 branch: chore/ISS-0142-release-lytos-cli-1-5-1
 depends: [ISS-0140, ISS-0141]
 created: 2026-08-31
 schema_version: 2
 risk: medium
+assignee: fredericgalline
+updated: 2026-08-31
+started_at: 2026-08-31
 ---
-
 # ISS-0142 — A patch release whose payload is the proof
 
 ## Context
@@ -48,7 +50,7 @@ code change is otherwise the kind of thing nobody can explain six months later.
 
 ## Definition of done
 
-- [ ] `package.json` and `package-lock.json` declare 1.5.1, with no other source change — verify: auto
+- [x] `package.json` and `package-lock.json` declare 1.5.1, with no other source change — verify: auto
 - [ ] The release PR passes CI on Node 20 and 22 and is merged into `main` — verify: auto
 - [ ] Tag `v1.5.1` points to the versioned commit on `origin/main` — verify: auto
 - [ ] The release workflow run succeeds, and its log shows npm ≥ 11.5.1 and the OIDC assertion passing — verify: auto
