@@ -9,22 +9,25 @@
 # install — so it must not validate less than the workflow that gates a
 # pull request (ISS-0140).
 #
-# AUTHENTICATION: this publishes with the NPM_TOKEN secret. `--provenance`
-# signs the artefact via OIDC; it does not authenticate the publish.
+# AUTHENTICATION: npm Trusted Publishing (ISS-0141). The GitHub Actions
+# OIDC token authenticates the publish; there is no npm credential to
+# store, rotate, or let expire. Provenance is generated automatically —
+# `--provenance` is deliberately absent rather than decorative.
 #
-# An earlier version of this comment claimed npm Trusted Publishing and
-# "no token needed". That was never true here, and the belief cost four
-# months: every tag from v0.9.0 to v1.5.0 failed on `404 Not Found - PUT`
-# — npm's answer instead of 401 for an existing package — while releases
-# went out by hand and nobody read the red workflow.
+# This replaced an NPM_TOKEN that was created on 2026-04-13, worked for six
+# days, and expired on 2026-04-20. npm answers `404 Not Found - PUT` rather
+# than 401 for a package that exists, so seven consecutive tags reported a
+# missing package while the real cause was a dead credential — and releases
+# went out by hand, which kept the outcome looking right.
 #
-# Adopting Trusted Publishing for real needs BOTH:
-#   1. npm >= 11.5.1 — the Node 20 pinned below bundles npm 10.x, which
-#      has no Trusted Publishing at all;
-#   2. a trusted publisher declared for lytos-cli on npmjs.com, naming
-#      this repo and this workflow file.
-# And NODE_AUTH_TOKEN must then be REMOVED — a token takes precedence and
-# would silently keep the old path alive.
+# Trusted Publishing needs BOTH, and both are enforced below:
+#   1. Node >= 22.14.0 and npm >= 11.5.1. Node 22 is a leg of the ci.yml
+#      matrix, so the gates keep meaning the same thing in both workflows;
+#      it bundles npm 10.9.x, hence the explicit npm upgrade.
+#   2. a trusted publisher declared for lytos-cli on npmjs.com, naming this
+#      repository and this workflow filename.
+#
+# And no auth token may reach npm — see the step that asserts it.
 
 name: Release
 
@@ -48,7 +51,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: "npm"
           registry-url: "https://registry.npmjs.org"
 
@@ -78,7 +81,31 @@ jobs:
           node dist/cli.js --version
           node dist/cli.js --help
 
+      # Node 22 bundles npm 10.9.x, which has no Trusted Publishing at all.
+      - name: Upgrade npm to a version that can publish via OIDC
+        run: |
+          npm install -g npm@latest
+          npm --version
+
+      # `setup-node` writes `//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}`
+      # into .npmrc whenever registry-url is set. With no token, that expands to an
+      # EMPTY value — npm reads the line, concludes auth is configured, and never
+      # asks GitHub for the OIDC token. The publish then fails with ENEEDAUTH/404:
+      # the same misleading error that hid a dead credential for four months.
+      # Upstream: actions/setup-node#1551, npm/documentation#1960.
+      #
+      # So the absence of that line is asserted, not assumed.
+      - name: Assert no auth token reaches npm
+        run: |
+          npmrc="${NPM_CONFIG_USERCONFIG:-$HOME/.npmrc}"
+          if [ -f "$npmrc" ]; then
+            sed -i '/_authToken/d' "$npmrc"
+          fi
+          if [ -f "$npmrc" ] && grep -q "_authToken" "$npmrc"; then
+            echo "::error::an _authToken line survives in $npmrc — npm would skip the OIDC exchange and publish with empty credentials"
+            exit 1
+          fi
+          echo "no auth token configured; the publish will authenticate via OIDC"
+
       - name: Publish to npm
-        run: npm publish --access public --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public
