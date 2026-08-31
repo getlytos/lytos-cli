@@ -8,7 +8,7 @@ complexity: light
 domain: [cli, ci]
 skill: 
 skills_aux: []
-status: 4-review
+status: parked
 branch: chore/ISS-0139-release-lytos-cli-1-5-0
 depends: [ISS-0132, ISS-0133, ISS-0136]
 created: 2026-08-31
@@ -17,6 +17,8 @@ schema_version: 2
 risk: medium
 assignee: fredericgalline
 started_at: 2026-08-31
+park_reason: gate-failed
+parked_at: 2026-08-31
 ---
 # ISS-0139 — Release lytos-cli 1.5.0
 
@@ -42,7 +44,8 @@ packets. These are backward-compatible capabilities and warrant a minor release.
 - [x] `npm pack --dry-run` reports a 1.5.0 package containing only the intended published files — verify: auto
 - [x] The release PR passes CI on Node 20 and 22 and is merged into `main` — verify: auto
 - [x] Tag `v1.5.0` points to the versioned commit on `origin/main` — verify: auto
-- [ ] The release workflow succeeds and npm reports `1.5.0` as `latest` — verify: auto
+- [x] npm reports `1.5.0` as `latest` — verify: auto
+- [ ] The release workflow succeeds *(permanently false — see Outcome; kept, not erased)* — verify: auto
 
 ## Notes
 
@@ -83,3 +86,55 @@ Two consequences worth carrying forward:
 
 This issue is otherwise complete: the artifact is correct, distributed, and matches its pre-merge
 evidence. What it does not have is the path it promised to take.
+
+## Audit — 2026-08-31
+
+**Verdict:** NO_GO
+
+### Checks
+- [x] Tests pass (356/356 on the confirming full run; one unrelated `park` timeout passed both in isolation and on rerun)
+- [ ] Machine-verifiable DoD items (`verify: auto`) complete
+- [ ] Rules respected (the explicit release-path constraint was violated)
+- [x] Documentation aligned
+
+### Notes
+The mechanical release diff is correct: `package.json` and `package-lock.json` contain 1.5.0, PR #32 passed CI on Node 20 and 22, and tag `v1.5.0` resolves to merge commit `a526310` on `origin/main`. However, the release run `33401803788` failed during `npm publish`, and the issue records that 1.5.0 was subsequently published from a developer machine. This leaves the auto DoD item at line 45 false and violates the no-manual-publish constraint at lines 33-34. Under the audit rule, a promised deliverable that does not exist is blocking even when the artifact itself is usable.
+
+### To fix before next review
+- [x] Resolve the permanently false workflow-publication criterion explicitly through the board's auditable supersession/failure mechanism (ISS-0142 contains the replacement proof); do not tick or erase the false 1.5.0 statement. — *criterion split in two, the false half kept and left unticked; parked `gate-failed`, the only auditable mechanism the board owns today*
+- [x] Re-submit ISS-0139 only after its terminal state accurately represents the failed release path and the successful replacement evidence. — *not re-submitted: the park **is** the terminal state, see below*
+
+## Terminal state — 2026-08-31
+
+**Parked `gate-failed`. This park is terminal, not pending.**
+
+The criterion "the release workflow succeeds" cannot become true for 1.5.0 at any future date: run
+33401803788 failed on an expired credential, and npm refuses to republish an existing version, so
+no re-tag and no re-run can reach it. An issue whose contract is unsatisfiable does not belong in
+`4-review`, and closing it would file a broken contract as a fulfilled one.
+
+The criterion was therefore **split**, not amended and not erased:
+
+| Half | State |
+|---|---|
+| npm reports `1.5.0` as `latest` | ✅ true |
+| the release workflow succeeds | ❌ permanently false, and kept visible as such |
+
+The replacement proof exists and is complete: **ISS-0142** published 1.5.1 through the workflow
+with a SLSA v1 provenance attestation, and **ISS-0141** fixed the path that made this failure
+possible. The deliverable of this issue — 1.5.0 distributed to users — exists. What does not exist
+is the path it promised to take.
+
+### Why a park, and what it exposes
+
+`park` is the only mechanism this board owns that records *why* something stopped in the
+frontmatter. It is a poor fit — "parked" reads as "will resume", and this will not — and that
+mismatch is itself the finding.
+
+The alternative, `lyt close --force`, was rejected on inspection: `buildCloseExtras()` writes
+`updated`, `completed_at` and `commits`, and **nothing that records the closure was forced or
+that an item stayed red**. A forced close produces a `5-done` fiche indistinguishable from a
+complete one, in the very field the manifest calls the project's audit journal. The audit asked
+for an auditable mechanism; `--force` is not one.
+
+Logged against **ISS-0137** (the waiver), for which this issue is the second dated instance.

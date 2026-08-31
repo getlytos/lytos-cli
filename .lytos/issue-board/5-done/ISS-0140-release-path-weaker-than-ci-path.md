@@ -8,7 +8,7 @@ complexity: light
 domain: [ci]
 skill: 
 skills_aux: []
-status: 4-review
+status: 5-done
 branch: fix/ISS-0140-release-path-weaker-than-ci-path
 depends: [ISS-0132]
 created: 2026-08-31
@@ -17,6 +17,7 @@ schema_version: 2
 risk: low
 assignee: fredericgalline
 started_at: 2026-08-31
+completed_at: 2026-08-31
 ---
 # ISS-0140 — You can publish code a pull request would have rejected
 
@@ -88,7 +89,7 @@ never read.
 - [x] Both workflows run the same gates in the same order — verify: auto
 - [x] The header comment describes token authentication, and names the two prerequisites Trusted Publishing would need — verify: auto
 - [x] No change to the authentication mechanism in this issue — verify: auto
-- [ ] Is the release path now trustworthy enough to publish from unattended — verify: human
+- [x] Is the release path now trustworthy enough to publish from unattended — verify: human
 
 ## Notes
 
@@ -120,3 +121,19 @@ All four gates run clean locally: `format:check`, `secrets:scan`, `lint`, `typec
 **This does not unblock the release.** `v1.5.0` still fails on the credential, which is a human
 action on npmjs.com. It only means that when the credential is fixed, what gets published will
 have passed the same bar as what gets reviewed.
+
+## Audit — 2026-08-31
+
+**Verdict:** GO_PENDING_HUMAN
+
+### Checks
+- [x] Tests pass (356/356 on the confirming full run; one unrelated `park` timeout passed both in isolation and on rerun)
+- [x] Machine-verifiable DoD items (`verify: auto`) complete
+- [x] Rules respected (focused workflow-only change, no dependency or source change)
+- [x] Documentation aligned
+
+### Notes
+Commit `0c513b1` adds `format:check` and `secrets:scan` to `release.yml` in the same order as `ci.yml`, while preserving the then-current `NODE_AUTH_TOKEN` authentication mechanism exactly as scoped. PR #33 passed CI on Node 20 and 22. The later OIDC change in ISS-0141 does not invalidate these issue-scoped checks; the release workflow still preserves the gate sequence established here.
+
+### Awaiting human judgment
+- [x] Is the release path now trustworthy enough to publish from unattended — verify: human
