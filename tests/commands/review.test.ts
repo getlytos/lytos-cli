@@ -931,3 +931,119 @@ updated: 2026-08-31
     expect(result.stdout).toContain("git worktree add /tmp/audit-ISS-9500 origin/chore/landed-elsewhere");
   });
 });
+
+describe("lyt review — a stale branch: field is hygiene, not a defect (ISS-0144)", () => {
+  /**
+   * ISS-0141's shape: the delivery on one branch, the audit response on a
+   * second, both merged, and `branch:` still naming the first. The tool
+   * already redirects to a ref holding everything (ISS-0133 / 658ab48) —
+   * what was missing is what the packet says that redirection is *worth*.
+   * ISS-0141 came back NO_GO on the field while every check was green on
+   * the substitute ref, which costs a full cross-model round.
+   */
+  function setupSplitFixture(cwd: string): void {
+    git(["init", "-b", "main"], cwd);
+    git(["config", "user.name", "Lytos Test"], cwd);
+    git(["config", "user.email", "test@example.com"], cwd);
+    writeFileSync(join(cwd, "seed.txt"), "seed\n", "utf-8");
+    git(["add", "."], cwd);
+    git(["commit", "-m", "chore: seed"], cwd);
+
+    // The delivery, on the branch the fiche declares.
+    git(["checkout", "-b", "fix/ISS-9600-delivery"], cwd);
+    writeFileSync(join(cwd, "seed.txt"), "delivered\n", "utf-8");
+    git(["add", "."], cwd);
+    git(["commit", "-m", "fix: the delivery\n\nRefs: ISS-9600"], cwd);
+
+    // The audit response, on a second branch built on the first — so `main`
+    // (after merging both) holds everything and the declared branch does not.
+    git(["checkout", "-b", "fix/ISS-9600-response"], cwd);
+    writeFileSync(join(cwd, "seed.txt"), "responded\n", "utf-8");
+    git(["add", "."], cwd);
+    git(["commit", "-m", "fix: the audit response\n\nRefs: ISS-9600"], cwd);
+    git(["checkout", "main"], cwd);
+  }
+
+  /** Two commits on two branches that never meet: no ref holds both. */
+  function setupUnreachableFixture(cwd: string): void {
+    git(["init", "-b", "main"], cwd);
+    git(["config", "user.name", "Lytos Test"], cwd);
+    git(["config", "user.email", "test@example.com"], cwd);
+    writeFileSync(join(cwd, "seed.txt"), "seed\n", "utf-8");
+    git(["add", "."], cwd);
+    git(["commit", "-m", "chore: seed"], cwd);
+
+    git(["checkout", "-b", "fix/ISS-9601-left"], cwd);
+    writeFileSync(join(cwd, "left.txt"), "left\n", "utf-8");
+    git(["add", "."], cwd);
+    git(["commit", "-m", "fix: left half\n\nRefs: ISS-9601"], cwd);
+
+    git(["checkout", "main"], cwd);
+    git(["checkout", "-b", "fix/ISS-9601-right"], cwd);
+    writeFileSync(join(cwd, "right.txt"), "right\n", "utf-8");
+    git(["add", "."], cwd);
+    git(["commit", "-m", "fix: right half\n\nRefs: ISS-9601"], cwd);
+    git(["checkout", "main"], cwd);
+  }
+
+  function writeIssue(cwd: string, id: string, branch: string): void {
+    const dir = join(cwd, ".lytos", "issue-board", "4-review");
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(
+      join(dir, `${id}-split.md`),
+      `---
+id: ${id}
+title: "Split across branches"
+type: fix
+priority: P2-normal
+effort: S
+status: 4-review
+branch: "${branch}"
+depends: []
+created: 2026-08-31
+updated: 2026-08-31
+---
+
+# ${id} — Split across branches
+`,
+      "utf-8"
+    );
+  }
+
+  let fixture: Fixture | undefined;
+  afterEach(() => {
+    fixture?.cleanup();
+    fixture = undefined;
+  });
+
+  it("tells the auditor a stale field is not on its own a NO_GO when a substitute ref holds every commit", () => {
+    fixture = createEmptyBoardFixture();
+    setupSplitFixture(fixture.cwd);
+    writeIssue(fixture.cwd, "ISS-9600", "fix/ISS-9600-delivery");
+
+    const result = run("review ISS-9600", fixture.cwd);
+
+    expect(result.exitCode).toBe(0);
+    // The redirection of 658ab48 is untouched.
+    expect(result.stdout).toContain("the declared branch does not contain this issue's commits");
+    expect(result.stdout).toContain("fix/ISS-9600-response");
+    // …and it now carries what it is worth.
+    expect(result.stdout).toContain("board hygiene, not as a defect in the work");
+    expect(result.stdout).toContain("not on its own a reason to return NO_GO");
+    expect(result.stdout).not.toContain("This one is blocking");
+  });
+
+  it("keeps the case blocking when no ref holds every commit", () => {
+    fixture = createEmptyBoardFixture();
+    setupUnreachableFixture(fixture.cwd);
+    writeIssue(fixture.cwd, "ISS-9601", "main");
+
+    const result = run("review ISS-9601", fixture.cwd);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("No ref in this repository contains all of them");
+    expect(result.stdout).toContain("This one is blocking");
+    // The hygiene wording must never reach a case that cannot be audited.
+    expect(result.stdout).not.toContain("not on its own a reason to return NO_GO");
+  });
+});

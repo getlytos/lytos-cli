@@ -495,13 +495,24 @@ Other refs that also contain them: ${others}.`
           }`
         : `**No ref in this repository contains all of them.** Do not run the checks anywhere: report this as a defect — the fiche points at work that cannot be tested as exported.`;
 
+      // How much the stale field is worth. Without this the auditor has no
+      // basis for separating a board wart from a defect in the code, and the
+      // sentence above ("the fiche is lying") pushes hard the wrong way: on
+      // 2026-08-31 ISS-0141 came back NO_GO on a metadata field while every
+      // check was green on the very ref this function had chosen for it.
+      // ISS-0144. The asymmetry is the whole point — stale-with-a-substitute
+      // is hygiene, no-substitute is blocking.
+      const weight = best
+        ? `**Weigh it as board hygiene, not as a defect in the work.** Every commit is present on \`${best.name}\`, so the issue is auditable in full and your verdict must rest on what you find there. A stale \`branch:\` field is **not on its own a reason to return NO_GO** — record it in your Notes so it gets fixed, and rule on the code.`
+        : `**This one is blocking**: with no ref holding every commit, the work cannot be audited as exported, and that is a defect in its own right.`;
+
       return `**Where to audit:** ⚠️ **the declared branch does not contain this issue's commits.** The fiche declares \`${target.branch}\`, but ${target.missing.length} of the commits in the diff below (${missingList}) are not reachable from it.
 
 Auditing \`${target.branch}\` would make this packet contradict itself: you would read the corrected patches in section 7 and then reproduce the *old* behaviour when you run the tests. Any "the fix was never applied" finding you reach that way is an artefact of the stale \`branch:\` field, not a defect in the code.
 
 ${fallback}
 
-Either way, **report the stale \`branch:\` field itself** — the fiche is lying about where its work lives.`;
+Either way, **report the stale \`branch:\` field itself** — the fiche points somewhere its work no longer lives. ${weight}`;
     }
   }
 }
