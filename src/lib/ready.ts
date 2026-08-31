@@ -22,17 +22,38 @@ import { analyzeDod } from "./dod.js";
 import { riskOf } from "./quality.js";
 import type { Frontmatter } from "./frontmatter.js";
 
-export type ReadyGap = "risk-unset" | "dod-not-testable" | "no-out-of-scope";
+export type ReadyGap =
+  | "risk-unset"
+  | "dod-not-testable"
+  | "no-out-of-scope"
+  | "no-scope"
+  | "no-constraints";
 
 export interface ReadyAnalysis {
   ready: boolean;
   missing: ReadyGap[];
 }
 
-const OUT_OF_SCOPE_RE =
-  /hors[\s-]?(?:du\s+)?scope|out[\s-]?of[\s-]?scope|out\s+of\s+scope/i;
-const HEADING_RE = /^#{1,6}[ \t]+(.*)$/;
+const OUT_OF_SCOPE_LABEL =
+  /^\*{0,2}(?:hors[\s-]?(?:du\s+)?scope|out[\s-]?of[\s-]?scope)\*{0,2}/i;
+const SCOPE_LABEL = /^\*{0,2}scope\*{0,2}/i;
+const CONSTRAINTS_LABEL = /^\*{0,2}constraints?\*{0,2}/i;
+const HEADING_RE = /^(#{1,6})[ \t]+(.*)$/;
 const READY_HEADING_RE = /^ready\b/i;
+
+/**
+ * Efforts small enough that the two-line Ready is the whole form.
+ *
+ * The rule the templates already state: `issue-feature.md` asks for scope,
+ * constraints and out-of-scope; `issue-task.md` asks for out-of-scope alone,
+ * because "a task is small, so its Ready is small: two lines, not a form".
+ * default-rules.md says the same in prose — *"keep it proportional: on an XS
+ * task, Ready is two lines"* — and nothing enforced it.
+ *
+ * An unstated `effort` gets the full form. Same stance as `risk` above: for
+ * *entry*, an unstated field is not a licence to ask for less.
+ */
+const SMALL_EFFORTS = new Set(["xs", "s"]);
 
 /**
  * The body of the `## Ready` section, or "" when the issue has none.
@@ -44,16 +65,57 @@ const READY_HEADING_RE = /^ready\b/i;
  */
 function readySection(content: string): string {
   const body: string[] = [];
-  let inReady = false;
+  // 0 = outside. Otherwise the heading level that opened the section: only a
+  // heading at that level or above closes it. Stopping at *every* heading — the
+  // original behaviour — meant a `### Out of scope` subheading ended the section
+  // that was about to declare it, and the fiche read as not-ready for having
+  // been more structured, not less.
+  let level = 0;
   for (const line of content.split(/\r?\n/)) {
     const heading = line.match(HEADING_RE);
     if (heading) {
-      inReady = READY_HEADING_RE.test(heading[1].trim());
+      const depth = heading[1].length;
+      const isReady = READY_HEADING_RE.test(heading[2].trim());
+      if (level === 0) level = isReady ? depth : 0;
+      else if (depth <= level) level = isReady ? depth : 0;
       continue;
     }
-    if (inReady) body.push(line);
+    if (level > 0) body.push(line);
   }
   return body.join("\n");
+}
+
+/**
+ * Does the Ready section declare `label`, **with a value**?
+ *
+ * A bare `Out of scope:` used to satisfy the criterion: the words were present,
+ * the boundary was not. The label has to open the line — so a passing mention
+ * inside a sentence does not count — and something has to follow it.
+ */
+function declares(section: string, label: RegExp): boolean {
+  for (const raw of section.split(/\r?\n/)) {
+    const line = raw.replace(/^\s*[-*+]\s+/, "").trim();
+    const match = line.match(label);
+    if (!match) continue;
+    // What is left once the label's own punctuation is gone. Emphasis marks are
+    // stripped for the emptiness test only: `- **Out of scope:**` leaves `:**`,
+    // and two asterisks are not a declared boundary.
+    const rest = line
+      .slice(match[0].length)
+      .replace(/^\s*[*_]+/, "")
+      .replace(/^\s*[—–:-]+\s*/, "")
+      .replace(/[*_`]/g, "")
+      .trim();
+    if (rest.length > 0) return true;
+  }
+  return false;
+}
+
+/** The Ready form this issue owes, by `effort` (ADR-0007 §3: proportional). */
+function needsFullForm(fm: Frontmatter): boolean {
+  const effort =
+    typeof fm.effort === "string" ? fm.effort.trim().toLowerCase() : "";
+  return !SMALL_EFFORTS.has(effort);
 }
 
 /** Is `risk` explicitly and validly set? (riskOf defaults to medium; here we require it set.) */
@@ -65,11 +127,19 @@ function riskExplicitlySet(fm: Frontmatter): boolean {
 
 export function analyzeReady(content: string, fm: Frontmatter): ReadyAnalysis {
   const missing: ReadyGap[] = [];
+  const section = readySection(content);
 
   if (!riskExplicitlySet(fm)) missing.push("risk-unset");
   if (!analyzeDod(content).loopEligible) missing.push("dod-not-testable");
-  if (!OUT_OF_SCOPE_RE.test(readySection(content)))
-    missing.push("no-out-of-scope");
+  if (!declares(section, OUT_OF_SCOPE_LABEL)) missing.push("no-out-of-scope");
+
+  // Scope and constraints are Ready criteria in default-rules.md and in the
+  // feature template, and were never checked: an issue with neither was
+  // loop-eligible. They are asked of the sizes that can afford them.
+  if (needsFullForm(fm)) {
+    if (!declares(section, SCOPE_LABEL)) missing.push("no-scope");
+    if (!declares(section, CONSTRAINTS_LABEL)) missing.push("no-constraints");
+  }
 
   return { ready: missing.length === 0, missing };
 }
