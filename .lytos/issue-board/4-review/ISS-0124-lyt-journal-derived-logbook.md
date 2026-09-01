@@ -8,11 +8,11 @@ complexity: standard
 domain: [cli, docs, app]
 skill: 
 skills_aux: []
-status: 3-in-progress
-branch: chore/ISS-0126-translate-live-fiches-to-english
+status: 4-review
+branch: chore/ISS-0124-journal-speaks-one-language
 depends: []
 created: 2026-08-09
-updated: 2026-08-31
+updated: 2026-09-01
 schema_version: 2
 assignee: Claude
 started_at: 2026-08-10
@@ -228,6 +228,58 @@ high-severity vulnerabilities.
 
 ### To fix before next review
 - [x] Land the wrapped-context correction on the declared branch, or update the declared branch. — *repointed to `chore/ISS-0126-translate-live-fiches-to-english`, which contains `c60e9d1`; the branch was stale, not the work*
-- [ ] Define and implement the language strategy for historical entries, then test this repository's rendered output.
-- [ ] Align implementation, README, and issue on period versus sprint grouping and on whether JOURNAL.md is generated.
-- [ ] Make the mandatory format and dependency-audit gates green.
+- [x] Define and implement the language strategy for historical entries, then test this repository's rendered output. — *the 12 French fiches translated in full; the rendered journal is English end to end*
+- [x] Align implementation, README, and issue on period versus sprint grouping and on whether JOURNAL.md is generated. — *period grouping only, `--write` implemented, README corrected, gitignore rule shipped in both copies*
+- [x] Make the mandatory format and dependency-audit gates green. — *`format:check` clean, `npm audit --omit=dev` at 0; dev-side advisories are ISS-0143*
+
+## Response to audit — 2026-09-01
+
+Both points accepted, and the first needed a decision rather than a patch.
+
+### 1. The language of history — the 12 fiches are translated
+
+The audit was right and the wording matters: the journal is a **derived** view, so it cannot be
+more English than its sources. `lyt journal` emitted 14 French entries out of 86 — every one of
+them a closed or archived fiche from the ISS-0074 → ISS-0105 era, before the repository's language
+rule existed.
+
+Three options were weighed and put to the human, because this touches closed records and the
+public face of the tool: translate the source fiches, narrow the promise (history predates the
+rule), or translate only the fragment the journal exposes. **Translate** was chosen, and the third
+option was rejected on its own terms — a fiche with an English header and a French body is worse
+against the language rule than either extreme.
+
+Twelve fiches translated in full (not just title and context): ISS-0074, 0079, 0080, 0093, 0094,
+0095, 0096, 0097, 0099, 0100, 0102, 0105. Two of the fourteen — ISS-0052 and ISS-0014 — turned out
+to be **false positives** of the detection heuristic: it matched `le-socle` and a quotation from
+the French website inside otherwise English fiches. Measuring before acting saved two needless
+rewrites.
+
+Filenames keep their French slugs (`ISS-0093-merge-driver-union-pour-les-fiches.md`). Renaming
+them would break every cross-reference in the board and in git history for a path nobody reads as
+prose — the rule is about what the artifact *says*.
+
+One defect introduced and caught: the translated ISS-0093 title used escaped quotes inside a
+double-quoted YAML scalar, and the escapes leaked verbatim into the public output
+(`A \"union of sections\"`). Re-reading the rendered journal rather than trusting the edit is
+what found it.
+
+### 2. Grouping and JOURNAL.md — the three artifacts now agree
+
+The three said three different things: the fiche promised period grouping (having itself deferred
+sprint-objective grouping to ISS-0131), the implementation let an optional `sprint:` field override
+it, and the README announced "grouped by sprint".
+
+- **Period only.** The override produced a logbook whose sections were sometimes months and
+  sometimes sprint names, depending on which fiches happened to carry the field — a chronology a
+  reader cannot trust. One rule, applied to every entry. Grouping by sprint *objective* stays a
+  real feature, and it belongs to ISS-0131, which owns reading `sprint.md`.
+- **`JOURNAL.md` is generated**, by `lyt journal --write`, gitignored in both `.lytos/.gitignore`
+  and the scaffold's — the BOARD.md contract of ADR-0002: regenerated, never hand-written, never
+  committed. Writing is **opt-in**, not the default: a read has no business touching the working
+  tree. `lyt board` writes because the board *is* its output; the journal's output is the
+  narrative, and a file is one way to read it. The code comment claiming "if you want a file,
+  redirect" is gone — it was the code narrowing a promise the fiche never withdrew.
+- **README corrected** to say month grouping and to document `--write`.
+
+359 tests green; format, lint, typecheck, secrets scan clean.
