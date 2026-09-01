@@ -1,6 +1,6 @@
 ---
 id: ISS-0096
-title: `lyt pull-notes` — rapatrier les commits .lytos de main vers la branche courante
+title: "`lyt pull-notes` — repatriate the .lytos commits from main onto the current branch"
 type: feat
 priority: P2-medium
 effort: S
@@ -16,24 +16,24 @@ updated: 2026-08-10
 schema_version: 2
 completed_at: 2026-08-10
 ---
-# ISS-0096 — Les notes mobiles atterrissent sur main, le travail vit sur des branches
+# ISS-0096 — Mobile notes land on main, the work lives on branches
 
-## Retour terrain (immo, 03-04/08)
+## Field feedback (immo, 03–04/08)
 
-Deux fois en 24 h : une note déposée depuis mobile arrive sur main (NOTE-0002 tourisme, puis tout
-un corpus de réflexion produit à 690 €) pendant que le travail vit sur une pile de branches — le
-board de la branche ne voit pas les notes, et le rapatriement s'est fait par cherry-picks manuels
-en repérant les SHA à l'œil.
+Twice in 24 hours: a note written from mobile lands on `main` (NOTE-0002 on tourism, then a whole
+corpus of thinking produced at €690) while the work lives on a stack of branches — the branch's
+board cannot see the notes, and repatriating them was done by hand-picking SHAs by eye and
+cherry-picking them one at a time.
 
-## Le geste
+## The gesture
 
-`lyt pull-notes` : liste les commits de `origin/main` absents de HEAD qui ne touchent QUE
-`.lytos/`, les cherry-picke (`-x`) dans l'ordre, régénère le board. Refuse (et liste) ceux qui
-touchent aussi du code — ceux-là relèvent d'un merge, pas d'un rapatriement.
+`lyt pull-notes`: lists the commits on `origin/main` missing from HEAD that touch **only**
+`.lytos/`, cherry-picks them (`-x`) in order, regenerates the board. Refuses — and lists — the
+ones that also touch code: those belong to a merge, not to a repatriation.
 
-- [x] Détection .lytos-only, cherry-picks -x ordonnés, board régénéré
-- [x] `--dry-run` qui liste sans agir ; refus motivé des commits mixtes
-- [x] Tests : notes pures, commit mixte refusé, aucun commit à rapatrier
+- [x] `.lytos`-only detection, ordered `-x` cherry-picks, board regenerated
+- [x] `--dry-run` that lists without acting; reasoned refusal of mixed commits
+- [x] Tests: pure notes, mixed commit refused, nothing to repatriate
 
 ## Audit — 2026-08-10
 

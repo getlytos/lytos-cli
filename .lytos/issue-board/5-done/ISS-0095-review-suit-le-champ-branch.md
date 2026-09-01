@@ -1,6 +1,6 @@
 ---
 id: ISS-0095
-title: `lyt review` audite la branche déclarée par la fiche, pas l'arbre courant
+title: "`lyt review` audits the branch the fiche declares, not the current tree"
 type: feat
 priority: P1-high
 effort: M
@@ -16,25 +16,25 @@ updated: 2026-08-10
 schema_version: 2
 completed_at: 2026-08-10
 ---
-# ISS-0095 — Le faux « aucun correctif versionné »
+# ISS-0095 — The false "no versioned fix"
 
-## Retour terrain (immo, 03/08)
+## Field feedback (immo, 03/08)
 
-Une re-review a rendu TROIS faux « aucun correctif versionné depuis le premier audit » : les
-correctifs étaient poussés — sur des branches que les fiches ne désignaient pas — et l'audit
-lisait l'arbre courant. Résolu sur le terrain par convention (le frontmatter `branch:` désigne où
-auditer, note dans chaque fiche) ; la convention doit devenir le comportement de l'outil.
+A re-review returned THREE false "no versioned fix since the first audit" verdicts: the fixes had
+been pushed — onto branches the fiches did not name — while the audit read the current tree.
+Solved in the field by convention (the `branch:` frontmatter says where to audit, with a note in
+each fiche); the convention has to become the tool's behaviour.
 
-## Le geste
+## The gesture
 
-`lyt review ISS-X --export` : le prompt d'audit inclut la branche déclarée et instruit l'auditeur
-de la vérifier là (checkout ou worktree temporaire) ; si `branch:` est vide, l'audit porte sur
-l'arbre courant et LE DIT. Bonus : avertir à l'export quand la branche déclarée n'existe pas sur
-origin — c'est un mensonge de fiche, détectable avant l'audit.
+`lyt review ISS-X --export`: the audit prompt carries the declared branch and instructs the
+auditor to verify there (checkout or temporary worktree); when `branch:` is empty, the audit
+covers the current tree and SAYS SO. Bonus: warn at export time when the declared branch does not
+exist on origin — that is a lying fiche, and it is detectable before the audit is spent.
 
-- [x] Le prompt exporté porte la branche + l'instruction de s'y placer
-- [x] Avertissement si `branch:` absent ou introuvable sur origin
-- [x] Tests sur les trois cas (branche valide, vide, introuvable)
+- [x] The exported prompt carries the branch plus the instruction to move onto it
+- [x] Warning when `branch:` is absent or not found on origin
+- [x] Tests on the three cases (valid branch, empty, not found)
 
 ## Audit — 2026-08-10
 

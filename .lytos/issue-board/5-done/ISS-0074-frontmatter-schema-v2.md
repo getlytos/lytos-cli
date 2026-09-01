@@ -1,6 +1,6 @@
 ---
 id: ISS-0074
-title: Frontmatter schema v2 (auditabilité durable)
+title: Frontmatter schema v2 (durable auditability)
 type: feat
 priority: P1-high
 effort: L
@@ -21,82 +21,82 @@ review_at: 2026-05-25
 reviewer: fredericgalline
 started_at: 2026-05-25
 ---
-# ISS-0074 — Frontmatter schema v2 (auditabilité durable)
+# ISS-0074 — Frontmatter schema v2 (durable auditability)
 
 ## Context
 
-Le frontmatter actuel est calibré pour un workflow MVP écrit à la main. Il ne porte aucune information d'auditabilité : qui a implémenté (humain et IA), qui a reviewé, à quel coût en tokens et en argent, sur quels prompts/skills exactement, avec quel verdict, quel risque, quelle confiance.
+The current frontmatter is calibrated for a hand-written MVP workflow. It carries no auditability information at all: who implemented (human and AI), who reviewed, at what cost in tokens and in money, on exactly which prompts and skills, with what verdict, what risk, what confidence.
 
-C'est exactement ce qui sépare Lytos du vibecoding. Sans ces champs, on perd la trace dès que la session IA se ferme. Avec, on peut répondre dans deux ans : *quelle IA a fait ça, qui l'a managé, à quel coût ?*
+That is precisely what separates Lytos from vibecoding. Without these fields the trace is lost the moment the AI session closes. With them, we can answer in two years' time: *which AI did this, who managed it, at what cost?*
 
-Décision durable : voir [`ADR-0001-frontmatter-schema-v2`](../../adr/ADR-0001-frontmatter-schema-v2.md).
+Durable decision: see [`ADR-0001-frontmatter-schema-v2`](../../adr/ADR-0001-frontmatter-schema-v2.md).
 
 ## Proposed solution
 
-Étendre le frontmatter avec ~15 nouveaux champs **tous optionnels et rétrocompatibles**, organisés en 5 catégories : human accountability, AI traceability, lifecycle, audit & cost, decision & risk, Git artifacts.
+Extend the frontmatter with roughly 15 new fields, **all optional and backward-compatible**, organised in five categories: human accountability, AI traceability, lifecycle, audit & cost, decision & risk, Git artifacts.
 
-L'implémentation se déroule en **5 phases indépendantes** (chacune shippable) :
+The implementation runs in **five independent phases** (each shippable on its own):
 
-1. **Spec + parser** — accepter les nouveaux champs sans les utiliser
-2. **Read support** — afficher les nouveaux champs dans `lyt board`, `lyt doctor`
-3. **Write support automatique** — `lyt start` / `lyt review` / `lyt close` écrivent lifecycle + verdict
-4. **AI wrapper integration** — issue séparée pour chaque cible (Claude Code, Cursor, ...)
-5. **Migration helper** — `lyt migrate-frontmatter` pour backfill sur repos existants
+1. **Spec + parser** — accept the new fields without using them
+2. **Read support** — display the new fields in `lyt board` and `lyt doctor`
+3. **Automatic write support** — `lyt start` / `lyt review` / `lyt close` write lifecycle + verdict
+4. **AI wrapper integration** — a separate issue per target (Claude Code, Cursor, …)
+5. **Migration helper** — `lyt migrate-frontmatter` to backfill existing repositories
 
 ## Definition of done
 
-- [x] L'ADR-0001 est mergée et référencée dans `manifest.md`.
-- [x] Le template `issue-feature.md` est mis à jour (champs v2 commentés "auto" vs "manuel").
-- [x] Le validateur accepte tous les nouveaux champs avec leur domaine de valeur.
-- [x] Le parser ignore poliment les champs inconnus (forward-compat).
-- [x] Aucune issue v1 existante ne casse — tests de régression sur tout le board actuel.
-- [x] `lyt doctor` signale les issues v1 en warning soft, pas en erreur.
-- [x] `lyt start` / `lyt review` / `lyt close` écrivent les champs lifecycle automatiquement.
-- [x] `lyt review --verdict go|no-go|pending` écrit `review`.
-- [x] Documentation à jour dans `method/` et `docs/`. *(template + ADR-0001 référencé dans manifest ; CLI help mis à jour pour `--verdict`)*
-- [x] Tests : parsing, validation, write paths, migration. *(parsing + validation + write paths livrés ; migration tests vivent dans [[ISS-0077]] qui porte la commande)*
+- [x] ADR-0001 is merged and referenced from `manifest.md`.
+- [x] The `issue-feature.md` template is updated (v2 fields commented "auto" vs "manual").
+- [x] The validator accepts every new field with its value domain.
+- [x] The parser politely ignores unknown fields (forward compatibility).
+- [x] No existing v1 issue breaks — regression tests over the whole current board.
+- [x] `lyt doctor` reports v1 issues as a soft warning, not an error.
+- [x] `lyt start` / `lyt review` / `lyt close` write the lifecycle fields automatically.
+- [x] `lyt review --verdict go|no-go|pending` writes `review`.
+- [x] Documentation up to date in `method/` and `docs/`. *(template + ADR-0001 referenced from the manifest; CLI help updated for `--verdict`)*
+- [x] Tests: parsing, validation, write paths, migration. *(parsing + validation + write paths delivered; the migration tests live in [[ISS-0077]], which owns the command)*
 
 ## Checklist
 
 ### Phase 1 — Spec + parser
-- [x] Mettre à jour `issue-feature.md` (template) avec les champs v2 commentés.
-- [x] Étendre le parser pour accepter tous les champs optionnels v2.
-- [x] Étendre le validateur avec les domaines de valeurs (review, risk, validation.*).
-- [x] Tests parser : v1 valide, v2 valide, champs inconnus ignorés, valeurs hors domaine rejetées.
+- [x] Update `issue-feature.md` (template) with the commented v2 fields.
+- [x] Extend the parser to accept every optional v2 field.
+- [x] Extend the validator with the value domains (review, risk, validation.*).
+- [x] Parser tests: valid v1, valid v2, unknown fields ignored, out-of-domain values rejected.
 
 ### Phase 2 — Read support
-- [x] `lyt board` affiche `review` / `assignee` quand présents.
-- [x] `lyt doctor` détecte les issues v1 et propose la migration.
-- [x] Tests E2E sur un repo mixte v1/v2.
+- [x] `lyt board` displays `review` / `assignee` when present.
+- [x] `lyt doctor` detects v1 issues and offers the migration.
+- [x] E2E tests on a mixed v1/v2 repository.
 
-### Phase 3 — Write support automatique
-- [x] `lyt start` écrit `started_at` + `assignee` (depuis git config).
-- [x] `lyt review` écrit `review_at`, `reviewer`, et `review` selon `--verdict`.
-- [x] `lyt close` écrit `completed_at` + `commits` (via git log).
-- [x] Tests : chaque commande modifie correctement le frontmatter et garde le YAML propre.
+### Phase 3 — Automatic write support
+- [x] `lyt start` writes `started_at` + `assignee` (from the git config).
+- [x] `lyt review` writes `review_at`, `reviewer`, and `review` according to `--verdict`.
+- [x] `lyt close` writes `completed_at` + `commits` (via git log).
+- [x] Tests: each command edits the frontmatter correctly and keeps the YAML clean.
 
-### Phase 4 — AI wrapper integration *(split-out → [[ISS-0076]])*
-Cette phase est portée par une issue dédiée parce qu'elle dépend d'un ADR de contrat (journal IA → frontmatter) et de N implémentations par cible (Claude Code, Cursor, Codex CLI). Cf. [[ISS-0076]].
+### Phase 4 — AI wrapper integration *(split out → [[ISS-0076]])*
+This phase is carried by a dedicated issue because it depends on a contract ADR (AI journal → frontmatter) and on N implementations, one per target (Claude Code, Cursor, Codex CLI). See [[ISS-0076]].
 
-### Phase 5 — Migration *(split-out → [[ISS-0077]])*
-Cette phase est portée par `lyt migrate-frontmatter` dans une issue dédiée. Pas bloquante : l'auto-migration via `lyt start/close/review` couvre déjà tout issue activement touchée. Cf. [[ISS-0077]].
+### Phase 5 — Migration *(split out → [[ISS-0077]])*
+This phase is carried by `lyt migrate-frontmatter` in a dedicated issue. Not blocking: the automatic migration through `lyt start/close/review` already covers every actively touched issue. See [[ISS-0077]].
 
 ## Relevant files
 
-- `.lytos/adr/ADR-0001-frontmatter-schema-v2.md` (décision)
-- `.lytos/issue-board/templates/issue-feature.md` (template projet) + `method/issue-board/templates/issue-feature.md` (template distribué par `lyt init`)
+- `.lytos/adr/ADR-0001-frontmatter-schema-v2.md` (the decision)
+- `.lytos/issue-board/templates/issue-feature.md` (project template) + `method/issue-board/templates/issue-feature.md` (the template `lyt init` distributes)
 - `src/lib/frontmatter.ts` (parser/serializer — phase 1)
 - `src/lib/linter.ts` (validator — phase 1)
 - `src/commands/start.ts` / `src/commands/close.ts` / `src/lib/review.ts` (write paths — phase 3)
 - `tests/lib/frontmatter.test.ts` (unit tests parser — phase 1)
 - `tests/commands/lint.test.ts` (integration tests validator — phase 1)
-- `method/` (documentation utilisateur — phase 2/3)
+- `method/` (user documentation — phases 2/3)
 
 ## Notes
 
-- **Rétrocompatibilité absolue** : non négociable. Tout repo v1 doit continuer à fonctionner sans modification.
-- **Auto-population** : les champs v2 ne doivent quasi jamais être écrits à la main — l'adoption échoue si on impose du remplissage manuel. Cf. table dans l'ADR.
-- **Cross-repo** : la livraison de la phase 1 + phase 3 (au minimum `review`) débloque l'issue lytos-app **ISS-0018** (dot vert/rouge). Coordonner les deux côtés.
-- **Hors scope** : système de commentaires, permissions par issue, sub-tasks. Lytos n'est pas Jira.
-- **Évolutions futures** : v3 nécessitera un nouvel ADR. Cette issue ne fixe pas le futur, seulement le présent v2.
-- Le manifest lytos-app a été mis à jour avec une ligne explicite « On préfère l'auditabilité durable plutôt que la vitesse jetable » qui justifie ce schéma — voir manifest lytos-app, section Principes.
+- **Absolute backward compatibility**: non-negotiable. Every v1 repository must keep working untouched.
+- **Auto-population**: the v2 fields should almost never be written by hand — adoption fails if manual filling is imposed. See the table in the ADR.
+- **Cross-repo**: delivering phase 1 + phase 3 (at minimum `review`) unblocks the lytos-app issue **ISS-0018** (the green/red dot). Coordinate both sides.
+- **Out of scope**: a comment system, per-issue permissions, sub-tasks. Lytos is not Jira.
+- **Future evolution**: v3 will need a new ADR. This issue does not fix the future, only the v2 present.
+- The lytos-app manifest gained an explicit line — "we prefer durable auditability over disposable speed" — which justifies this schema; see the lytos-app manifest, Principles section.

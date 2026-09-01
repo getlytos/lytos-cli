@@ -1,6 +1,6 @@
 ---
 id: ISS-0079
-title: Gitignore BOARD.md sur lytos-cli (mirror lytos-app ADR-0010)
+title: Gitignore BOARD.md on lytos-cli (mirrors lytos-app ADR-0010)
 type: refactor
 priority: P2-normal
 effort: XS
@@ -21,33 +21,33 @@ review_at: 2026-06-13
 schema_version: 2
 completed_at: 2026-06-14
 ---
-# ISS-0079 — Gitignore BOARD.md sur lytos-cli
+# ISS-0079 — Gitignore BOARD.md on lytos-cli
 
 ## Context
 
-Lytos-app a documenté + livré [ADR-0010 — BOARD.md is a derived artifact](https://github.com/getlytos/lytos-app/blob/main/.lytos/adr/ADR-0010-board-md-derived-artifact.md) en réponse au pattern de conflit observé 3 fois pendant la session 2026-05-25 (dont une fois sur **ce repo** — PR #22 schema v2).
+Lytos-app documented and shipped [ADR-0010 — BOARD.md is a derived artifact](https://github.com/getlytos/lytos-app/blob/main/.lytos/adr/ADR-0010-board-md-derived-artifact.md) in response to the conflict pattern observed three times during the 2026-05-25 session (once on **this repository** — PR #22, schema v2).
 
-Le même fix doit s'appliquer ici. `lyt board` continue d'écrire BOARD.md localement (terminal-friendly), il arrête juste de le commiter.
+The same fix belongs here. `lyt board` keeps writing BOARD.md locally (terminal-friendly); it simply stops committing it.
 
 ## Proposed solution
 
-Calque exact de lytos-app ADR-0010 :
+An exact tracing of lytos-app's ADR-0010:
 
-1. Ajouter `.lytos/issue-board/BOARD.md` à `.gitignore`.
-2. `git rm --cached .lytos/issue-board/BOARD.md` (stop tracking, file stays on disk).
-3. Ajouter un `.lytos/issue-board/README.md` qui oriente le visiteur GitHub vers `lyt board` ou l'App.
-4. Optionnel : ADR-0002 sur lytos-cli qui mirror ADR-0010 (les ADR cross-repo restent locaux mais référencés).
+1. Add `.lytos/issue-board/BOARD.md` to `.gitignore`.
+2. `git rm --cached .lytos/issue-board/BOARD.md` (stop tracking, the file stays on disk).
+3. Add a `.lytos/issue-board/README.md` pointing a GitHub visitor to `lyt board` or the App.
+4. Optional: an ADR-0002 on lytos-cli mirroring ADR-0010 (cross-repo ADRs stay local but referenced).
 
-`lyt board` n'a aucune raison de changer côté code — c'est juste que sa sortie n'est plus stagée.
+`lyt board` needs no code change — its output simply stops being staged.
 
 ## Definition of done
 
-- [x] `.gitignore` mis à jour avec entry + commentaire pointant l'ADR.
-- [x] `git rm --cached` exécuté, BOARD.md plus dans l'index.
-- [x] README à `.lytos/issue-board/` avec orientation.
-- [x] ADR-0002 sur lytos-cli — **tranché** : ADR local complet créé (mirror d'ADR-0010), référencé dans le tableau ADR du manifest. Choix cohérent avec le principe « Durable auditability over short-term ergonomics ».
-- [x] Tests existants passent (28 tests `init` verts, suite globale verte hormis 1 échec `review.test.ts` non lié — signature de commit de l'environnement).
-- [x] Vérification empirique : structurellement garanti — BOARD.md n'étant plus tracké, il ne produit plus de diff et ne peut plus générer de conflit de merge.
+- [x] `.gitignore` updated with the entry plus a comment pointing at the ADR.
+- [x] `git rm --cached` run, BOARD.md no longer in the index.
+- [x] A README in `.lytos/issue-board/` that orients the reader.
+- [x] ADR-0002 on lytos-cli — **decided**: a full local ADR created (mirroring ADR-0010), referenced from the manifest's ADR table. Consistent with the principle "durable auditability over short-term ergonomics".
+- [x] Existing tests pass (28 `init` tests green, the whole suite green except one unrelated `review.test.ts` failure — the environment's commit signature).
+- [x] Empirical check: structurally guaranteed — BOARD.md is no longer tracked, so it produces no diff and can no longer generate a merge conflict.
 
 ## Relevant files
 

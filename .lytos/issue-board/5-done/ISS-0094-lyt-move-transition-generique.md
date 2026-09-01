@@ -1,6 +1,6 @@
 ---
 id: ISS-0094
-title: `lyt move ISS-X <étape>` — la transition générique atomique
+title: "`lyt move ISS-X <stage>` — the atomic generic transition"
 type: feat
 priority: P1-high
 effort: S
@@ -16,25 +16,25 @@ updated: 2026-08-10
 schema_version: 2
 completed_at: 2026-08-10
 ---
-# ISS-0094 — Un verbe pour chaque transition, pas seulement les extrémités
+# ISS-0094 — A verb for every transition, not only for the two ends
 
-## Retour terrain (immo, 03-04/08)
+## Field feedback (immo, 03–04/08)
 
-`lyt start` et `lyt close` couvrent leurs deux extrémités — mais la PHASE DE CLÔTURE Lytos
-(travail fini → `4-review`, en attendant l'audit) n'a pas de verbe. Sur deux jours d'usage
-intensif par un agent, chaque passage en review a coûté trois opérations manuelles (éditer le
-frontmatter, `git mv`, régénérer le board), une dizaine de fois — en scripts python jetables.
+`lyt start` and `lyt close` cover the two ends — but the Lytos **closing phase** (work finished →
+`4-review`, awaiting the audit) has no verb. Over two days of intensive use by an agent, every
+move into review cost three manual operations (edit the frontmatter, `git mv`, regenerate the
+board), about ten times over — through throwaway Python scripts.
 
-## Le geste
+## The gesture
 
-`lyt move ISS-0192 4-review` : met à jour `status` + `updated`, déplace le fichier, régénère le
-board — atomique, comme `start` le fait déjà pour sa transition. Refuse les transitions qui ont
-un verbe dédié plus riche (`3-in-progress` → « utilisez lyt start », `5-done` → « lyt close »)
-pour ne pas contourner leurs garde-fous.
+`lyt move ISS-0192 4-review`: updates `status` + `updated`, moves the file, regenerates the board
+— atomic, the way `start` already is for its own transition. It refuses the transitions that have
+a richer dedicated verb (`3-in-progress` → "use lyt start", `5-done` → "lyt close") so that their
+guardrails cannot be bypassed.
 
-- [x] Transitions libres entre étapes sans verbe dédié, refus documenté sinon
-- [x] `--json`, et le même contrôle d'origine que start (`--force`)
-- [x] Tests par transition, y compris les refus
+- [x] Free transitions between stages with no dedicated verb, documented refusal otherwise
+- [x] `--json`, and the same origin freshness check as start (`--force`)
+- [x] Tests per transition, refusals included
 
 ## Audit — 2026-08-10
 
