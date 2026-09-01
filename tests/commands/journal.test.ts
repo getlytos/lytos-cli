@@ -4,7 +4,7 @@
 
 import { describe, it, expect, afterEach } from "vitest";
 import { resolve } from "path";
-import { mkdirSync, writeFileSync } from "fs";
+import { mkdirSync, writeFileSync, readFileSync, existsSync } from "fs";
 import { createEmptyFixture, type Fixture } from "../helpers/fixtures.js";
 
 const CLI = resolve(__dirname, "../../dist/cli.js");
@@ -102,7 +102,7 @@ describe("lyt journal", () => {
     expect(run("journal", fixture.cwd).stdout).not.toContain("Still open");
   });
 
-  it("renders a sprint group whose issue carries no verdict", () => {
+  it("groups by period even when the issue carries a sprint field (ISS-0124)", () => {
     fixture = createEmptyFixture();
     mkdirSync(resolve(fixture.cwd, ".lytos/issue-board/5-done"), { recursive: true });
     writeFileSync(
@@ -111,8 +111,34 @@ describe("lyt journal", () => {
     );
     const groups = JSON.parse(run("journal --json", fixture.cwd).stdout);
     expect(groups).toHaveLength(1);
-    expect(groups[0].key).toBe("Sprint #06");
+    // `sprint:` used to override the period, so a logbook's sections were
+    // sometimes months and sometimes sprint names depending on which fiches
+    // happened to carry the field. One rule, applied to every entry; grouping by
+    // sprint objective belongs to ISS-0131, which reads sprint.md.
+    expect(groups[0].key).toBe("2026-08");
     expect(groups[0].entries[0].verdict).toBe("—");
     expect(run("journal", fixture.cwd).stdout).toContain("**ISS-0061** Closed without audit");
+  });
+
+  it("writes .lytos/JOURNAL.md only when asked (ISS-0124)", () => {
+    fixture = createEmptyFixture();
+    mkdirSync(resolve(fixture.cwd, ".lytos/issue-board/5-done"), { recursive: true });
+    writeFileSync(
+      resolve(fixture.cwd, ".lytos/issue-board/5-done/ISS-0062.md"),
+      `---\nid: ISS-0062\ntitle: "Shipped"\nstatus: 5-done\ncompleted_at: 2026-08-07\n---\n\n## Context\n\nWhy it mattered.\n`
+    );
+    const target = resolve(fixture.cwd, ".lytos/JOURNAL.md");
+
+    // A read has no business touching the working tree.
+    run("journal", fixture.cwd);
+    expect(existsSync(target)).toBe(false);
+
+    run("journal --write", fixture.cwd);
+    expect(existsSync(target)).toBe(true);
+    const written = readFileSync(target, "utf-8");
+    expect(written).toContain("# Journal");
+    expect(written).toContain("**ISS-0062** Shipped");
+    // The file and stdout are the same rendering — one source, two surfaces.
+    expect(run("journal", fixture.cwd).stdout.trim()).toBe(written.trim());
   });
 });

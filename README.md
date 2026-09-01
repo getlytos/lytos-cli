@@ -77,7 +77,7 @@ Every bridge points at the same `.lytos/` directory, so switching tools does not
 | `lyt start ISS-XXXX` | Start an issue — move to in-progress, create branch, update board |
 | `lyt move ISS-XXXX <stage>` | Any other transition (e.g. work done → `4-review`) — status, file move, and board in one atomic verb. Stages owned by a richer verb are refused (`3-in-progress` → `lyt start`, `5-done` → `lyt close`) |
 | `lyt claim ISS-XXXX` | Assign an issue to yourself and move it to in-progress (multi-user). `lyt unclaim` releases it back to the sprint |
-| `lyt journal` | Derived logbook — the *why* of closed issues, chronological, grouped by sprint, linked back to each fiche. Regenerated like BOARD.md, never written by hand. `--json` for the App |
+| `lyt journal` | Derived logbook — the *why* of closed issues, chronological, grouped by month, linked back to each fiche. `--write` regenerates `.lytos/JOURNAL.md`, gitignored like BOARD.md. `--json` for the App |
 | `lyt pull-notes` | Cherry-pick (`-x`) the `.lytos/`-only commits of `origin/main` missing from HEAD onto the current branch — notes captured on main rejoin the branch board. Mixed commits (code + `.lytos/`) are refused and listed. `--dry-run` previews |
 | `lyt close ISS-XXXX` | Close one issue — promote to `5-done` from `4-review` (or explicitly from in-progress), warns about unchecked items |
 | `lyt close` | Batch-close every issue in 4-review/ → 5-done/ (asks to confirm; `--yes` skips the prompt; `--dry-run` previews) |

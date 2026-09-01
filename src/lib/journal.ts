@@ -117,8 +117,15 @@ function collectClosed(lytosDir: string): { path: string; rel: string }[] {
 }
 
 /**
- * Build the journal: entries grouped (by `sprint` frontmatter if present, else by
- * YYYY-MM of completion), newest group first.
+ * Build the journal: entries grouped by the `YYYY-MM` of completion, newest
+ * group first.
+ *
+ * Period, not sprint. An optional `sprint:` frontmatter field used to override
+ * the period, which produced a logbook whose sections were sometimes months and
+ * sometimes sprint names depending on which fiches happened to carry the field —
+ * a chronology the reader cannot trust. Grouping by sprint *objective* is a real
+ * feature and it belongs to ISS-0131, which owns reading `sprint.md`; until then
+ * one rule, applied to every entry.
  */
 export function buildJournal(lytosDir: string): JournalGroup[] {
   const byGroup = new Map<string, JournalEntry[]>();
@@ -128,7 +135,7 @@ export function buildJournal(lytosDir: string): JournalGroup[] {
     const fm = parseFrontmatter(content);
     if (!fm) continue;
     const date = str(fm.completed_at) || str(fm.updated) || str(fm.created);
-    const groupKey = str(fm.sprint) || (date ? date.slice(0, 7) : "undated");
+    const groupKey = date ? date.slice(0, 7) : "undated";
     const entry: JournalEntry = {
       id: str(fm.id),
       title: str(fm.title),
