@@ -142,3 +142,28 @@ describe("lyt journal", () => {
     expect(run("journal", fixture.cwd).stdout.trim()).toBe(written.trim());
   });
 });
+
+describe("lyt journal — a digest is not a place to navigate from (ISS-0124)", () => {
+  /**
+   * `--write` put the rendering in `.lytos/JOURNAL.md`, one directory above the
+   * fiches. The `[detail]` link the journal builds is correct there; the links
+   * *inside* the excerpted context are not — they were written relative to the
+   * fiche's own directory. `lyt doctor` found eight dead links the moment the
+   * file existed.
+   */
+  it("flattens inline links in the excerpt, keeping the words", () => {
+    fixture = createEmptyFixture();
+    mkdirSync(resolve(fixture.cwd, ".lytos/issue-board/5-done"), { recursive: true });
+    writeFileSync(
+      resolve(fixture.cwd, ".lytos/issue-board/5-done/ISS-0063.md"),
+      `---\nid: ISS-0063\ntitle: "Linked context"\nstatus: 5-done\ncompleted_at: 2026-08-07\n---\n\n## Context\n\nThis follows [ISS-0079](ISS-0079-gitignore-board-md.md) and the [skill](../../skills/session-start.md).\n`
+    );
+
+    const out = run("journal", fixture.cwd).stdout;
+    expect(out).toContain("This follows ISS-0079 and the skill.");
+    expect(out).not.toContain("ISS-0079-gitignore-board-md.md");
+    expect(out).not.toContain("session-start.md");
+    // The entry's own way in is untouched — that link is built, not excerpted.
+    expect(out).toContain("[detail](issue-board/5-done/ISS-0063.md)");
+  });
+});

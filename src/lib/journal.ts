@@ -74,7 +74,19 @@ function firstWhy(content: string): string {
       flush();
       continue;
     }
-    current.push(t.replace(/[*_`]/g, ""));
+    current.push(
+      t
+        // A one-line digest inherits the fiche's inline links, and their relative
+        // paths were written from the fiche's own directory. Rendered anywhere
+        // else — `.lytos/JOURNAL.md`, the App — they resolve against nothing:
+        // `[ISS-0079](ISS-0079-gitignore-board-md.md)` is a valid sibling link
+        // from `5-done/` and a dead one from `.lytos/`. Keep the words, drop the
+        // target; a teaser is not a place to navigate from, and the entry's own
+        // `[detail]` link is the way in. Found by `lyt doctor` on the JOURNAL.md
+        // that `--write` had just started producing.
+        .replace(/!?\[([^\]]+)\]\([^)]*\)/g, "$1")
+        .replace(/[*_`]/g, "")
+    );
   }
   flush();
 
