@@ -30,3 +30,27 @@ Make the test deterministic: mock the git/network access (the behind-origin stat
 
 - [ ] The test no longer depends on a real network call (git dependency injected or mocked).
 - [ ] Stable across 10 consecutive runs of the full suite.
+
+## Second instance — 2026-09-02
+
+The flakiness is broader than the one test this fiche names. On `main` after the sprint's five
+merges, three consecutive full runs of `npm test` gave **1, then 3, then 2 failures out of 393** —
+and the failures were in `tests/commands/pull-notes.test.ts`, not in `claim.test.ts`:
+
+```
+run 1 : 1 failed | 392 passed
+run 2 : 3 failed | 390 passed
+run 3 : 2 failed | 391 passed
+```
+
+`npx vitest run tests/commands/pull-notes.test.ts` in isolation: **8 passed**, every time. CI was
+green on Node 20 and 22 for all five pull requests.
+
+So the shared cause is not one test's 5-second timeout: it is that several suites drive real `git`
+in temporary directories, under vitest's parallelism, on a machine where those operations are
+slower or contended. The fiche's scope should widen from "fix this timeout" to "make the
+git-driving suites deterministic under parallel load" — serialise them, or give the git fixtures a
+budget that does not depend on machine load.
+
+Worth flagging for what it costs: a suite that fails differently on each run teaches the reader to
+re-run rather than to read, which is exactly how a real regression gets waved through.

@@ -106,6 +106,28 @@ export function diagnose(lytosDir: string): DiagnosticResult {
 /**
  * Check all markdown files for internal links pointing to non-existent files.
  */
+/**
+ * A markdown file's prose, with code removed.
+ *
+ * A fiche is prose *containing* code: it quotes syntax, shows bad paths, explains
+ * what a link looks like. A checker that reads the raw text treats those examples
+ * as data — and writing *about* a broken link then creates one. That happened on
+ * ISS-0124's own delivery note, whose example of a dead link was reported as a
+ * dead link (ISS-0145).
+ *
+ * The same narrowing already had to be made twice elsewhere: `ready.ts` scopes to
+ * the `## Ready` section because a stray "out of scope" in a note used to satisfy
+ * the criterion, and `pinnedGateRefs()` scopes to the Definition of Done because
+ * quoting a pin in an audit response counted as writing one.
+ */
+function withoutCode(content: string): string {
+  return content
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/~~~[\s\S]*?~~~/g, "")
+    .replace(/``[^`]*``/g, "")
+    .replace(/`[^`\n]*`/g, "");
+}
+
 function checkBrokenLinks(lytosDir: string): {
   findings: DiagnosticFinding[];
   filesChecked: number;
@@ -120,7 +142,7 @@ function checkBrokenLinks(lytosDir: string): {
   const linkPattern = /\[([^\]]*)\]\((?!https?:\/\/|mailto:)([^)]+)\)/g;
 
   for (const filePath of mdFiles) {
-    const content = readFileSync(filePath, "utf-8");
+    const content = withoutCode(readFileSync(filePath, "utf-8"));
     const relFile = relative(lytosDir, filePath);
     filesChecked++;
 
