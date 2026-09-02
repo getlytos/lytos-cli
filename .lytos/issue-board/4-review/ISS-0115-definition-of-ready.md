@@ -8,8 +8,8 @@ complexity: standard
 domain: [cli, method]
 skill: 
 skills_aux: []
-status: 3-in-progress
-branch: chore/ISS-0126-translate-live-fiches-to-english
+status: 4-review
+branch: feat/ISS-0115-ready-checks-what-it-documents
 depends: []
 created: 2026-08-09
 updated: 2026-08-31
@@ -164,6 +164,55 @@ high-severity vulnerabilities.
 
 ### To fix before next review
 - [x] Land the previous Ready-section correction on the declared branch, or update the declared branch. — *repointed to `chore/ISS-0126-translate-live-fiches-to-english`, which contains `5ae3e05`; the branch was stale, not the work*
-- [ ] Enforce the documented scope and constraints criteria, proportionally by issue type if that is the intended policy, with regressions.
-- [ ] Parse the Ready section by heading level and require a non-empty out-of-scope declaration.
-- [ ] Make the mandatory format and dependency-audit gates green.
+- [x] Enforce the documented scope and constraints criteria, proportionally by issue type if that is the intended policy, with regressions. — *proportional by `effort`: XS/S owe out-of-scope, M+ owe scope and constraints too*
+- [x] Parse the Ready section by heading level and require a non-empty out-of-scope declaration. — *both fixed, with the emphasis-stripping the bare-label case needed*
+- [x] Make the mandatory format and dependency-audit gates green. — *`format:check` clean, `npm audit --omit=dev` at 0; dev-side advisories are ISS-0143*
+
+## Response to audit — 2026-08-31
+
+Both defects accepted. The first was the gap between what the rules say and what the analyzer
+checked; the second was two parser bugs in the same twenty lines.
+
+### 1. Scope and constraints were documented and unchecked
+
+The audit was exact: `analyzeReady()` checked risk, a machine DoD, and the *words* "out of scope".
+`default-rules.md` says a Ready section states **four** things, `issue-feature.md` asks for all
+four, and an issue with neither scope nor constraints was loop-eligible.
+
+Enforced now, **proportionally by `effort`** — which is the policy the templates already
+implement, not a new one:
+
+| `effort` | Ready owes |
+|---|---|
+| XS, S | out-of-scope + `risk:` — `issue-task.md`'s two lines |
+| M and above | scope, constraints, out-of-scope + `risk:` — `issue-feature.md`'s form |
+| unstated | the full form — for an entry gate, an unstated field is not a licence to ask for less |
+
+`effort` rather than `type` on purpose: an `L` fix deserves the same specification as an `L`
+feature, and it is size, not category, that decides whether the form earns its cost.
+
+**Measured before shipping, on the 50 live fiches**: **zero** issues that are ready today become
+not-ready. Every M-or-larger fiche carrying a Ready section already declares scope and constraints
+— the rule was being followed by hand and simply not enforced. That number was the deciding
+argument for `effort` over a stricter or looser threshold; a hardening that silently blocked half
+the backlog would have been a different decision, and would have needed to be your call.
+
+### 2. Two parser bugs
+
+- **The section stopped at every heading.** A `### Boundaries` subheading inside `## Ready` ended
+  the section that was about to declare out-of-scope — a fiche read as *not ready* for being more
+  structured, not less. It now closes only on a heading at the Ready level or above.
+- **A label with no value satisfied the criterion.** `Out of scope:` passed: the words were there,
+  the boundary was not. The label must open the line — so a passing mention inside a sentence no
+  longer counts — and something must follow it. Emphasis marks are stripped for that emptiness
+  test, because `- **Out of scope:**` leaves `:**` behind, and two asterisks are not a boundary.
+  That case was caught by its own regression failing first.
+
+### 3. Documentation
+
+`default-rules.md` said *"on an XS task, Ready is two lines"* — true but not decidable. Both copies
+now name the `effort` threshold, the unstated-effort stance, the gap codes `lyt next` and
+`lyt lint` report, and the two parser rules. A rule a reader cannot apply the same way the tool
+does is the drift this issue exists to prevent.
+
+366 tests green.

@@ -155,7 +155,14 @@ A `## Ready` section states four things: **scope** (one line), **constraints**, 
 the frontmatter. `npx lyt lint` flags sprint issues that aren't ready, and `npx lyt next` refuses
 to hand one to an agent (reason `not-ready`).
 
-Keep it proportional: on an XS task, Ready is two lines, not a form. The point is to catch
+Keep it proportional, and the threshold is `effort`: at **XS or S**, Ready is out-of-scope plus
+`risk:` — two lines, not a form. At **M and above**, it also states scope and constraints, which
+is what `issue-feature.md` asks for. An issue with no `effort` gets the full form: for an entry
+gate, an unstated field is not a licence to ask for less. `lyt next` and `lyt lint` report the
+missing pieces by name (`no-scope`, `no-constraints`, `no-out-of-scope`).
+
+A label with no value does not count — `Out of scope:` with nothing after it is the words without
+the boundary — and the declaration only counts inside the `## Ready` section, where it binds. The point is to catch
 ambiguity before it becomes a wasted session — not to add ceremony. An agent that hits ambiguity
 mid-work will park the issue (`npx lyt park ISS-XXXX --reason ambiguous-spec`) rather than guess;
 a high rate of `ambiguous-spec` parks is a signal that specification upstream is too thin, not
