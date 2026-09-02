@@ -418,6 +418,44 @@ schema_version: 2
     expect(schemaFindings[0].file).toContain("ISS-0001-v1.md");
   });
 
+  it("does not read a link quoted as code as a link (ISS-0145)", () => {
+    fixture = createEmptyFixture();
+    createValidLytos(fixture.cwd);
+    writeFileSync(
+      resolve(fixture.cwd, ".lytos/issue-board/1-backlog/ISS-0500-quoting.md"),
+      [
+        "---",
+        "id: ISS-0500",
+        'title: "Quoting links"',
+        "status: 1-backlog",
+        "created: 2026-09-02",
+        "---",
+        "",
+        "# ISS-0500 — Quoting links",
+        "",
+        "## Context",
+        "",
+        "Inline example: `[ISS-0079](ISS-0079-that-does-not-exist.md)` is dead from here.",
+        "",
+        "```markdown",
+        "[another](also-missing.md)",
+        "```",
+        "",
+        "And a real one: [really missing](really-missing.md).",
+        "",
+      ].join("\n")
+    );
+
+    const data = JSON.parse(run("doctor --json", fixture.cwd).stdout);
+    const links = data.findings.filter(
+      (f: { category: string; file: string }) =>
+        f.category === "broken-link" && f.file.includes("ISS-0500")
+    );
+    // The quoted examples are documentation; only the real link is a defect.
+    expect(links).toHaveLength(1);
+    expect(links[0].message).toContain("really-missing.md");
+  });
+
   it("reports an incomplete stack contract — a contract nobody reads is not a contract (ISS-0107)", () => {
     fixture = createEmptyFixture();
     createValidLytos(fixture.cwd);
