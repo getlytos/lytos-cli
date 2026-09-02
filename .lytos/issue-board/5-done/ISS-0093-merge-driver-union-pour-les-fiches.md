@@ -1,6 +1,6 @@
 ---
 id: ISS-0093
-title: Merge driver « union de sections » pour les fiches d'issues
+title: The "union of sections" merge driver for issue fiches
 type: feat
 priority: P1-high
 effort: M
@@ -16,27 +16,27 @@ updated: 2026-08-10
 schema_version: 2
 completed_at: 2026-08-10
 ---
-# ISS-0093 — Les fiches d'issues ne doivent plus produire de conflits de merge
+# ISS-0093 — Issue fiches must stop producing merge conflicts
 
-## Retour terrain (projet immo, nuit du 03 au 04/08)
+## Field feedback (immo project, night of 03–04/08)
 
-Deux conflits de merge sur des fiches en une seule nuit, résolus à la main. Cause structurelle :
-les fiches vivent en APPEND (réponses d'audit, tranches livrées, journaux) — deux branches qui
-ajoutent chacune une section à la même fiche entrent en conflit alors que **l'union des deux est
-toujours la bonne résolution**.
+Two merge conflicts on fiches in a single night, both resolved by hand. The cause is structural:
+fiches live by APPEND (audit responses, delivered slices, logs) — two branches each adding a
+section to the same fiche conflict, even though **the union of the two is always the right
+resolution**.
 
-## Le geste
+## The gesture
 
-`lyt init` (et `lyt doctor` en contrôle) installe un merge driver git déclaré par `.gitattributes`
-sur `.lytos/issue-board/**/*.md` : frontmatter fusionné champ à champ (conflit réel si le MÊME champ
-diverge — c'est le seul cas qui mérite un humain), corps fusionné par union ordonnée des sections
-`##` ajoutées. Implémentation : sous-commande cachée `lyt _merge-issue %O %A %B` + config git posée
-par init.
+`lyt init` (with `lyt doctor` checking it) installs a git merge driver, declared through
+`.gitattributes` on `.lytos/issue-board/**/*.md`: the frontmatter is merged field by field (a real
+conflict only when the SAME field diverges — the one case that deserves a human), and the body is
+merged as an ordered union of the appended `##` sections. Implementation: a hidden subcommand
+`lyt _merge-issue %O %A %B` plus the git config that `init` writes.
 
-- [x] Driver : union des sections de corps, fusion champ à champ du frontmatter
-- [x] `lyt init` pose .gitattributes + git config ; `lyt doctor` vérifie leur présence
-- [x] Tests : append//append (auto), même champ modifié (conflit maintenu), section réécrite des
-      deux côtés (conflit maintenu — une réécriture n'est pas un append)
+- [x] Driver: union of body sections, field-by-field frontmatter merge
+- [x] `lyt init` writes `.gitattributes` + git config; `lyt doctor` checks they are there
+- [x] Tests: append//append (automatic), same field edited (conflict kept), a section rewritten on
+      both sides (conflict kept — a rewrite is not an append)
 
 ## Audit — 2026-08-10
 

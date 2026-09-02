@@ -1,6 +1,6 @@
 ---
 id: ISS-0080
-title: Inclure BOARD.md dans le .gitignore par défaut du scaffold lyt init
+title: Include BOARD.md in the default .gitignore of the lyt init scaffold
 type: refactor
 priority: P2-normal
 effort: XS
@@ -21,36 +21,36 @@ review_at: 2026-06-13
 schema_version: 2
 completed_at: 2026-06-14
 ---
-# ISS-0080 — Scaffold `lyt init` inclut BOARD.md dans le gitignore
+# ISS-0080 — The `lyt init` scaffold gitignores BOARD.md
 
 ## Context
 
-[`ISS-0079`](ISS-0079-gitignore-board-md.md) applique la décision [ADR-0010](https://github.com/getlytos/lytos-app/blob/main/.lytos/adr/ADR-0010-board-md-derived-artifact.md) au repo lytos-cli lui-même. Cette issue propage la décision au **scaffold distribué** : `method/` directory qui sert de modèle à `lyt init`.
+[`ISS-0079`](ISS-0079-gitignore-board-md.md) applies the [ADR-0010](https://github.com/getlytos/lytos-app/blob/main/.lytos/adr/ADR-0010-board-md-derived-artifact.md) decision to the lytos-cli repository itself. This issue propagates the decision to the **distributed scaffold**: the `method/` directory that `lyt init` copies from.
 
-Aujourd'hui, tout nouveau projet créé via `lyt init` se retrouve avec `BOARD.md` trackée par défaut — donc va revivre le même pattern de conflit à la première PR multi-modif. C'est dommage que la décision durable acte par ADR-0010 ne soit pas embarquée dans la valeur par défaut.
+Today every new project created through `lyt init` gets `BOARD.md` tracked by default — and will therefore relive the same conflict pattern on its first multi-change PR. It would be a shame for a durable decision recorded in an ADR not to be baked into the default.
 
 ## Proposed solution
 
-Deux modifications dans `method/` :
+Two changes in `method/`:
 
-1. Si le scaffold inclut un `.gitignore` par défaut → ajouter l'entry `.lytos/issue-board/BOARD.md`. Si pas de `.gitignore` dans le scaffold → en créer un avec cette entry + les classiques (`node_modules/`, `dist/`, `.DS_Store`, etc. selon ce que les projets typiques cibles voudraient).
-2. Inclure le `README.md` de `.lytos/issue-board/` (le même que lytos-app fournit) qui oriente le visiteur GitHub.
+1. If the scaffold ships a default `.gitignore` → add the `.lytos/issue-board/BOARD.md` entry. If it ships none → create one with that entry plus the usual suspects (`node_modules/`, `dist/`, `.DS_Store`, …, according to what typical target projects would want).
+2. Include the `.lytos/issue-board/README.md` (the same one lytos-app provides) that orients a GitHub visitor.
 
-Test : `lyt init` dans un dossier vide → vérifier que BOARD.md est gitignoré dès le départ.
+Test: `lyt init` in an empty folder → check that BOARD.md is gitignored from the start.
 
 ## Definition of done
 
-- [x] `method/.gitignore` mis à jour avec `issue-board/BOARD.md` (chemin relatif à `.lytos/`, là où ce gitignore atterrit une fois scaffoldé — pas `.lytos/issue-board/BOARD.md`).
-- [x] `method/issue-board/README.md` ajouté (version générique) + entrée `REMOTE_FILES` dans `src/lib/scaffold.ts` pour qu'il soit copié au `lyt init`.
-- [x] Tests `init.test.ts` vérifient : `lyt init` produit un `.lytos/.gitignore` contenant `issue-board/BOARD.md` + un README présent et orienté.
-- [x] Test empirique : couvert par le test ci-dessus — le `.gitignore` généré contient l'entry, donc un repo créé via `lyt init` ne tracke pas BOARD.md dès le départ.
+- [x] `method/.gitignore` updated with `issue-board/BOARD.md` (the path relative to `.lytos/`, where this gitignore lands once scaffolded — not `.lytos/issue-board/BOARD.md`).
+- [x] `method/issue-board/README.md` added (generic version) plus a `REMOTE_FILES` entry in `src/lib/scaffold.ts` so that `lyt init` copies it.
+- [x] `init.test.ts` checks that `lyt init` produces a `.lytos/.gitignore` containing `issue-board/BOARD.md`, and a README that is present and orienting.
+- [x] Empirical test: covered by the above — the generated `.gitignore` carries the entry, so a repository created through `lyt init` does not track BOARD.md from the start.
 
 ## Relevant files
 
-- `method/.gitignore` (créé ou modifié)
-- `method/.lytos/issue-board/README.md` (nouveau)
-- `tests/commands/init.test.ts` (étendu)
-- `src/lib/scaffold.ts` (si la liste des fichiers du scaffold est codée explicitement plutôt que copiée via `cp -r`)
+- `method/.gitignore` (created or modified)
+- `method/.lytos/issue-board/README.md` (new)
+- `tests/commands/init.test.ts` (extended)
+- `src/lib/scaffold.ts` (if the scaffold's file list is coded explicitly rather than copied with `cp -r`)
 
 ## Notes
 
