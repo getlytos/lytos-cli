@@ -72,18 +72,78 @@ ambiguous-spec" → issues are under-specified before the loop, not by it).
 
 ### 4. DoD items declare their verification mode
 
-Each Definition-of-Done item declares how it is verified: `verify: auto` or
-`verify: human`. This is the single source that splits the review report:
+Each Definition-of-Done item declares **who or what verifies it**. There are three
+modes, and the choice between them is not a matter of taste:
 
-- `auto` items → **gates** (test / coverage floor / E2E / typecheck / lint / build).
-  A gate can say NO mechanically, independent of the model's confidence. A self-
-  ticked checkbox is worth zero in a loop.
-- `human` items → the **review checklist** (§6).
+| Mode | Verified by | Routed to |
+|------|-------------|-----------|
+| `verify: auto` | A command that exits non-zero — test, typecheck, lint, build, E2E, or a plain assertion over a file | the **gates** |
+| `verify: reviewer` | The adversarial reviewer model (§5), against a rubric written in the quality kit (ADR-0005) | the **reviewer's verdict** |
+| `verify: human` | A person, because nothing else can | the **review checklist** (§6) |
 
-An item is therefore in one of three states: auto-verified ✓, auto-verified ✗
-(failed → blocks review), or human-only (routed to the checklist). "No hallucination"
-and "no interpretation" are **not** achievable by instruction — only by this net:
-gates that block, park-on-ambiguity, and adversarial cross-model review.
+**The rule that decides the mode — an item is `human` only when it is genuinely
+unverifiable by an agent or by an E2E run.** Taste, product intent, "would a
+newcomer understand this", "is this default sane for real projects" qualify. "The
+file contains X", "the command is documented", "the section exists" never do: those
+are assertions, and an assertion nobody wrote is not a human judgment — it is a
+queue.
+
+An unmarked item defaults to `auto` and is flagged as unqualified: the default must
+be the mode that blocks, never the mode that waits on a person.
+
+A gate can say NO mechanically, independent of the model's confidence. A self-ticked
+checkbox is worth zero in a loop, which is why an auditing model may tick an `auto`
+item, may rule on a `reviewer` item, and may **never** tick a `human` one — nor
+return NO_GO merely because a `human` box is empty (§5, `GO_PENDING_HUMAN`).
+
+Human items are themselves risk-tiered (ADR-0007): blocking on `medium`/`high`,
+advisory on `low`. Rigor follows blast radius on the human side of the gate exactly
+as it does on the machine side — a `human` item on a typo is not a reason to stop
+the line.
+
+"No hallucination" and "no interpretation" are **not** achievable by instruction —
+only by this net: gates that block, park-on-ambiguity, and adversarial cross-model
+review.
+
+#### Field revision — 2026-08-10
+
+This section originally defined **two** modes, `auto | human`, with everything
+non-mechanical falling to `human`. Sprints #04–#06 built the loop and its gate on
+that definition, and then we ran the gate for real on this repo. It did not scale.
+
+At the review gate the board held **81 `auto` items against 34 `human`** — close to
+a third of the whole Definition-of-Done surface waiting on one person. Classifying
+those 34 against the criterion above was the finding: about ten were genuinely
+human, six were rulings a model could make against a rubric, and **seventeen were
+assertions — most of them a `grep`**. "The template documents the convention." "The
+principle is stated in the manifest." On the same day, ISS-0113 shipped a test that
+fails when a CLI verb has no `--help` example, while the identical shape — "the
+README documents `lyt journal`" — was filed as human judgment.
+
+Two causes, both structural rather than careless:
+
+1. **The taxonomy had two values where the domain has three.** ADR-0005's quality
+   kit already separated `gate` / `reviewer` / `human`; the DoD marker had nowhere
+   to put "a model can rule on this", so it fell to `human` by default. The same
+   design error appeared independently on audit verdicts, where a missing third
+   verdict made every issue carrying a `human` item unpassable.
+2. **ADR-0007 claimed to route human judgment by risk, and nothing did.** The human
+   checklist was assembled with no risk filter at all; the matrix applied to
+   machine gates only. Proportionality was enforced for machines and unenforced for
+   humans.
+
+Writing the seventeen assertions as tests dropped the review column's human queue
+from twelve items to six, without the `reviewer` mode being implemented yet — the
+measured half of the estimate above.
+
+The two-value version is recorded here rather than quietly dropped: it is the reason the third
+mode exists, and without it someone re-proposes `auto | human` in six months on the
+grounds that it is simpler. It is simpler. It also puts a person in the loop for
+every string comparison in the repo.
+
+*Implementation: ISS-0127. This ADR was `Proposed` throughout, never accepted, so
+§4 is revised in place rather than superseded — the revision is the proposal
+surviving contact with its own dogfooding, which is what `Proposed` is for.*
 
 ### 5. Adversarial cross-model review
 
