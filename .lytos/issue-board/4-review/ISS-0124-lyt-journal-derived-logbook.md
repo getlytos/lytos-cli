@@ -283,3 +283,29 @@ it, and the README announced "grouped by sprint".
 - **README corrected** to say month grouping and to document `--write`.
 
 359 tests green; format, lint, typecheck, secrets scan clean.
+
+## Defect found after landing — 2026-09-02
+
+`--write` was merged, and `lyt doctor` immediately reported **eight broken links in
+`.lytos/JOURNAL.md`**. Not in the links the journal builds — those were right — but in the ones it
+**copies**.
+
+The one-line "why" excerpt is lifted verbatim from a fiche's Context, inline markdown links
+included, and those links were written relative to the fiche's own directory.
+`[ISS-0079](ISS-0079-gitignore-board-md.md)` is a valid sibling link from `5-done/` and a dead one
+from `.lytos/`. Printing to stdout hid it: nothing resolved the paths. Writing a file at a
+different depth turned every one of them into a broken link, and the JSON the App consumes carried
+the same dead targets all along.
+
+The excerpt now flattens inline links to their label — the words are kept, the target dropped. A
+teaser is not a place to navigate from, and the entry's own `[detail]` link, which the journal
+*builds* rather than copies, is the way in. Fixed in `firstWhy()` so stdout, `--write` and `--json`
+share one rendering, which the existing test already asserts.
+
+Worth recording as method evidence: this is the third time in two days that the project's own
+tooling caught a defect the implementer had just written — `lyt lint` on ISS-0141's DoD marker,
+`lyt gates` on ISS-0114's own pin extraction, and now `lyt doctor` on this. Each time the defect
+was invisible until an artifact was produced and re-read. Shipping the file is what made the links
+resolvable, and therefore checkable.
+
+393 tests green; doctor back to 0 errors.
