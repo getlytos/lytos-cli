@@ -15,6 +15,8 @@ import {
   unresolvedGateRefs,
   validateStack,
   unlistedDependencies,
+  gateCoverage,
+  pinnedGateRefs,
   type QualityKit,
 } from "../../src/lib/quality.js";
 import { analyzeDod } from "../../src/lib/dod.js";
@@ -115,18 +117,20 @@ describe("unresolvedGateRefs", () => {
   const kit: QualityKit = { gates: parseGates(KIT_MD), stack: null };
 
   it("finds DoD gate refs absent from the kit", () => {
-    const content = "- [ ] x — verify: auto:tests-unit\n- [ ] y — verify: auto:ghost-gate\n";
+    const content = "## Definition of done\n\n- [ ] x — verify: auto:tests-unit\n- [ ] y — verify: auto:ghost-gate\n";
     expect(unresolvedGateRefs(content, kit)).toEqual(["ghost-gate"]);
   });
 
   it("returns nothing when all refs resolve", () => {
-    expect(unresolvedGateRefs("- [ ] x — verify: auto:deps-audit", kit)).toEqual([]);
+    expect(
+      unresolvedGateRefs("## Definition of done\n\n- [ ] x — verify: auto:deps-audit", kit)
+    ).toEqual([]);
   });
 
   it("agrees with the DoD parser on the same item — one syntax, two readers", () => {
     // The divergence this guards against: the ref resolver read `auto:<id>` while
     // the DoD parser classified the very same item as unqualified.
-    const item = "- [ ] Dependency audit clean — verify: auto:deps-audit";
+    const item = "## Definition of done\n\n- [ ] Dependency audit clean — verify: auto:deps-audit";
     expect(unresolvedGateRefs(item, kit)).toEqual([]);
     expect(analyzeDod(`## Definition of done\n\n${item}\n`).auto).toBe(1);
   });
@@ -297,5 +301,129 @@ ${deps}
   it("stays silent on a project that is not npm-shaped — the kit is language-agnostic", () => {
     dir = mkdtempSync(join(tmpdir(), "lytos-stack-"));
     expect(unlistedDependencies(dir, stack("- commander"))).toEqual([]);
+  });
+});
+
+describe("gateCoverage — flag the gates nothing carries (ISS-0114)", () => {
+  const kit: QualityKit = {
+    gates: [
+      { id: "tests-unit", kind: "gate", tiers: ["low", "medium", "high"], tool: "npm test" },
+      { id: "over-engineering", kind: "reviewer", tiers: ["medium", "high"], tool: "rubric:over-engineering" },
+      { id: "product-intent", kind: "human", tiers: ["high"], tool: "checklist:intent" },
+    ],
+    stack: null,
+  };
+
+  it("flags a reviewer gate no DoD item pins — no command will ever run it", () => {
+    const dod = "## Definition of done\n\n- [ ] Tests written — verify: auto\n";
+    const c = gateCoverage(gatesForRisk(kit, "medium"), dod);
+    expect(c.uncarried.map((g) => g.id)).toEqual(["over-engineering"]);
+  });
+
+  it("does not flag an unpinned machine gate — CI runs it whether the DoD names it or not", () => {
+    const dod = "## Definition of done\n\n- [ ] Tests written — verify: auto\n";
+    const c = gateCoverage(gatesForRisk(kit, "medium"), dod);
+    expect(c.unpinnedButRun.map((g) => g.id)).toEqual(["tests-unit"]);
+    expect(c.uncarried.map((g) => g.id)).not.toContain("tests-unit");
+  });
+
+  it("counts a gate as carried once a DoD item pins it, in any verification mode", () => {
+    const dod = `## Definition of done
+
+- [ ] No over-engineering — verify: reviewer:over-engineering
+- [ ] Intent is right — verify: human:product-intent
+- [ ] Tests — verify: auto:tests-unit
+`;
+    const c = gateCoverage(gatesForRisk(kit, "high"), dod);
+    expect(c.uncarried).toEqual([]);
+    expect(c.pinned.map((g) => g.id).sort()).toEqual([
+      "over-engineering",
+      "product-intent",
+      "tests-unit",
+    ]);
+  });
+
+  it("flags a mandatory human gate at high that nothing carries", () => {
+    const dod = "## Definition of done\n\n- [ ] Tests — verify: auto:tests-unit\n";
+    const c = gateCoverage(gatesForRisk(kit, "high"), dod);
+    expect(c.uncarried.map((g) => g.id).sort()).toEqual([
+      "over-engineering",
+      "product-intent",
+    ]);
+  });
+});
+
+describe("pinnedGateRefs — the pin is the gate id, whatever mode carries it (ISS-0114)", () => {
+  it("reads a pin from auto, reviewer and human alike", () => {
+    const content = `## Definition of done
+
+- [ ] a — verify: auto:secrets-scan
+- [ ] b — verify: reviewer:over-engineering
+- [ ] c — verify: human:product-intent
+- [ ] d — verify: auto
+- [ ] e — verify: human
+`;
+    expect(pinnedGateRefs(content).sort()).toEqual([
+      "over-engineering",
+      "product-intent",
+      "secrets-scan",
+    ]);
+  });
+
+  it("reports an unresolvable pin whatever mode wrote it — a renamed gate orphans them all", () => {
+    const kit: QualityKit = {
+      gates: [{ id: "tests-unit", kind: "gate", tiers: ["low"], tool: "npm test" }],
+      stack: null,
+    };
+    const content = "## Definition of done\n\n- [ ] x — verify: human:gate-that-left\n";
+    expect(unresolvedGateRefs(content, kit)).toEqual(["gate-that-left"]);
+  });
+});
+
+describe("pinnedGateRefs — prose about a pin is not a pin (ISS-0114)", () => {
+  /**
+   * Found by dogfooding, on the fiche that introduced the flag. Writing
+   * `verify: reviewer:over-engineering` inside an audit response — explaining
+   * what a DoD item *should* say — silenced the very flag that was reporting
+   * that gate as carried by nobody. The same shape ready.ts guards against: a
+   * stray phrase in a note must not satisfy a contract.
+   */
+  it("ignores a pin quoted outside the Definition of done", () => {
+    const fiche = `# ISS-0000 — Something
+
+## Response to audit
+
+Add a DoD item pinning it — \`— verify: reviewer:over-engineering\` — or nobody
+discharges it.
+
+## Definition of done
+
+- [ ] Tests written — verify: auto
+`;
+    expect(pinnedGateRefs(fiche)).toEqual([]);
+  });
+
+  it("reads the pin once it is actually in the Definition of done", () => {
+    const fiche = `# ISS-0000 — Something
+
+## Definition of done
+
+- [ ] No over-engineering — verify: reviewer:over-engineering
+`;
+    expect(pinnedGateRefs(fiche)).toEqual(["over-engineering"]);
+  });
+
+  it("ignores a pin inside a fenced block — a code sample is documentation", () => {
+    const fiche = `# ISS-0000
+
+## Definition of done
+
+\`\`\`
+- [ ] example — verify: auto:tests-unit
+\`\`\`
+
+- [ ] real item — verify: auto
+`;
+    expect(pinnedGateRefs(fiche)).toEqual([]);
   });
 });

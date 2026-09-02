@@ -17,6 +17,7 @@ risk matrix (ADR-0007) selects from here.*
 | tests-negative | gate | medium,high | error-path tests (bad input → exit code + message) |
 | doc-L3 | gate | medium,high | frontmatter schema doc ↔ parser (ADR-0001) |
 | over-engineering | reviewer | medium,high | rubric:over-engineering (diff vs effort, new deps) |
+| architecture-review | reviewer | high | rubric:architecture (boundaries, coupling, reversibility) |
 | runbook-smoke | gate | high | doc L4 runbook replayed in CI (ISS-0120) |
 | product-intent | human | high | checklist:intent |
 

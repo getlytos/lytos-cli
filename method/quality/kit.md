@@ -33,8 +33,18 @@ survivable. Choose deliberately, and write the reason next to the row.
 | migration-check | gate | high | <backward-compat / migration> |
 | over-engineering | reviewer | medium,high | rubric:over-engineering |
 | security-review | reviewer | high | rubric:security |
+| architecture-review | reviewer | high | rubric:architecture |
 | screen-reader | human | high | checklist:a11y |
 | product-intent | human | high | checklist:intent |
+
+*Two promises of ADR-0007 §1 are deliberately **not** rows here, and saying so beats shipping
+rows nobody can bind. **Doc levels L1 and L2** wait on ISS-0116, which makes documentation levels
+first-class; a `doc-L1` row today would have no honest `tool` and would sit in the table looking
+enforced — the exact failure this kit exists to prevent. **`screen-reader` stays at `high`,
+not `medium`**: it is a `human` gate, and making it mandatory at medium stops every medium change
+for a person, which is the opposite of rigor following blast radius. Medium-tier UI work is
+covered by `ds-conformance`, a machine gate. Tighten either on a project where the blast radius
+justifies it — that is what tightening is for.*
 
 *Edit this table to your stack: fill the `tool` column, add or remove gates, tighten the
 tiers (a project may only tighten — never loosen below `low`). The six `low` gates are the

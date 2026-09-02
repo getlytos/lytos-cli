@@ -20,6 +20,7 @@
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
 import { parseFrontmatter, type FrontmatterValue } from "./frontmatter.js";
+import { dodSection } from "./dod.js";
 
 export type GateKind = "gate" | "reviewer" | "human";
 export type RiskTier = "low" | "medium" | "high";
@@ -355,12 +356,68 @@ export function unresolvedGateRefs(content: string, kit: QualityKit): string[] {
   // comparing a lowercased ref against a raw id makes those two permanently
   // unresolvable and every DoD item pinning them a false positive.
   const ids = new Set(kit.gates.map((g) => g.id.toLowerCase()));
+  return pinnedGateRefs(content).filter((id) => !ids.has(id));
+}
+
+/**
+ * Every kit entry a fiche's DoD pins, lowercased.
+ *
+ * The pin is the gate id, whatever the verification mode carries it:
+ * `verify: auto:secrets-scan`, `verify: reviewer:over-engineering`,
+ * `verify: human:product-intent`. Only `auto:` was recognised before, which
+ * left the two kinds that most need carrying — `reviewer` and `human`, the ones
+ * no command will ever run — with no way to say a DoD item discharges them.
+ */
+export function pinnedGateRefs(content: string): string[] {
   const refs = new Set<string>();
-  const re = /verify:\s*auto:([a-z0-9][a-z0-9-]*)/gi;
+  const re = /verify:\s*(?:auto|reviewer|human):([a-z0-9][a-z0-9-]*)/gi;
   let m: RegExpExecArray | null;
-  while ((m = re.exec(content)) !== null) {
-    const id = m[1].toLowerCase();
-    if (!ids.has(id)) refs.add(id);
-  }
+  // The DoD section only. A fiche quoting the pin syntax in prose — an audit
+  // response explaining what to add, say — must not count as having added it.
+  const scope = dodSection(content);
+  while ((m = re.exec(scope)) !== null) refs.add(m[1].toLowerCase());
   return [...refs];
+}
+
+/** A mandatory gate, and whether the issue's DoD says anything about it. */
+export interface GateCoverage {
+  /** Mandatory at this risk and pinned by a DoD item. */
+  pinned: QualityGate[];
+  /** Mandatory, unpinned, but machine-run: CI executes it either way. */
+  unpinnedButRun: QualityGate[];
+  /**
+   * Mandatory, unpinned, and nothing executes it. Nobody is carrying these:
+   * a `reviewer` or `human` gate absent from the DoD is a judgment the review
+   * packet will never ask for.
+   */
+  uncarried: QualityGate[];
+}
+
+/**
+ * What the issue's Definition of Done says about the gates its risk makes
+ * mandatory — the "flags the missing ones" half of ISS-0114's gesture.
+ *
+ * The asymmetry is the whole value. An unpinned `gate` is not a defect: CI runs
+ * `npm test` whether or not a DoD item names it, and ISS-0107 deliberately kept
+ * pins optional so one-off assertions can stay in Definitions of Done. An
+ * unpinned `reviewer` or `human` entry is different in kind — no command will
+ * ever run it, so if the DoD does not carry it, the gate is mandatory on paper
+ * and discharged by nobody.
+ */
+export function gateCoverage(
+  required: QualityGate[],
+  content: string
+): GateCoverage {
+  const pins = new Set(pinnedGateRefs(content));
+  const coverage: GateCoverage = {
+    pinned: [],
+    unpinnedButRun: [],
+    uncarried: [],
+  };
+  for (const gate of required) {
+    if (pins.has(gate.id.toLowerCase())) coverage.pinned.push(gate);
+    else if (gate.kind === "gate") coverage.unpinnedButRun.push(gate);
+    else coverage.uncarried.push(gate);
+  }
+  return coverage;
 }

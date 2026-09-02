@@ -8,8 +8,8 @@ complexity: heavy
 domain: [cli, method]
 skill: 
 skills_aux: []
-status: 3-in-progress
-branch: chore/ISS-0126-translate-live-fiches-to-english
+status: 4-review
+branch: feat/ISS-0114-flag-the-gates-nothing-carries
 depends: [ISS-0107]
 created: 2026-08-09
 updated: 2026-08-31
@@ -188,6 +188,78 @@ reports five high-severity vulnerabilities.
 
 ### To fix before next review
 - [x] Align the declared branch with the corrections being audited. — *repointed to `chore/ISS-0126-translate-live-fiches-to-english`, which contains `4dba6cc`; the branch was stale, not the work*
-- [ ] Implement detection/reporting of mandatory gates missing for an issue, with a regression that currently fails on a bare-auto DoD.
-- [ ] Align the shipped default tiers with the issue/ADR, or narrow those promises explicitly.
-- [ ] Make the mandatory format and dependency-audit gates green.
+- [x] Implement detection/reporting of mandatory gates missing for an issue, with a regression that currently fails on a bare-auto DoD. — *`gateCoverage()` + the flagged section in `lyt gates`, 9 regressions*
+- [x] Align the shipped default tiers with the issue/ADR, or narrow those promises explicitly. — *`architecture-review` added; doc-L1/L2 and a11y-at-medium narrowed with their reasons, next to the table*
+- [x] Make the mandatory format and dependency-audit gates green. — *`format:check` clean, `npm audit --omit=dev` at 0; dev-side advisories are ISS-0143*
+
+## Response to audit — 2026-08-31
+
+Both points accepted. The first was a promise the gesture made and the command never kept.
+
+### 1. "Flags the missing ones" — it did not, and now it does
+
+The audit was right: `lyt gates ISS-XXXX` listed the catalog rows selected by risk and exited,
+never once looking at the issue. The gesture's own sentence — *"resolves, for an issue, the list of
+gates due **and flags the missing ones**"* — had no implementation behind it.
+
+`gateCoverage()` compares the mandatory gates against the fiche's Definition of Done and sorts
+them three ways. **The asymmetry is the whole value**, and it is what keeps this from being noise:
+
+| | Flagged? | Why |
+|---|---|---|
+| pinned by a DoD item | no | carried |
+| unpinned, `kind: gate` | **no** | CI runs `npm test` whether or not a DoD item names it — and ISS-0107 deliberately kept pins optional so one-off assertions stay in DoDs |
+| unpinned, `reviewer` or `human` | **yes** | no command will ever run these; absent from the DoD, they are mandatory on paper and discharged by nobody |
+
+Flagging the machine gates too would have produced a warning on every issue in the repository,
+which is how a signal becomes wallpaper.
+
+One thing had to be fixed underneath: the pin syntax only recognised `auto:<id>`, so the two kinds
+that most need carrying had **no way to be pinned at all**. `verify: reviewer:over-engineering`
+and `verify: human:product-intent` now read as pins. This is not a taxonomy change — the mode
+still says who verifies; the pin just also names which kit entry the item discharges.
+
+Dogfooded on this board the moment it built: `lyt gates ISS-0114` flags `over-engineering` as
+carried by nothing, on this very fiche. It is right, and the fiche now says so.
+
+`lyt gates` stays read-only and exits 0. Flagging is not failing: this command reports, and
+turning it into a gate of its own is a decision with its own blast radius, not a side effect of
+fixing a report.
+
+### 2. The shipped tiers — one added, two narrowed on the record
+
+- **`architecture-review` (reviewer, high) added** to both `kit.md` copies. It was promised by the
+  gesture, absent from the table, and a reviewer rubric costs nothing to bind.
+- **Doc levels L1 and L2 — narrowed, not added.** ISS-0116 owns making documentation levels
+  first-class. A `doc-L1` row today would have no honest `tool`, and would sit in the table
+  *looking* enforced — precisely the failure `kit.md` opens by naming.
+- **`screen-reader` stays at `high`.** The gesture puts a11y at medium, but `screen-reader` is a
+  `human` gate: mandatory at medium, it stops every medium-risk change for a person. That is the
+  opposite of rigor following blast radius, on the fiche whose entire thesis is that rigor follows
+  blast radius. Medium-tier UI work is covered by `ds-conformance`, a machine gate. A project whose
+  blast radius justifies more can tighten — that is what tightening is for.
+
+Both narrowings are written next to the table in `method/quality/kit.md`, where the next reader
+meets them, not only here.
+
+### 3. The mandatory gates — green
+
+`format:check` clean; `npm audit --omit=dev --audit-level=high` at 0 vulnerabilities. The five
+high advisories the audit cited are dev-toolchain only: ISS-0143.
+
+### A defect this fiche caught on itself
+
+Writing the paragraph above — the one quoting \`verify: reviewer:over-engineering\` as the fix —
+**silenced the flag it was describing**. The pin resolver scanned the whole fiche, so prose *about*
+a pin counted as a pin, and `lyt gates ISS-0114` went quiet on the very gate it had just correctly
+reported.
+
+Exactly the shape `ready.ts:41` already guards against: a stray "out of scope" in a note used to
+make an issue *look* ready. Pin extraction is now scoped to the Definition of Done section, fences
+excluded, through a `dodSection()` helper shared with the DoD parser — one reader, one contract.
+
+Four existing tests had to change with it: they passed bare checklist lines with no DoD heading,
+which was testing an implementation shortcut rather than the contract. Three new cases cover the
+real behaviour — prose ignored, fenced sample ignored, actual DoD item read.
+
+383 tests green.
