@@ -24,6 +24,8 @@ import {
   validateKit,
   baselineViolations,
   unresolvedGateRefs,
+  validateStack,
+  unlistedDependencies,
 } from "./quality.js";
 
 export type DiagnosticSeverity = "error" | "warning" | "info";
@@ -551,6 +553,30 @@ function checkQualityKit(lytosDir: string): DiagnosticFinding[] {
       file: "quality/kit.md",
       message: `Loosened below the risk baseline: ${violation}`,
       fix: "Restore the gate at low,medium,high — tune tiers above the floor instead, or record the exception in an ADR",
+    });
+  }
+
+  // The stack contract (ISS-0107). It was parsed into a struct nothing read;
+  // a contract nobody consults is documentation wearing a gate's clothes.
+  for (const problem of validateStack(kit.stack)) {
+    findings.push({
+      severity: "warning",
+      category: "quality-kit",
+      file: "quality/stack.md",
+      message: `Incomplete stack contract: ${problem}`,
+      fix: "Fill the frontmatter (`lockfile:`, `docs_source:`) and list the runtime dependencies the project actually allows",
+    });
+  }
+
+  // What the contract promises in prose: "anything outside this list fails the
+  // dependency gate". Runtime deps only — dev tooling answers to deps-audit.
+  for (const dep of unlistedDependencies(join(lytosDir, ".."), kit.stack)) {
+    findings.push({
+      severity: "warning",
+      category: "quality-kit",
+      file: "package.json",
+      message: `Runtime dependency not allow-listed: ${dep}`,
+      fix: `Add \`- ${dep}\` to the "Allowed dependencies" section of quality/stack.md, or record the addition in an ADR and then list it`,
     });
   }
 

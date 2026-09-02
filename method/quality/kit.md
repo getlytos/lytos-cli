@@ -83,6 +83,9 @@ somebody's judgment.
 5. **Point the Definition of Done at it**: `- [ ] Secrets scan clean — verify: auto:secrets-scan`.
    `lyt doctor` flags a reference that resolves to no kit entry, so a renamed gate cannot quietly
    orphan the DoD items that depended on it.
+   **The pin is optional**: a bare `verify: auto` is a machine-checkable item no catalog gate
+   covers — an assertion written for one issue alone — and most DoD items are exactly that. What is
+   enforced is that a pin, once written, resolves.
 6. **Verify the wiring**: `lyt gates ISS-XXXX` lists what is mandatory for that issue's `risk`;
    `lyt doctor` validates the kit's structure and its baseline.
 

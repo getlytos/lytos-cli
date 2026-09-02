@@ -2,8 +2,9 @@
  * Unit tests for the quality kit (ADR-0005/0007, ISS-0107).
  */
 
-import { describe, it, expect } from "vitest";
-import { readFileSync } from "fs";
+import { describe, it, expect, afterEach } from "vitest";
+import { mkdtempSync, rmSync, writeFileSync, readFileSync } from "fs";
+import { tmpdir } from "os";
 import { join } from "path";
 import {
   parseGates,
@@ -12,6 +13,8 @@ import {
   gatesForRisk,
   baselineViolations,
   unresolvedGateRefs,
+  validateStack,
+  unlistedDependencies,
   type QualityKit,
 } from "../../src/lib/quality.js";
 import { analyzeDod } from "../../src/lib/dod.js";
@@ -191,5 +194,108 @@ describe("baselineViolations", () => {
     const problems = baselineViolations(kit(softened));
     expect(problems).toHaveLength(1);
     expect(problems[0]).toContain('downgraded to "human"');
+  });
+});
+
+describe("validateStack — a contract that is parsed and then ignored (ISS-0107)", () => {
+  const full = `---
+lockfile: package-lock.json
+docs_source: vendored
+---
+
+# Stack contract
+
+## Allowed dependencies
+
+- commander
+`;
+
+  it("passes a complete contract", () => {
+    expect(validateStack(parseStack(full))).toEqual([]);
+  });
+
+  it("reports a contract with no lockfile — it calls the lockfile truth and names no file", () => {
+    const problems = validateStack(parseStack(full.replace("package-lock.json", "")));
+    expect(problems.some((p) => p.includes("lockfile"))).toBe(true);
+  });
+
+  it("reports a missing docs_source — ADR-0005 §3 has nowhere to inject from", () => {
+    const problems = validateStack(parseStack(full.replace("docs_source: vendored", "docs_source: ")));
+    expect(problems.some((p) => p.includes("docs_source"))).toBe(true);
+  });
+
+  it("reports an allow-list still holding only the lyt init placeholder", () => {
+    const scaffold = full.replace(
+      "- commander",
+      "- <list your runtime dependencies here; anything outside this list fails the dependency gate>"
+    );
+    const problems = validateStack(parseStack(scaffold));
+    expect(problems.some((p) => p.includes("placeholder"))).toBe(true);
+  });
+
+  it("reports an empty allow-list — every dependency would be unlisted", () => {
+    const problems = validateStack(parseStack(full.replace("- commander\n", "")));
+    expect(problems.some((p) => p.includes("empty allow-list"))).toBe(true);
+  });
+
+  it("says nothing when there is no contract at all — absence is doctor's call, not this one's", () => {
+    expect(validateStack(null)).toEqual([]);
+  });
+});
+
+describe("unlistedDependencies — what stack.md promises in prose (ISS-0107)", () => {
+  let dir: string | undefined;
+
+  function project(pkg: Record<string, unknown>): string {
+    dir = mkdtempSync(join(tmpdir(), "lytos-stack-"));
+    writeFileSync(join(dir, "package.json"), JSON.stringify(pkg), "utf-8");
+    return dir;
+  }
+
+  afterEach(() => {
+    if (dir) rmSync(dir, { recursive: true, force: true });
+    dir = undefined;
+  });
+
+  const stack = (deps: string) =>
+    parseStack(`---
+lockfile: package-lock.json
+docs_source: vendored
+---
+
+## Allowed dependencies
+
+${deps}
+`);
+
+  it("flags a runtime dependency the contract never allowed", () => {
+    const root = project({ dependencies: { commander: "^12", lodash: "^4" } });
+    expect(unlistedDependencies(root, stack("- commander"))).toEqual(["lodash"]);
+  });
+
+  it("accepts a bullet that documents itself — the allow-list is prose too", () => {
+    const root = project({ dependencies: { commander: "^12" } });
+    expect(
+      unlistedDependencies(root, stack("- `commander` — the CLI framework (manifest)"))
+    ).toEqual([]);
+  });
+
+  it("ignores devDependencies — stack.md allow-lists what ships, deps-audit owns the toolchain", () => {
+    const root = project({
+      dependencies: { commander: "^12" },
+      devDependencies: { vitest: "^4", prettier: "^3" },
+    });
+    expect(unlistedDependencies(root, stack("- commander"))).toEqual([]);
+  });
+
+  it("never allow-lists the placeholder — a sentence is nobody's package name", () => {
+    const root = project({ dependencies: { commander: "^12" } });
+    const placeholder = stack("- <list your runtime dependencies here>");
+    expect(unlistedDependencies(root, placeholder)).toEqual(["commander"]);
+  });
+
+  it("stays silent on a project that is not npm-shaped — the kit is language-agnostic", () => {
+    dir = mkdtempSync(join(tmpdir(), "lytos-stack-"));
+    expect(unlistedDependencies(dir, stack("- commander"))).toEqual([]);
   });
 });
