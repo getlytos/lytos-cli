@@ -350,6 +350,14 @@ a red, but by an absence.
 So: put skip markers on **intermediate** commits, never on the last one before a
 merge. The head that gets merged must have been tested.
 
+**And beware writing about the marker.** GitHub scans the **whole commit
+message**, not just the subject line. A commit whose body *explains* a skip
+marker is itself skipped — this was measured twice in a row while documenting
+this very section. A marker pasted in by accident, from a quoted log or a copied
+changelog, silently suppresses CI, and the pull request shows no checks with no
+visible reason. Name it in prose without spelling it, and rely on the rule above
+rather than on everyone's care.
+
 Do not adopt a skip marker on the strength of this paragraph alone. Test it in
 your repository, and write down what you saw.
 

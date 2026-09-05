@@ -250,3 +250,32 @@ What `lyt` **can** answer from git alone is whether the current branch carries
 code at all — `git diff --name-only main...HEAD`. That is the question that
 decides whether a fiche commit is free or expensive, and it needs no forge. If a
 warning is ever wanted, that is its shape.
+
+## The trap the experiment fell into, twice
+
+The commit meant to restore CI — the one whose message said *"this commit
+deliberately carries no marker: it must run CI"* — **was itself skipped.**
+
+Its subject was clean. But its body quoted the marker while explaining the
+result, and:
+
+> **GitHub scans the whole commit message, not just the subject line.**
+
+Measured: marker on line 4 of the body, zero runs. Two commits in a row were
+skipped this way while documenting the feature.
+
+This is not a curiosity. It means:
+
+- **you cannot write about the marker in a commit message** without triggering
+  it — which is a real problem for any project whose commit messages explain
+  what they did;
+- a marker pasted into a message by accident — a quoted log, a copied
+  changelog, an issue body — silently suppresses CI, and nothing in the pull
+  request says why. It shows no checks, and the reason is four lines down in a
+  message nobody re-reads.
+
+The remedy in prose is to name it without spelling it: *"the skip marker"*, or
+split across a line break. The remedy in policy is the one already stated —
+**the head commit at merge time must have run CI**, whatever any message says.
+That rule holds even when the suppression was an accident, which is exactly why
+it is the rule worth having.
