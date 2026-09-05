@@ -1,6 +1,6 @@
 ---
 id: ISS-0148
-title: "The review loop is not free — every verdict is a CI run on someone's bill"
+title: The review loop is not free — every verdict is a CI run on someone's bill
 type: docs
 priority: P1-high
 effort: M
@@ -8,14 +8,16 @@ complexity: standard
 domain: [method, ci]
 skill: 
 skills_aux: []
-status: 1-backlog
-branch: 
+status: 3-in-progress
+branch: docs/ISS-0148-the-review-loop-is-not-free-every-verdic
 depends: []
 created: 2026-09-05
 schema_version: 2
 risk: low
+assignee: fredericgalline
+updated: 2026-09-05
+started_at: 2026-09-05
 ---
-
 # ISS-0148 — Every verdict is a CI run
 
 ## Context — measured, on a real bill

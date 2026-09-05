@@ -270,6 +270,96 @@ Configure branch protection rules to enforce this. A green CI is not a suggestio
 
 ---
 
+## The review loop is not free
+
+A gate you pass ten times costs ten times. Lytos iterates by design — every audit
+verdict, every response to a NO_GO, every `lyt move` and `lyt close` writes to
+`.lytos/**` — and each of those commits can trigger a full CI run on someone's
+bill.
+
+Measured on a real project: one pull request, **three of its five CI runs fired on
+commits touching only `.lytos/**`**. At 32 billed minutes per run, that is roughly
+96 minutes of CI for editing markdown. The same account exhausted its entire
+monthly Actions allowance in five days.
+
+### The invariant
+
+> **The number of CI runs equals the number of code iterations, never the number
+> of review rounds.**
+
+A round that finds a code defect deserves a run. A round that finds a wording
+problem, a stale frontmatter field or a missing verdict does not — none of them
+can change what the CI tests.
+
+### The ordering that holds it
+
+| | step |
+|---|---|
+| 1 | work locally, and verify locally |
+| 2 | **one push**; the PR opens, CI runs **once** |
+| 3 | `lyt review` — the branch is on `origin` and green |
+| 4 | GO → `lyt close` → fiche commit → merge |
+
+Step 2 satisfies the traceability requirement **for free**: `lyt review`'s
+portable prompt needs the branch on `origin` so an independent auditor — a fresh
+session, possibly a fresh clone — can fetch it. Putting the push there costs
+nothing, instead of fighting the constraint.
+
+**Do not invert it.** Closing on local evidence and opening the PR afterwards is
+tempting, and it is wrong wherever your local toolchain is narrower than CI. One
+project's workstation ran PHP 8.4 while its matrix tested 7.4 and 8.3 — *neither*
+supported version. `lyt close` sets `completed_at` and moves the file to
+`5-done`; a red run afterwards leaves a closed fiche and a broken branch.
+
+The review audits an **already-green** branch. It does not trigger CI.
+
+### `paths-ignore` will not save you
+
+The obvious defence does not work:
+
+```yaml
+pull_request:
+  paths-ignore:
+    - '.lytos/**'
+```
+
+On `pull_request`, GitHub evaluates path filters against the **whole PR diff**,
+not the commit just pushed. A pull request that carries code re-runs everything
+on every push, whatever that push touched. The filter only spares pull requests
+that are documentation **in their entirety**.
+
+### Skip markers, and what is actually verified
+
+`[skip ci]` in a commit message is judged **per commit**, which is the case at
+hand: every commit Lytos causes touches `.lytos/**` and nothing else, so none of
+them can change what the CI tests.
+
+Two things were tested rather than assumed, on a public repository whose CI runs
+on `push` to `main` and on `pull_request`:
+
+- **on `pull_request` / `synchronize`** — see the measured result recorded in
+  ISS-0148 of the Lytos CLI repository;
+- **under branch protection**, a required check that never ran can block a merge.
+  Verify this against your own protection rules before adopting the marker.
+
+Do not adopt a skip marker on the strength of this paragraph alone. Test it in
+your repository, and write down what you saw.
+
+### What not to do
+
+**Do not scaffold a workflow from `lyt init`.** Every project's CI has its own
+shape; a method that writes into `.github/workflows` becomes a third place that
+diverges from the two you already maintain.
+
+**Do not ask the CLI to warn you.** `lyt` talks to git, never to a forge — there
+is no `gh`, no API call, no octokit anywhere in its source. Teaching it to say
+"this will re-run CI on PR #12" would mean adding forge coupling, authentication
+and network failure modes to a tool that has none. What it *could* tell you from
+git alone is whether the current branch carries code at all — and that is the
+question that matters.
+
+---
+
 ## Semantic versioning
 
 If the project publishes releases (library, API, CLI):
