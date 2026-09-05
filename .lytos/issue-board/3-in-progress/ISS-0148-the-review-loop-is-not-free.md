@@ -178,3 +178,37 @@ Filed from the same incident as [ISS-0147](ISS-0147-on-origin-is-read-from-the-l
 Four expensive review rounds produced three documented defects — two here, one
 there. That is a decent yield for the method, and an argument for making its
 loop cheaper rather than shorter.
+
+## The experiment — 2026-09-05
+
+Run on this repository, whose CI fires on `push` to `main` and on `pull_request`
+targeting `main`, with **no path filter** — so nothing else can explain a missing
+run.
+
+### Baseline
+
+PR #51, first commit, ordinary message: **2 checks fired** — `ci (20)` and
+`ci (22)`.
+
+### The `[skip ci]` commit
+
+This very commit carries `[skip ci]` in its subject. What follows was written
+before pushing it; the result is recorded immediately below, unedited.
+
+**RESULT — pending.** Replaced by the observation once the push settles.
+
+### `lyt` cannot warn — answered from the code
+
+`lyt` talks to **git only**. There is no `gh`, no `api.github`, no octokit
+anywhere in `src/`; `move.ts` and `close.ts` reach GitHub through nothing but
+git's own origin-freshness checks.
+
+So a warning naming a pull request is not a small addition: it would bring forge
+coupling, authentication, offline behaviour and network failure modes into a tool
+that currently has none of them — and it would tie a forge-agnostic CLI to
+GitHub.
+
+What `lyt` **can** answer from git alone is whether the current branch carries
+code at all — `git diff --name-only main...HEAD`. That is the question that
+decides whether a fiche commit is free or expensive, and it needs no forge. If a
+warning is ever wanted, that is its shape.
