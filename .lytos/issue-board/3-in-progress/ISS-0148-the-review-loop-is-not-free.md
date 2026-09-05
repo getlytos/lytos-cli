@@ -195,7 +195,45 @@ PR #51, first commit, ordinary message: **2 checks fired** — `ci (20)` and
 This very commit carries `[skip ci]` in its subject. What follows was written
 before pushing it; the result is recorded immediately below, unedited.
 
-**RESULT — pending.** Replaced by the observation once the push settles.
+**RESULT — the marker works, and it does one thing more than expected.**
+
+| | |
+|---|---|
+| check-runs on the `[skip ci]` commit | **0** |
+| check-runs still on the previous commit | 2, both `success` |
+| checks visible **on the pull request** | **0** |
+| pull request state | `MERGEABLE` / `CLEAN` |
+
+So `[skip ci]` does suppress the run on `pull_request` / `synchronize`. That half
+is settled.
+
+### The correction I owe
+
+An earlier draft of this fiche claimed: *"The PR keeps the check results of the
+last code push, which is correct — the code did not change, so the verdict still
+holds."* **That is false**, and the experiment says so.
+
+A pull request's check rollup follows its **head commit**. The two green checks
+still exist — attached to `e31fa95f` — but they no longer appear on the pull
+request at all. The PR does not show a stale green; it shows **nothing**.
+
+Here that is harmless: this repository has no required-check protection, so the
+PR stays `CLEAN` and mergeable. **Under branch protection requiring a check, the
+same PR would be blocked** — not by a red, but by an absence. That is the second
+thing this fiche said had to be tested, and this is its mechanism.
+
+### The guidance that follows
+
+`[skip ci]` belongs on **intermediate** commits, never on the last one before a
+merge. Concretely, for a Lytos loop under branch protection:
+
+- verdicts, responses and status moves during the loop → `[skip ci]`, free;
+- the commit that closes the fiche must either follow a real run, or be pushed
+  **before** the final code commit, so the head that gets merged has been tested.
+
+Where no required check is configured, the marker is safe everywhere — but that
+is a property of the repository, not of the marker, and it can change the day
+someone turns protection on.
 
 ### `lyt` cannot warn — answered from the code
 

@@ -337,10 +337,18 @@ them can change what the CI tests.
 Two things were tested rather than assumed, on a public repository whose CI runs
 on `push` to `main` and on `pull_request`:
 
-- **on `pull_request` / `synchronize`** — see the measured result recorded in
-  ISS-0148 of the Lytos CLI repository;
-- **under branch protection**, a required check that never ran can block a merge.
-  Verify this against your own protection rules before adopting the marker.
+- **on `pull_request` / `synchronize`** — it works: zero check-runs on the marked
+  commit, on a repository whose CI has no path filter at all;
+- **but a pull request's check rollup follows its head commit.** The earlier
+  green checks still exist on the earlier commit — they simply stop appearing on
+  the pull request. It shows no checks, not a stale green.
+
+That second point is the one that bites. Without required checks, the PR stays
+mergeable. **Under branch protection requiring a check, it is blocked** — not by
+a red, but by an absence.
+
+So: put skip markers on **intermediate** commits, never on the last one before a
+merge. The head that gets merged must have been tested.
 
 Do not adopt a skip marker on the strength of this paragraph alone. Test it in
 your repository, and write down what you saw.
