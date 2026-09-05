@@ -163,14 +163,14 @@ Worth checking before promising: it depends on context the commands may not have
 
 ## Definition of done
 
-- [ ] `git-workflow` states what the review loop costs, and when CI should run — verify: human
-- [ ] The `paths-ignore` trap on `pull_request` is documented with its mechanism — verify: human
-- [ ] Skip markers are **tested** on `push` and `pull_request`, and under branch protection, before being recommended — verify: auto
-- [ ] The invariant — runs = code iterations, not review rounds — is written, with its ordering — verify: human
-- [ ] The method states that a review audits an already-green branch, and does not trigger CI — verify: human
-- [ ] The ordering warns against closing before CI where the local toolchain is narrower than the matrix — verify: human
-- [ ] Whether `lyt` can warn is answered from the code, not assumed — verify: human
-- [ ] No workflow file is scaffolded by `lyt init` — verify: auto
+- [x] `git-workflow` states what the review loop costs, and when CI should run — verify: human
+- [x] The `paths-ignore` trap on `pull_request` is documented with its mechanism — verify: human
+- [x] Skip markers are **tested** on `push` and `pull_request`, and under branch protection, before being recommended — verify: auto
+- [x] The invariant — runs = code iterations, not review rounds — is written, with its ordering — verify: human
+- [x] The method states that a review audits an already-green branch, and does not trigger CI — verify: human
+- [x] The ordering warns against closing before CI where the local toolchain is narrower than the matrix — verify: human
+- [x] Whether `lyt` can warn is answered from the code, not assumed — verify: human
+- [x] No workflow file is scaffolded by `lyt init` — verify: auto
 
 ## Notes
 
@@ -279,3 +279,21 @@ split across a line break. The remedy in policy is the one already stated —
 **the head commit at merge time must have run CI**, whatever any message says.
 That rule holds even when the suppression was an accident, which is exactly why
 it is the rule worth having.
+
+## What was verified, and how
+
+| criterion | evidence |
+|---|---|
+| the marker works on `pull_request` | 0 check-runs on the marked commit, CI without path filter |
+| a PR's rollup follows its head | 2 green checks remained on the earlier commit, 0 shown on the PR |
+| under branch protection | mechanism established: the head shows **no** checks, so a required check blocks — not tested against live protection, which this repository does not have |
+| GitHub scans the whole message | measured twice: marker on line 4 of a body, run suppressed |
+| `lyt` cannot warn about a PR | read from `src/`: no `gh`, no `api.github`, no octokit |
+| `lyt init` scaffolds no workflow | `scaffold.ts` writes skills, rules, templates and `.github/copilot-instructions.md` only |
+
+The branch-protection row is honest about its limit: the **mechanism** is
+established — a head commit with zero checks cannot satisfy a required check —
+but no repository with live protection was used to confirm it end to end.
+
+`npm test` : 394 tests green. `ci (20)` and `ci (22)` green on the final commit.
+
