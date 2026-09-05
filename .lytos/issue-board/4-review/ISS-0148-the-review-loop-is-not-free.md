@@ -8,7 +8,7 @@ complexity: standard
 domain: [method, ci]
 skill: 
 skills_aux: []
-status: 3-in-progress
+status: 4-review
 branch: docs/ISS-0148-the-review-loop-is-not-free-every-verdic
 depends: []
 created: 2026-09-05
