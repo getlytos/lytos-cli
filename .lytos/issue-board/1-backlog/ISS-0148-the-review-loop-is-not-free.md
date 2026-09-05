@@ -92,16 +92,44 @@ did not change, so the verdict still holds.
 happens under branch protection, where a required check that never ran may block
 the merge. Both are testable in an afternoon, and neither is guessable.
 
-### 2. Push once per round, not once per edit
+### 2. One push per **code** iteration — the invariant
 
-The review loop is **local**. What forces a push is `lyt review`'s portable
-prompt: an auditor that is a fresh session — possibly a fresh clone — must be
-able to fetch the branch.
+The sharper rule is not "push less often" but:
 
-That justifies one push per review round. It does not justify one per fiche edit,
-which is what the incident showed: three pushes where one would have done. If the
-audit runs on the same machine and the same tree, even that is arguable — the
-branch only has to reach `origin` before the audit that must be reproducible.
+> **The number of CI runs equals the number of code iterations, never the number
+> of review rounds.**
+
+A review round that finds a code defect deserves a run. A round that finds a
+wording problem, a stale frontmatter field, or a missing verdict does not — none
+of them can change what the CI tests.
+
+The ordering that holds this invariant:
+
+| | step |
+|---|---|
+| 1 | work locally |
+| 2 | **one push**; the PR opens, CI runs **once** |
+| 3 | `lyt review` — the branch is on `origin` and green |
+| 4 | GO → `lyt close` → fiche commit with `[skip ci]` → merge |
+
+**Step 2 satisfies the traceability requirement for free.** `lyt review`'s
+portable prompt needs the branch on `origin`; putting the push there costs
+nothing, instead of fighting the constraint — which is what burned three review
+cycles on ISS-0007.
+
+Applied to that issue: four review rounds, but only **two** code changes. This
+ordering would have produced 2 CI runs instead of the 7 that occurred.
+
+**Do not invert it.** Closing on local evidence and opening the PR afterwards is
+tempting, and it is wrong wherever the local toolchain does not cover what CI
+covers. Measured on the project in question: the workstation runs PHP 8.4 while
+the matrix tests 7.4 and 8.3 — it runs *neither* supported version. `lyt close`
+sets `completed_at` and moves the file to `5-done`; a red run afterwards leaves a
+closed fiche and a broken branch.
+
+The method should state the ordering, and state that the review audits an
+**already-green** branch rather than triggering CI itself. That is what happens
+in practice; it has never been written down.
 
 This is guidance, not tooling: the method should say it, since nothing in the
 commands implies it.
@@ -136,7 +164,9 @@ Worth checking before promising: it depends on context the commands may not have
 - [ ] `git-workflow` states what the review loop costs, and when CI should run — verify: human
 - [ ] The `paths-ignore` trap on `pull_request` is documented with its mechanism — verify: human
 - [ ] Skip markers are **tested** on `push` and `pull_request`, and under branch protection, before being recommended — verify: auto
-- [ ] The push-per-round guidance is written, with the portable-prompt reason that justifies it — verify: human
+- [ ] The invariant — runs = code iterations, not review rounds — is written, with its ordering — verify: human
+- [ ] The method states that a review audits an already-green branch, and does not trigger CI — verify: human
+- [ ] The ordering warns against closing before CI where the local toolchain is narrower than the matrix — verify: human
 - [ ] Whether `lyt` can warn is answered from the code, not assumed — verify: human
 - [ ] No workflow file is scaffolded by `lyt init` — verify: auto
 
