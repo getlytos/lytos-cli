@@ -100,6 +100,10 @@ export function parseFrontmatter(content: string): Frontmatter | null {
 }
 
 function quoteIfNeeded(value: string): string {
+  // An empty string must stay quoted: `key: ` (colon, space, nothing) is
+  // ambiguous trailing whitespace, not a value — `key: ""` round-trips
+  // cleanly and is what parseFrontmatter() expects back (ISS-0150).
+  if (value === "") return '""';
   const needsQuotes = value.includes(":") || value.includes("#");
   return needsQuotes ? `"${value}"` : value;
 }

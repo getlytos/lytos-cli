@@ -64,17 +64,17 @@ correctly (see the existing "does not confuse a v1 quoted-empty value..." test i
 
 ## Definition of done
 
-- [ ] `serializeFrontmatter({ skill: "" })` produces `skill: ""`, with no trailing whitespace on
+- [x] `serializeFrontmatter({ skill: "" })` produces `skill: ""`, with no trailing whitespace on
       the line — verify: auto
-- [ ] A parse → serialize → parse round-trip of an issue with an empty-string field (e.g.
+- [x] A parse → serialize → parse round-trip of an issue with an empty-string field (e.g.
       `skill: ""`) preserves the empty-string value and introduces no trailing whitespace —
       verify: auto
-- [ ] Another empty-string field (e.g. `branch: ""`) gets the same fix, covered by a test —
+- [x] Another empty-string field (e.g. `branch: ""`) gets the same fix, covered by a test —
       verify: auto
-- [ ] An integration test drives the actual fix: `lyt start` (or `lyt move`) on an issue whose
+- [x] An integration test drives the actual fix: `lyt start` (or `lyt move`) on an issue whose
       frontmatter holds `skill: ""` no longer rewrites that line to trailing whitespace —
       verify: auto
-- [ ] Full test suite, `tsc --noEmit`, and `eslint src/` all pass — verify: auto
+- [x] Full test suite, `tsc --noEmit`, and `eslint src/` all pass — verify: auto
 
 ## Relevant files
 
@@ -89,3 +89,25 @@ correctly (see the existing "does not confuse a v1 quoted-empty value..." test i
   reproduced directly on ISS-0149's own issue file in the same session.
 - Companion fix to ISS-0149 (different root cause, different files) — kept as a separate issue on
   its own branch off `origin/main` per the constraint that the two must not be stacked.
+
+## Delivered — 2026-09-21
+
+`quoteIfNeeded()` in `src/lib/frontmatter.ts` now returns `""` for an empty string instead of
+falling through to the unquoted (and therefore blank) branch. Both call sites in
+`serializeFrontmatter()` — the top-level scalar path and the nested-object subvalue path — share
+this one helper, so `ai_implementer.model: ""` and similar nested empty strings get the same fix
+for free. `parseFrontmatter()` needed no change: it already stripped `""` back to `""` correctly
+(covered by an existing test).
+
+Reproduced the bug first (live, on this issue's own `skill: ""` line via `lyt start ISS-0150`),
+then fixed it and reproduced the fix: `tests/lib/frontmatter.test.ts` gained a
+`serializeFrontmatter — empty string values` block (direct serialization, a second empty field —
+`branch` — a nested-object case, and a full parse→serialize→parse round-trip asserting no line in
+the output ends in whitespace). `tests/commands/move.test.ts` gained an integration test that
+injects `skill: ""` into a real issue fixture, runs `lyt move ISS-0002 4-review`, and asserts the
+rewritten frontmatter still reads `skill: ""` with no trailing-whitespace line anywhere in the
+block — the same shape as the `lyt start`/`lyt move`/`lyt close` path that triggered the original
+report.
+
+Full suite: 399 passed (31 files). `tsc --noEmit`, `eslint src/`, `prettier --check`, and
+`secrets:scan` all clean.

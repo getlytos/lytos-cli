@@ -114,6 +114,33 @@ describe("lyt move", () => {
     expect(board).toContain("ISS-0002");
   });
 
+  it("keeps skill: \"\" quoted — no trailing whitespace after a rewrite (ISS-0150)", () => {
+    fixture = createEmptyFixture();
+    createMoveFixture(fixture.cwd);
+
+    const filePath = join(
+      fixture.cwd,
+      ".lytos/issue-board/3-in-progress/ISS-0002-in-progress.md"
+    );
+    const original = readFileSync(filePath, "utf-8");
+    writeFileSync(
+      filePath,
+      original.replace("status: 3-in-progress", 'status: 3-in-progress\nskill: ""')
+    );
+
+    const result = run("move ISS-0002 4-review", fixture.cwd);
+    expect(result.exitCode).toBe(0);
+
+    const content = readFileSync(
+      join(fixture.cwd, ".lytos/issue-board/4-review/ISS-0002-in-progress.md"),
+      "utf-8"
+    );
+
+    const frontmatterLines = content.split("---")[1].split("\n").filter((l) => l.length > 0);
+    expect(frontmatterLines).toContain('skill: ""');
+    expect(frontmatterLines.some((l) => /\s$/.test(l))).toBe(false);
+  });
+
   it("moves a backlog issue to 2-sprint", () => {
     fixture = createEmptyFixture();
     createMoveFixture(fixture.cwd);
