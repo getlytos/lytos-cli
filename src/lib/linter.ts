@@ -11,6 +11,13 @@ import { join } from "path";
 import { parseFrontmatter } from "./frontmatter.js";
 import { analyzeDod } from "./dod.js";
 import { analyzeReady } from "./ready.js";
+import {
+  MANIFEST_SECTIONS as MANIFEST_SECTION_DEFS,
+  MANIFEST_LANGS,
+  MANIFEST_OWNER_LABEL,
+  MANIFEST_WHY_PLACEHOLDER,
+  type ManifestLang,
+} from "./manifest-sections.js";
 
 export type Severity = "error" | "warning";
 
@@ -55,23 +62,44 @@ const REQUIRED_DIRS = [
   { path: "issue-board", fix: "Run `lyt init` to create the issue board" },
 ];
 
-const MANIFEST_SECTIONS = [
-  {
-    pattern: /## Identity/,
-    name: "Identity",
-    fix: "Add an ## Identity section with project name and description",
-  },
-  {
-    pattern: /## Why this project exists/,
-    name: "Why this project exists",
-    fix: "Add a ## Why this project exists section",
-  },
-  {
-    pattern: /## Tech stack/,
-    name: "Tech stack",
-    fix: "Add a ## Tech stack section with your technologies",
-  },
-];
+/**
+ * Escape a literal string for use inside a `RegExp`.
+ */
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Match any supported language's spelling of a heading or placeholder.
+ * The manifest's language is not read from config — accepting every
+ * language the templates generate is simpler and just as correct (ISS-0149).
+ */
+function anyLanguagePattern(textFor: (lang: ManifestLang) => string): RegExp {
+  const alternatives = MANIFEST_LANGS.map((lang) =>
+    escapeRegExp(textFor(lang))
+  );
+  return new RegExp(alternatives.join("|"));
+}
+
+/** Matches `| <label> |` followed by an empty cell, for every language. */
+function emptyFieldPattern(labelFor: (lang: ManifestLang) => string): RegExp {
+  const alternatives = MANIFEST_LANGS.map(
+    (lang) => `\\| ${escapeRegExp(labelFor(lang))} \\|\\s*\\|`
+  );
+  return new RegExp(alternatives.join("|"));
+}
+
+const MANIFEST_SECTION_FIXES: Record<string, string> = {
+  identity: 'Add an "## Identity" section with project name and description',
+  why: 'Add a "## Why this project exists" section',
+  stack: 'Add a "## Tech stack" section with your technologies',
+};
+
+const MANIFEST_SECTIONS = MANIFEST_SECTION_DEFS.map((section) => ({
+  pattern: anyLanguagePattern((lang) => `## ${section.heading[lang]}`),
+  name: section.name,
+  fix: MANIFEST_SECTION_FIXES[section.key],
+}));
 
 const PLACEHOLDER_PATTERNS = [
   {
@@ -85,12 +113,12 @@ const PLACEHOLDER_PATTERNS = [
     fix: "Fill in the project description",
   },
   {
-    pattern: /\| Owner \|\s*\|/,
+    pattern: emptyFieldPattern((lang) => MANIFEST_OWNER_LABEL[lang]),
     message: "Empty owner in manifest",
     fix: "Fill in the project owner",
   },
   {
-    pattern: /\*3-5 sentences\. The "why"/,
+    pattern: anyLanguagePattern((lang) => MANIFEST_WHY_PLACEHOLDER[lang]),
     message: "Template placeholder text still present",
     fix: "Replace the placeholder with your project's purpose",
   },
