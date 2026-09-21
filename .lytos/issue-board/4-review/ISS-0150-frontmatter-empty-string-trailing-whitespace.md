@@ -111,3 +111,16 @@ report.
 
 Full suite: 399 passed (31 files). `tsc --noEmit`, `eslint src/`, `prettier --check`, and
 `secrets:scan` all clean.
+
+## Audit — 2026-09-21
+
+**Verdict:** GO
+
+### Checks
+- [x] Tests pass (399 tests in 31 files)
+- [x] Machine-verifiable DoD items (`verify: auto`) complete
+- [x] Rules respected (format, ESLint, typecheck, secret scan, build, tests, and whitespace diff check pass)
+- [x] Documentation aligned
+
+### Notes
+The fix is correctly centralized in `quoteIfNeeded()`, so top-level and nested values share it. Regression coverage tests direct serialization, a second scalar field, a nested field, semantic round-trip integrity, and the actual `lyt move` transition that previously reintroduced trailing whitespace.
