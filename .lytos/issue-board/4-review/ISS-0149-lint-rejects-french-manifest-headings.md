@@ -8,7 +8,7 @@ complexity: standard
 domain: [cli]
 skill: 
 skills_aux: []
-status: 3-in-progress
+status: 4-review
 branch: fix/ISS-0149-lint-only-recognizes-english-headings
 depends: []
 created: 2026-09-21
