@@ -6,6 +6,12 @@
  */
 
 import { DetectedStack } from "./detect-stack.js";
+import {
+  MANIFEST_SECTIONS,
+  MANIFEST_OWNER_LABEL,
+  MANIFEST_WHY_PLACEHOLDER,
+  type ManifestLang,
+} from "./manifest-sections.js";
 
 const REPO_URL = "https://github.com/getlytos/lytos-method";
 
@@ -16,7 +22,20 @@ interface TemplateContext {
   lang?: "en" | "fr";
 }
 
+function sectionHeading(key: string, lang: ManifestLang): string {
+  return MANIFEST_SECTIONS.find((s) => s.key === key)!.heading[lang];
+}
+
 export function manifestTemplate(ctx: TemplateContext): string {
+  const lang: ManifestLang = ctx.lang === "fr" ? "fr" : "en";
+  const heading = {
+    identity: sectionHeading("identity", lang),
+    why: sectionHeading("why", lang),
+    stack: sectionHeading("stack", lang),
+  };
+  const ownerLabel = MANIFEST_OWNER_LABEL[lang];
+  const whyPlaceholder = MANIFEST_WHY_PLACEHOLDER[lang];
+
   const stackLabels =
     ctx.lang === "fr"
       ? {
@@ -46,20 +65,20 @@ export function manifestTemplate(ctx: TemplateContext): string {
 
 ---
 
-## Identité
+## ${heading.identity}
 
 | Champ | Valeur |
 |-------|--------|
 | Nom | ${ctx.projectName} |
 | Description | |
-| Propriétaire | |
+| ${ownerLabel} | |
 | Repo | |
 
 ---
 
-## Pourquoi ce projet existe
+## ${heading.why}
 
-*3-5 phrases. Le "pourquoi" de ce projet.*
+${whyPlaceholder}
 
 ---
 
@@ -73,7 +92,7 @@ export function manifestTemplate(ctx: TemplateContext): string {
 
 ---
 
-## Stack technique
+## ${heading.stack}
 
 | Composant | Technologie |
 |-----------|-------------|
@@ -131,20 +150,20 @@ ${stackRows}
 
 ---
 
-## Identity
+## ${heading.identity}
 
 | Field | Value |
 |-------|-------|
 | Name | ${ctx.projectName} |
 | Description | |
-| Owner | |
+| ${ownerLabel} | |
 | Repo | |
 
 ---
 
-## Why this project exists
+## ${heading.why}
 
-*3-5 sentences. The "why" of this project.*
+${whyPlaceholder}
 
 ---
 
@@ -158,7 +177,7 @@ ${stackRows}
 
 ---
 
-## Tech stack
+## ${heading.stack}
 
 | Component | Technology |
 |-----------|------------|
