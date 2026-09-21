@@ -224,3 +224,43 @@ describe("serializeFrontmatter — round-trip", () => {
     expect(out).toContain("depends: []");
   });
 });
+
+describe("serializeFrontmatter — empty string values (ISS-0150)", () => {
+  it('serializes an empty string as `""`, not as trailing whitespace', () => {
+    const out = serializeFrontmatter({ skill: "" });
+    const line = out.split("\n").find((l) => l.startsWith("skill:"));
+
+    expect(line).toBe('skill: ""');
+    expect(line).not.toMatch(/\s$/);
+  });
+
+  it("applies the same fix to any other empty-string field (e.g. branch)", () => {
+    const out = serializeFrontmatter({ branch: "" });
+    const line = out.split("\n").find((l) => l.startsWith("branch:"));
+
+    expect(line).toBe('branch: ""');
+    expect(line).not.toMatch(/\s$/);
+  });
+
+  it("applies the same fix inside a nested object", () => {
+    const out = serializeFrontmatter({
+      ai_implementer: { model: "", session: "abc" },
+    });
+    const line = out.split("\n").find((l) => l.trim().startsWith("model:"));
+
+    expect(line).toBe('  model: ""');
+    expect(line).not.toMatch(/\s$/);
+  });
+
+  it("round-trips an empty-string field with no trailing whitespace introduced", () => {
+    const input = wrap(['id: ISS-0001', 'skill: ""', 'status: 1-backlog'].join("\n"));
+
+    const parsed = parseFrontmatter(input)!;
+    const serialized = serializeFrontmatter(parsed);
+    const reparsed = parseFrontmatter(serialized + "\nbody\n")!;
+
+    expect(reparsed.skill).toBe("");
+    expect(reparsed).toEqual(parsed);
+    expect(serialized.split("\n").some((l) => /\s$/.test(l))).toBe(false);
+  });
+});
