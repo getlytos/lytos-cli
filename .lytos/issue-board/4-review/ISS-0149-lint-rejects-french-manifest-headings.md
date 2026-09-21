@@ -111,3 +111,16 @@ owner/placeholder warnings still fire per language, and that removing any one se
 generated manifest, in either language, still produces the matching "Missing section" error.
 
 Full suite: 404 passed (32 files). `tsc --noEmit`, `eslint src/`, and `prettier --check` all clean.
+
+## Audit — 2026-09-21
+
+**Verdict:** GO
+
+### Checks
+- [x] Tests pass (404 tests in 32 files)
+- [x] Machine-verifiable DoD items (`verify: auto`) complete
+- [x] Rules respected (format, ESLint, typecheck, secret scan, build, tests, and whitespace diff check pass)
+- [x] Documentation aligned
+
+### Notes
+`src/lib/manifest-sections.ts` is the single source of truth for every generated manifest heading and language-dependent placeholder. Both the template and the linter consume it, while lint messages remain English. Regression tests exercise every supported language, both placeholder checks, and the loss of every required section.
