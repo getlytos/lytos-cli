@@ -6,9 +6,9 @@ priority: P2-normal
 effort: XS
 complexity: light
 domain: [cli]
-skill: 
+skill: ""
 skills_aux: []
-status: 3-in-progress
+status: 4-review
 branch: fix/ISS-0150-empty-frontmatter-values-keep-their-quotes
 depends: []
 created: 2026-09-21
