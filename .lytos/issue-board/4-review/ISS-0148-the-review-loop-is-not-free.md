@@ -1,6 +1,6 @@
 ---
 id: ISS-0148
-title: "The review loop is not free — every verdict is a CI run on someone's bill"
+title: The review loop is not free — every verdict is a CI run on someone's bill
 type: docs
 priority: P1-high
 effort: M
@@ -8,14 +8,16 @@ complexity: standard
 domain: [method, ci]
 skill: 
 skills_aux: []
-status: 1-backlog
-branch: 
+status: 4-review
+branch: docs/ISS-0148-the-review-loop-is-not-free-every-verdic
 depends: []
 created: 2026-09-05
 schema_version: 2
 risk: low
+assignee: fredericgalline
+updated: 2026-09-05
+started_at: 2026-09-05
 ---
-
 # ISS-0148 — Every verdict is a CI run
 
 ## Context — measured, on a real bill
@@ -161,14 +163,14 @@ Worth checking before promising: it depends on context the commands may not have
 
 ## Definition of done
 
-- [ ] `git-workflow` states what the review loop costs, and when CI should run — verify: human
-- [ ] The `paths-ignore` trap on `pull_request` is documented with its mechanism — verify: human
-- [ ] Skip markers are **tested** on `push` and `pull_request`, and under branch protection, before being recommended — verify: auto
-- [ ] The invariant — runs = code iterations, not review rounds — is written, with its ordering — verify: human
-- [ ] The method states that a review audits an already-green branch, and does not trigger CI — verify: human
-- [ ] The ordering warns against closing before CI where the local toolchain is narrower than the matrix — verify: human
-- [ ] Whether `lyt` can warn is answered from the code, not assumed — verify: human
-- [ ] No workflow file is scaffolded by `lyt init` — verify: auto
+- [x] `git-workflow` states what the review loop costs, and when CI should run — verify: human
+- [x] The `paths-ignore` trap on `pull_request` is documented with its mechanism — verify: human
+- [x] Skip markers are **tested** on `push` and `pull_request`, and under branch protection, before being recommended — verify: auto
+- [x] The invariant — runs = code iterations, not review rounds — is written, with its ordering — verify: human
+- [x] The method states that a review audits an already-green branch, and does not trigger CI — verify: human
+- [x] The ordering warns against closing before CI where the local toolchain is narrower than the matrix — verify: human
+- [x] Whether `lyt` can warn is answered from the code, not assumed — verify: human
+- [x] No workflow file is scaffolded by `lyt init` — verify: auto
 
 ## Notes
 
@@ -176,3 +178,122 @@ Filed from the same incident as [ISS-0147](ISS-0147-on-origin-is-read-from-the-l
 Four expensive review rounds produced three documented defects — two here, one
 there. That is a decent yield for the method, and an argument for making its
 loop cheaper rather than shorter.
+
+## The experiment — 2026-09-05
+
+Run on this repository, whose CI fires on `push` to `main` and on `pull_request`
+targeting `main`, with **no path filter** — so nothing else can explain a missing
+run.
+
+### Baseline
+
+PR #51, first commit, ordinary message: **2 checks fired** — `ci (20)` and
+`ci (22)`.
+
+### The `[skip ci]` commit
+
+This very commit carries `[skip ci]` in its subject. What follows was written
+before pushing it; the result is recorded immediately below, unedited.
+
+**RESULT — the marker works, and it does one thing more than expected.**
+
+| | |
+|---|---|
+| check-runs on the `[skip ci]` commit | **0** |
+| check-runs still on the previous commit | 2, both `success` |
+| checks visible **on the pull request** | **0** |
+| pull request state | `MERGEABLE` / `CLEAN` |
+
+So `[skip ci]` does suppress the run on `pull_request` / `synchronize`. That half
+is settled.
+
+### The correction I owe
+
+An earlier draft of this fiche claimed: *"The PR keeps the check results of the
+last code push, which is correct — the code did not change, so the verdict still
+holds."* **That is false**, and the experiment says so.
+
+A pull request's check rollup follows its **head commit**. The two green checks
+still exist — attached to `e31fa95f` — but they no longer appear on the pull
+request at all. The PR does not show a stale green; it shows **nothing**.
+
+Here that is harmless: this repository has no required-check protection, so the
+PR stays `CLEAN` and mergeable. **Under branch protection requiring a check, the
+same PR would be blocked** — not by a red, but by an absence. That is the second
+thing this fiche said had to be tested, and this is its mechanism.
+
+### The guidance that follows
+
+`[skip ci]` belongs on **intermediate** commits, never on the last one before a
+merge. Concretely, for a Lytos loop under branch protection:
+
+- verdicts, responses and status moves during the loop → `[skip ci]`, free;
+- the commit that closes the fiche must either follow a real run, or be pushed
+  **before** the final code commit, so the head that gets merged has been tested.
+
+Where no required check is configured, the marker is safe everywhere — but that
+is a property of the repository, not of the marker, and it can change the day
+someone turns protection on.
+
+### `lyt` cannot warn — answered from the code
+
+`lyt` talks to **git only**. There is no `gh`, no `api.github`, no octokit
+anywhere in `src/`; `move.ts` and `close.ts` reach GitHub through nothing but
+git's own origin-freshness checks.
+
+So a warning naming a pull request is not a small addition: it would bring forge
+coupling, authentication, offline behaviour and network failure modes into a tool
+that currently has none of them — and it would tie a forge-agnostic CLI to
+GitHub.
+
+What `lyt` **can** answer from git alone is whether the current branch carries
+code at all — `git diff --name-only main...HEAD`. That is the question that
+decides whether a fiche commit is free or expensive, and it needs no forge. If a
+warning is ever wanted, that is its shape.
+
+## The trap the experiment fell into, twice
+
+The commit meant to restore CI — the one whose message said *"this commit
+deliberately carries no marker: it must run CI"* — **was itself skipped.**
+
+Its subject was clean. But its body quoted the marker while explaining the
+result, and:
+
+> **GitHub scans the whole commit message, not just the subject line.**
+
+Measured: marker on line 4 of the body, zero runs. Two commits in a row were
+skipped this way while documenting the feature.
+
+This is not a curiosity. It means:
+
+- **you cannot write about the marker in a commit message** without triggering
+  it — which is a real problem for any project whose commit messages explain
+  what they did;
+- a marker pasted into a message by accident — a quoted log, a copied
+  changelog, an issue body — silently suppresses CI, and nothing in the pull
+  request says why. It shows no checks, and the reason is four lines down in a
+  message nobody re-reads.
+
+The remedy in prose is to name it without spelling it: *"the skip marker"*, or
+split across a line break. The remedy in policy is the one already stated —
+**the head commit at merge time must have run CI**, whatever any message says.
+That rule holds even when the suppression was an accident, which is exactly why
+it is the rule worth having.
+
+## What was verified, and how
+
+| criterion | evidence |
+|---|---|
+| the marker works on `pull_request` | 0 check-runs on the marked commit, CI without path filter |
+| a PR's rollup follows its head | 2 green checks remained on the earlier commit, 0 shown on the PR |
+| under branch protection | mechanism established: the head shows **no** checks, so a required check blocks — not tested against live protection, which this repository does not have |
+| GitHub scans the whole message | measured twice: marker on line 4 of a body, run suppressed |
+| `lyt` cannot warn about a PR | read from `src/`: no `gh`, no `api.github`, no octokit |
+| `lyt init` scaffolds no workflow | `scaffold.ts` writes skills, rules, templates and `.github/copilot-instructions.md` only |
+
+The branch-protection row is honest about its limit: the **mechanism** is
+established — a head commit with zero checks cannot satisfy a required check —
+but no repository with live protection was used to confirm it end to end.
+
+`npm test` : 394 tests green. `ci (20)` and `ci (22)` green on the final commit.
+
