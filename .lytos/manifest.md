@@ -47,7 +47,7 @@ It is also the bridge between the free open-source method and the future team da
 | Component | Technology |
 |-----------|------------|
 | Language | TypeScript |
-| Runtime | Node.js 20+ |
+| Runtime | Node.js 22+ |
 | CLI framework | Commander.js |
 | Bundler | tsup |
 | Tests | Vitest |

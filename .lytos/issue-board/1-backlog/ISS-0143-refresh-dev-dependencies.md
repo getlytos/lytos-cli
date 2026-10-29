@@ -67,7 +67,7 @@ publish path: mixing 137 package moves into it would turn a failed publish into 
 - [ ] `npm audit --omit=dev` still reports 0 vulnerabilities — verify: auto
 - [ ] The prettier sweep is its own commit, formatting only, listed in `.git-blame-ignore-revs` — verify: auto
 - [ ] Format, lint, typecheck, secrets, build and the full test suite pass on the refreshed tree — verify: auto
-- [ ] CI passes on Node 20 and 22 — verify: auto
+- [ ] CI passes on Node 22 and 24 — verify: auto
 
 ## Notes
 
