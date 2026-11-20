@@ -472,3 +472,18 @@ export function humanItemProblems(
   }
   return problems;
 }
+
+/**
+ * Gates the bundled kit carries that a project's kit does not (`lyt upgrade`,
+ * ISS-0159). The project's kit is its own — tool cells linked to its stack,
+ * rows added and removed — so upgrade never merges into it; it only says what
+ * it lacks. Matched on the id, case-insensitively. Rows a project dropped on
+ * purpose are reported too: telling them apart is the project's call.
+ */
+export function missingBundledGates(
+  localKitMd: string,
+  bundledKitMd: string
+): QualityGate[] {
+  const have = new Set(parseGates(localKitMd).map((g) => g.id.toLowerCase()));
+  return parseGates(bundledKitMd).filter((g) => !have.has(g.id.toLowerCase()));
+}

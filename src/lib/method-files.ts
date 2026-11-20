@@ -44,3 +44,31 @@ export const QUALITY_LIBRARY_FILES: readonly string[] = [
   ...RUBRIC_NAMES.map((n) => `quality/rubrics/${n}.md`),
   ...CHECKLIST_NAMES.map((n) => `quality/checklists/${n}.md`),
 ];
+
+/**
+ * Method files `lyt upgrade` may REPLACE (paths relative to `method/` and to
+ * `.lytos/`): a missing one is added, a different one is replaced only after a
+ * `y` or with `--force`. The kit and the stack contract are deliberately not
+ * here — they are linked to the project — and the quality library is add-only.
+ */
+export const UPGRADEABLE_FILES: readonly string[] = [
+  // session-start is a Lytos bootstrap protocol, kept flat
+  "skills/session-start.md",
+  // Task skills follow agentskills.io format: <name>/SKILL.md
+  "skills/code-review/SKILL.md",
+  "skills/testing/SKILL.md",
+  "skills/documentation/SKILL.md",
+  "skills/git-workflow/SKILL.md",
+  "skills/code-structure/SKILL.md",
+  "skills/deployment/SKILL.md",
+  "skills/security/SKILL.md",
+  "skills/api-design/SKILL.md",
+  "rules/default-rules.md",
+  "rules/README.md",
+  "rules/team-and-loop.md",
+  "LYTOS.md",
+  ".gitignore",
+  "templates/sprint.md",
+  "issue-board/templates/issue-feature.md",
+  "issue-board/templates/issue-task.md",
+];
