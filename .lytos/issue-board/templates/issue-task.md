@@ -29,6 +29,7 @@ small: two lines, not a form. If you cannot write the out-of-scope line, the tas
 ready — and an agent working it in a loop will park it as `ambiguous-spec` anyway.*
 
 - **Out of scope** — what this task explicitly does NOT touch.
+- **Solution** — one line: the cheapest option that stays robust, and why.
 - `risk:` set in the frontmatter, and the DoD below has ≥1 machine-verifiable item.
 
 ## Definition of done

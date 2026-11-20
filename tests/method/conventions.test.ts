@@ -16,6 +16,8 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { parseGates } from "../../src/lib/quality.js";
+import { analyzeReady } from "../../src/lib/ready.js";
+import { parseFrontmatter } from "../../src/lib/frontmatter.js";
 
 const root = process.cwd();
 const read = (p: string): string => readFileSync(join(root, p), "utf-8");
@@ -165,5 +167,62 @@ describe("shipped commands appear in the public reference (ISS-0124)", () => {
     ];
     const missing = verbs.filter((v) => !readme.includes(`\`lyt ${v}`));
     expect(missing).toEqual([]);
+  });
+});
+
+describe("the card templates carry the solution study (ISS-0156)", () => {
+  it("issue-feature.md has the study under Proposed solution, and a Solution line in Ready", () => {
+    const doc = read(FEATURE_TEMPLATE);
+    const proposed = doc.slice(doc.indexOf("## Proposed solution"), doc.indexOf("## Ready"));
+    expect(proposed).toMatch(/Solution study \(rubric `cost-review`\) — written BEFORE any code/);
+    expect(proposed).toMatch(/Risk low: one line/);
+    expect(proposed).toMatch(/Risk medium or high: a table of two or three options/);
+    expect(proposed).toContain("10 / 100 / 500");
+    expect(proposed).toMatch(/robustness floor/);
+    expect(proposed).toMatch(/\*\*Decision:\*\* the cheapest option that passes/);
+    const ready = doc.slice(doc.indexOf("## Ready"), doc.indexOf("## Definition of done"));
+    expect(ready).toMatch(/- \*\*Solution\*\* — the study above is written/);
+  });
+
+  it("issue-task.md has a one-line Solution in Ready", () => {
+    const doc = read(TASK_TEMPLATE);
+    const ready = doc.slice(doc.indexOf("## Ready"), doc.indexOf("## Definition of done"));
+    expect(ready).toMatch(/- \*\*Solution\*\* — one line: the cheapest option that stays robust/);
+  });
+
+  it("the Solution line does not disturb the Ready analysis", () => {
+    // A card filled from either template is still ready when its three labels are set —
+    // and still not ready when they are not. `lyt next` never reads the Solution line.
+    const fill = (tpl: string, effort: string): { content: string; fm: ReturnType<typeof parseFrontmatter> } => {
+      const body = tpl
+        .replace(/^---[\s\S]*?\n---\n/, "")
+        .replace("- **Out of scope** — what this task explicitly does NOT touch.", "- **Out of scope** — the world.")
+        .replace("- **Out of scope** — what it explicitly does NOT do.", "- **Out of scope** — the world.")
+        .replace("- **Scope** — what this issue does, in one line.", "- **Scope** — one thing.")
+        .replace("- **Constraints** — what it must respect.", "- **Constraints** — none.")
+        .replace("- [ ] Verifiable criterion — verify: auto", "- [ ] A thing — verify: auto")
+        .replace("- [ ] Verifiable criterion 1 — verify: auto", "- [ ] A thing — verify: auto");
+      const content = `---\nid: ISS-0001\ntitle: t\neffort: ${effort}\nrisk: low\nstatus: 2-sprint\n---\n${body}`;
+      return { content, fm: parseFrontmatter(content) };
+    };
+    for (const [path, effort] of [[FEATURE_TEMPLATE, "M"], [TASK_TEMPLATE, "S"]] as const) {
+      const { content, fm } = fill(read(path), effort);
+      expect(analyzeReady(content, fm!), path).toEqual({ ready: true, missing: [] });
+      const unfilled = content.replace("**Out of scope** — the world.", "**Out of scope** —");
+      expect(analyzeReady(unfilled, fm!).missing, path).toContain("no-out-of-scope");
+    }
+  });
+
+  it("the default rules say where the study lives and who checks it", () => {
+    const rules = read(RULES);
+    expect(rules).toMatch(/\*\*solution study\*\* in its "Proposed solution", written before any code/);
+    expect(rules).toMatch(/`cost-review` review checks it/);
+  });
+
+  it("this repo's own template copies are the shipped ones", () => {
+    for (const name of ["issue-feature.md", "issue-task.md"]) {
+      expect(read(`.lytos/issue-board/templates/${name}`)).toBe(read(`method/issue-board/templates/${name}`));
+    }
+    expect(read(".lytos/rules/default-rules.md")).toBe(read(RULES));
   });
 });
