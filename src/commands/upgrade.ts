@@ -198,11 +198,11 @@ export const upgradeCommand = new Command("upgrade")
           continue;
         }
 
-        // Ask user
-        process.stderr.write(
+        // Ask user. The question text goes to `askConfirm`, never written
+        // beforehand: readline clears the line it draws on (ISS-0174).
+        const confirm = await askConfirm(
           `  ${cyan("~")} ${relPath} differs — update? [y/N] `
         );
-        const confirm = await askConfirm("");
         if (confirm) {
           writeFileSync(localPath, bundled, "utf-8");
           console.error(`    ${green("✓")} updated`);
