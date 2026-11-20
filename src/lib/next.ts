@@ -21,6 +21,7 @@ import { join } from "path";
 import { parseFrontmatter, type FrontmatterValue } from "./frontmatter.js";
 import { analyzeDod, type DodAnalysis } from "./dod.js";
 import { analyzeReady } from "./ready.js";
+import { decideDiscoveryGate } from "./discovery-gate.js";
 import { findIssueFile } from "./show.js";
 
 export interface NextCandidate {
@@ -38,7 +39,8 @@ export type BlockedReason =
   | "all-human-dod"
   | "no-machine-dod"
   | "no-dod"
-  | "not-ready";
+  | "not-ready"
+  | "epic-in-discovery";
 
 export interface NextBlocked {
   id: string;
@@ -139,6 +141,18 @@ export function selectNext(lytosDir: string): NextResult {
         title,
         reason: "not-ready",
         detail: `not ready: ${ready.missing.join(", ")}`,
+      });
+      continue;
+    }
+    // Discovery gate (ADR-0009 §3): the leaves of an epic not yet frozen are not
+    // loop work. A spike and a leaf with a recorded override are exempt.
+    const gate = decideDiscoveryGate(lytosDir, fm);
+    if (gate.action === "refuse") {
+      blocked.push({
+        id,
+        title,
+        reason: "epic-in-discovery",
+        detail: `${gate.epic} is still in phase: discovery — its leaves wait for the freeze (a spike or a recorded override is exempt)`,
       });
       continue;
     }

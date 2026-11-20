@@ -147,6 +147,13 @@ function displayIntent(intent: IntentDetail): void {
   if (intent.progress && intent.leaves) {
     rows.push(`${blue("Leaves:")} ${progressLabel(intent.progress)}`);
   }
+  const o = intent.discoveryOverride;
+  if (o) {
+    const when = [o.date, o.by ? `@${o.by}` : ""].filter(Boolean).join(" ");
+    rows.push(
+      `${yellow("Discovery override:")} ${o.reason}${when ? ` ${dim(`(${when})`)}` : ""}`
+    );
+  }
   if (rows.length === 0) return;
 
   console.error("");

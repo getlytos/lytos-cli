@@ -7,13 +7,16 @@ effort: M
 complexity: standard
 skill: ""
 skills_aux: []
-status: 1-backlog
-branch: "feat/ISS-0165-the-discovery-gate"
+status: 4-review
+branch: feat/ISS-0165-the-discovery-gate
 depends: [ISS-0163]
 related: [ISS-0162]
 created: 2026-11-20
 schema_version: 2
 risk: medium
+assignee: fredericgalline
+updated: 2026-11-20
+started_at: 2026-11-20
 ---
 # ISS-0165 — The discovery gate: the leaves of an unfrozen epic cannot enter the sprint
 
@@ -41,7 +44,7 @@ Decision: **A**.
 
 ## Definition of done
 
-- [ ] A leaf of a discovery epic is refused at the sprint entry and excluded by `lyt next` — verify: auto
-- [ ] A `spike` leaf and a recorded override both pass, and the override reason is written into the card — verify: auto
-- [ ] A card with no parent epic is unaffected — verify: auto
-- [ ] The refusal message names the epic and the way forward — verify: auto
+- [x] A leaf of a discovery epic is refused at the sprint entry and excluded by `lyt next` — verify: auto
+- [x] A `spike` leaf and a recorded override both pass, and the override reason is written into the card — verify: auto
+- [x] A card with no parent epic is unaffected — verify: auto
+- [x] The refusal message names the epic and the way forward — verify: auto

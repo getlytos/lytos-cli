@@ -17,6 +17,7 @@ import {
 } from "../lib/issue-ops.js";
 import { serializeFrontmatter, type Frontmatter } from "../lib/frontmatter.js";
 import { ok, error, info, warn, cyan, bold } from "../lib/output.js";
+import { enforceDiscoveryGate } from "../lib/discovery-gate-cli.js";
 
 function findLytosDir(cwd: string): string | null {
   const candidate = join(cwd, ".lytos");
@@ -73,6 +74,9 @@ export const claimCommand = new Command("claim")
       error(`Issue ${issueId} not found.`);
       process.exit(1);
     }
+
+    // The discovery gate (ADR-0009 §3): claiming is another way into the flow.
+    enforceDiscoveryGate(lytosDir, issue.frontmatter);
 
     const currentAssignee = issue.frontmatter.assignee;
     const gitUser = getGitUser();

@@ -20,6 +20,12 @@ import {
 import { parseIssueDetail } from "../lib/show.js";
 import { type Frontmatter } from "../lib/frontmatter.js";
 import { EPIC_TYPE } from "../lib/intent.js";
+import { SPIKE_TYPE } from "../lib/discovery-gate.js";
+import {
+  enforceDiscoveryGate,
+  OVERRIDE_HELP,
+  OVERRIDE_OPTION,
+} from "../lib/discovery-gate-cli.js";
 import { ok, info, warn, error, bold, cyan, green } from "../lib/output.js";
 
 const getGitUser = currentGitUser;
@@ -34,6 +40,7 @@ export const startCommand = new Command("start")
     "Start even when origin is ahead or the issue is claimed on origin",
     false
   )
+  .option(OVERRIDE_OPTION, OVERRIDE_HELP)
   .option("--json", "Output result as JSON", false)
   .on("--help", () => {
     console.log("");
@@ -84,6 +91,13 @@ export const startCommand = new Command("start")
       process.exit(1);
     }
 
+    // The discovery gate (ADR-0009 §3): a leaf of an epic still in discovery is
+    // not started. Local and cheap, so before the network check.
+    const gate = enforceDiscoveryGate(lytosDir, issue.frontmatter, {
+      override: opts.discoveryOverride,
+      json: opts.json,
+    });
+
     // Origin-freshness check — same as lyt claim
     if (!opts.force) {
       const check = checkOriginFresh(lytosDir, issueId, getGitUser());
@@ -116,6 +130,7 @@ export const startCommand = new Command("start")
       assignee: getGitUser(),
       schema_version: "2",
       updated: today(),
+      ...gate,
     };
     const existingStartedAt =
       typeof issue.frontmatter.started_at === "string"
@@ -175,11 +190,20 @@ export const startCommand = new Command("start")
     console.error("");
   });
 
+/**
+ * Card types that are not a branch prefix, and the prefix their branch takes: the
+ * pre-commit hook only accepts feat|fix|refactor|chore|docs|test|style|perf.
+ */
+const BRANCH_PREFIX_OF_TYPE: Record<string, string> = {
+  [EPIC_TYPE]: "feat",
+  [SPIKE_TYPE]: "chore",
+};
+
 function buildBranchName(fm: Frontmatter): string {
-  // `epic` is a card type, not a conventional-commit prefix: the pre-commit hook
-  // only accepts feat|fix|refactor|chore|docs|test|style|perf (ADR-0009).
   const type =
-    typeof fm.type === "string" && fm.type !== EPIC_TYPE ? fm.type : "feat";
+    typeof fm.type === "string"
+      ? (BRANCH_PREFIX_OF_TYPE[fm.type.toLowerCase()] ?? fm.type)
+      : "feat";
   const id = typeof fm.id === "string" ? fm.id : "ISS-0000";
   const title = typeof fm.title === "string" ? fm.title : "untitled";
   const slug = title
