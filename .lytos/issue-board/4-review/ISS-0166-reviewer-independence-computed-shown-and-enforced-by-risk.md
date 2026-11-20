@@ -7,7 +7,7 @@ effort: L
 complexity: heavy
 skill: ""
 skills_aux: []
-status: 5-done
+status: 4-review
 branch: feat/ISS-0166-reviewer-independence
 depends: []
 related: [ISS-0162]
@@ -17,8 +17,6 @@ risk: high
 assignee: fredericgalline
 updated: 2026-11-20
 started_at: 2026-11-20
-completed_at: 2026-11-20
-commits: [16fdcdd, 1c6e272, 889b647, 0aaa03d, ba6e11a, 27d1fd2, b5e8493, 3fd4185, a54e2a5, 957f8b6]
 ---
 # ISS-0166 — Reviewer independence: computed, shown in the packet and enforced by risk
 
@@ -51,7 +49,7 @@ Decision: **A**.
 - [x] `lyt report` shows the level and the minimum for the card's risk — verify: auto
 - [x] At high risk, a level-3 review cannot produce `review: go` alone, and the countersignature is recorded with who and when — verify: auto
 - [x] Negative cases exist for every rule (missing fields, an empty ranking, a risk with no minimum configured) — verify: auto
-- [x] A verdict recorded below the minimum for the card's risk is refused, and edits made after the verdict show in the packet; a hand-lowered `risk:` before the first verdict, what the declared models claim and what a typed countersignature proves are not prevented, and are listed in ADR-0010 "Known limits" — verify: reviewer:security-review
+- [ ] A verdict recorded below the minimum for the card's risk is refused, and edits made after the verdict show in the packet; a hand-lowered `risk:` before the first verdict, what the declared models claim and what a typed countersignature proves are not prevented, and are listed in ADR-0010 "Known limits" — verify: reviewer:security-review
 
 ## Delivery notes
 
@@ -63,7 +61,3 @@ What was built, and what the card left open.
 - **Where it shows.** `lyt report` (a "Decide first" line and an `## Independence` section, recomputed from the card, with where each value came from), `lyt gates` (the minimum per risk, the card's level), `lyt doctor` (unusable settings), `lyt review` (what it computed, and whether the reviewer was given or read from the card).
 - **Open points settled here.** Medium only warns by default (a stricter team sets `below_minimum.medium: countersign`); the card text and the ADR set the hold only at high. A `risk:` that is present but not low, medium or high is read as high. `lyt close` is not changed: it never consulted `review:`.
 - **Known limits.** The models and sessions are declared inputs: the CLI cannot prove who reviewed. A hand edit of the card is not prevented (it is a tracked markdown file) but is shown: an approval with no matching record, a record that no longer matches the models or the risk, an incomplete or typed countersignature. Nothing tells a human from an agent running `--countersign`: that is the wrapper contract's job (ISS-0168) and the App's.
-
-## Evidence (review)
-
-Covered by the two independent reviews of 1.7 (a stronger model of the same provider, read-only, level 2, 2026-11-20), both GO with reserves: The security reviews found three issues in the independence code (F1, F2, F6/F7), fixed or documented in ADR-0010 "Known limits" before the tag; the gateway-prefix gap that remains is ISS-0182. The hand-lowered `risk:` case (F7) is listed in the limits.
