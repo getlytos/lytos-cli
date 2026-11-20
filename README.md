@@ -68,10 +68,10 @@ Every bridge points at the same `.lytos/` directory, so switching tools does not
 
 | Command | What it does |
 |---------|-------------|
-| `lyt init` | Scaffold `.lytos/` in a project (interactive, detects the stack). Also installs the `lytos-issue` git merge driver (`.gitattributes` + git config): issue fiches merge structurally — frontmatter field by field, body as the ordered union of `##` sections — so two branches appending to the same fiche no longer conflict |
+| `lyt init` | Scaffold `.lytos/` in a project (interactive, detects the stack). On an interactive terminal it asks one optional question — whether you use Claude Design — answered up front with `--design <claude-design\|other\|none>`; see [Optional: a Claude Design register](#optional-a-claude-design-register). Also installs the `lytos-issue` git merge driver (`.gitattributes` + git config): issue fiches merge structurally — frontmatter field by field, body as the ordered union of `##` sections — so two branches appending to the same fiche no longer conflict |
 | `lyt board` | Regenerate BOARD.md from issue YAML frontmatter |
 | `lyt archive` | Move completed issues from `5-done/` to `archive/<quarter>/` (default: older than 7 days). `--all`, `--older-than <Nd>`, `--dry-run` |
-| `lyt lint` | Validate `.lytos/` structure and content |
+| `lyt lint` | Validate `.lytos/` structure and content — including the `verify:` marker of every Definition-of-Done item (see [Definition-of-Done markers](#definition-of-done-markers)) |
 | `lyt doctor` | Full diagnostic — broken links, stale memory, missing skills, health score |
 | `lyt show [ISS-XXXX]` | Display issue detail with progress bar, or all in-progress issues |
 | `lyt start ISS-XXXX` | Start an issue — move to in-progress, create branch, update board |
@@ -93,11 +93,11 @@ The CLI exposes decidable primitives; the wrapper or the App orchestrates them. 
 
 | Command | What it does |
 |---------|-------------|
-| `lyt next` | The next loop-eligible issue in the sprint — status workable, dependencies satisfied, Definition of Ready met, and a DoD carrying at least one machine-verifiable item. Refuses **and explains** when nothing qualifies |
+| `lyt next` | The next loop-eligible issue in the sprint — status workable, dependencies satisfied, Definition of Ready met, and a DoD carrying at least one machine-verifiable item (`verify: auto` — a `reviewer` ruling is a model's judgment, not a gate). Refuses **and explains** when nothing qualifies; `--json` gives each blocked issue a `reason`: `deps-pending`, `no-dod`, `all-human-dod`, `no-machine-dod` (no `auto` item but `reviewer` items present), `not-ready` |
 | `lyt park ISS-XXXX --reason <code>` | Halt instead of guessing: park an issue out of the flow with a reason from a closed taxonomy (`ambiguous-spec`, `missing-dependency`, `gate-failed`, `budget-exhausted`, `human-judgment-required`, `external-blocker`). `lyt unpark` resumes it |
 | `lyt budget` | Aggregate pipeline cost against a ceiling (`--max-usd`, `--max-issues`, or `budget:` in `sprint.md`). Exits non-zero when breached — a stop condition a `while` loop or CI can read |
 | `lyt gates [ISS-XXXX]` | The gates mandatory at an issue's `risk` level, resolved from the project's quality kit. Rigor follows blast radius: `low` gets the floor plus `cost-review` (the one deliberate exception, see ADR-0007), `high` gets everything |
-| `lyt report ISS-XXXX` | The review packet for one issue — diff, gate evidence, parks, human checklist, auditor verdict, audit trail. Laid out **doubt-first**: what needs deciding sits above what is already green. `--sprint` aggregates the whole sprint |
+| `lyt report ISS-XXXX` | The review packet for one issue — diff, gate evidence, parks, pending reviewer rulings, human checklist, auditor verdict, audit trail. Laid out **doubt-first**: what needs deciding sits above what is already green. `--sprint` aggregates the whole sprint |
 
 ![lyt show](docs/screenshots/lyt-show.png)
 
@@ -110,7 +110,7 @@ project/
 └── .lytos/
     ├── manifest.md              # Intent — project identity and constraints
     ├── LYTOS.md                 # Method reference
-    ├── config.yml               # Language and profile preferences
+    ├── config.yml               # Language, profile and design preferences
     ├── skills/                  # Design — Lytos protocol + agentskills.io task skills
     │   ├── session-start.md     # Lytos bootstrap protocol (flat)
     │   ├── code-structure/SKILL.md
@@ -122,7 +122,13 @@ project/
     │   ├── security/SKILL.md
     │   └── api-design/SKILL.md  # 8 task skills (agentskills.io format)
     ├── rules/                   # Standards — quality criteria
-    │   └── default-rules.md
+    │   ├── default-rules.md
+    │   └── team-and-loop.md     # The roles of a team and the loop between the owner's two gates
+    ├── quality/                 # Standards made executable
+    │   ├── kit.md               # Gate catalog: machine gates, model reviews, human calls — by risk
+    │   ├── stack.md             # Stack contract
+    │   ├── rubrics/             # The grids a reviewer follows (FORMAT.md + 8 grids)
+    │   └── checklists/          # The lists a person works through (4)
     ├── issue-board/             # Progress — kanban board
     │   ├── BOARD.md
     │   ├── 0-icebox/
@@ -160,6 +166,28 @@ To explicitly replace a bridge with the bundled template — useful when upstrea
 lyt init --force                          # re-scaffold, preserve bridges (default)
 lyt init --force --overwrite-bridges      # re-scaffold, replace bridges too
 ```
+
+### Optional: a Claude Design register
+
+`lyt init` asks **one** optional question, only on an interactive terminal outside CI: *Do you use Claude Design for design?* — `yes`, `no` or `other tool`; Enter means no. `--design <claude-design|other|none>` answers it up front. With no terminal (a pipe, CI, `--yes`) there is no prompt and the answer is `none`.
+
+The answer is recorded in `.lytos/config.yml` as `design:`. Only `claude-design` creates anything: `.lytos/design/registry.md`, a register of your Claude Design artifacts — links, current version, which cards cover which version, the gaps handed back to the design tool. An existing register is never overwritten, not even by `init --force`.
+
+It is never a brake: `none` and `other` generate nothing, `lyt doctor` and `lyt lint` say nothing about design, and no gate depends on it.
+
+### Definition-of-Done markers
+
+Every Definition-of-Done item says **who verifies it** with a trailing marker, and `lyt lint` flags the items that do not:
+
+| Marker | Verified by | Counts as machine-verifiable (loop-eligible)? |
+|--------|-------------|----------------------------------------------|
+| `— verify: auto` | A command that exits non-zero (test, typecheck, lint, build) | Yes |
+| `— verify: reviewer` | The auditing model, against a written rubric | No |
+| `— verify: human` | A person, because nothing else can | No |
+
+Each marker may pin the quality-kit line that carries it: `verify: auto:tests-unit`, `verify: reviewer:over-engineering`, `verify: human:product-intent`. A pin is the id of a kit line (first column of `quality/kit.md`), not the name of a rubric or a checklist file; `lyt doctor` flags a pin the kit does not have. An unmarked item counts as `auto` and is flagged by `lyt lint`. A DoD with no `auto` (or unmarked) item is not loop work.
+
+`verify: human` is the last resort: legitimate only when an end-to-end tester could not check the item itself, in a browser or with Playwright — otherwise it is `verify: auto:e2e`. A human item always carries a pin naming a `human` line of the kit, and `lyt lint` **warns** (never errors) on one that does not.
 
 ---
 

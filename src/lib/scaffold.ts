@@ -25,6 +25,8 @@ import type { DetectedStack } from "./detect-stack.js";
 import { installPreCommitHook } from "./hooks.js";
 import { installMergeDriver } from "./merge-driver.js";
 import { QUALITY_LIBRARY_FILES } from "./method-files.js";
+import { symlinkOnPath } from "./safe-write.js";
+import { DEFAULT_DESIGN, type DesignChoice } from "./design.js";
 
 const METHOD_DIR = join(dirname(fileURLToPath(import.meta.url)), "method");
 
@@ -127,6 +129,11 @@ export interface ScaffoldOptions {
   cwd: string;
   dryRun: boolean;
   overwriteBridges: boolean;
+  /**
+   * The design answer (ISS-0158), recorded in config.yml. Only `claude-design`
+   * writes a file; absent means `none`.
+   */
+  design?: DesignChoice;
 }
 
 export interface ScaffoldResult {
@@ -272,7 +279,7 @@ export function scaffold(options: ScaffoldOptions): ScaffoldResult {
   // Write config.yml with user preferences
   writeFile(
     join(lytosDir, "config.yml"),
-    `# Lytos configuration\nlanguage: ${options.lang}\nprofile: ${options.profile}\n`,
+    `# Lytos configuration\nlanguage: ${options.lang}\nprofile: ${options.profile}\ndesign: ${options.design ?? DEFAULT_DESIGN}\n`,
     options.dryRun,
     result
   );
@@ -286,6 +293,36 @@ export function scaffold(options: ScaffoldOptions): ScaffoldResult {
       result.warnings.push(
         `Could not read bundled file ${file.remote}: ${err instanceof Error ? err.message : String(err)}`
       );
+    }
+  }
+
+  // The design register — only for a project that said it uses Claude Design
+  // (ISS-0158). It is the project's own record of links and versions, so an
+  // existing one is never overwritten, not even by `init --force`.
+  if (options.design === "claude-design") {
+    const registerPath = join(lytosDir, "design", "registry.md");
+    const link = symlinkOnPath(registerPath, lytosDir);
+    if (link) {
+      result.warnings.push(
+        `${relative(options.cwd, registerPath)} not written: ${relative(options.cwd, link)} is a symbolic link, and init does not write through one.`
+      );
+    } else if (existsSync(registerPath)) {
+      result.warnings.push(
+        `Kept existing ${relative(options.cwd, registerPath)} — the design register is yours, init never overwrites it.`
+      );
+    } else {
+      try {
+        writeFile(
+          registerPath,
+          readBundled("design/registry.md"),
+          options.dryRun,
+          result
+        );
+      } catch (err) {
+        result.warnings.push(
+          `Could not read bundled file design/registry.md: ${err instanceof Error ? err.message : String(err)}`
+        );
+      }
     }
   }
 
