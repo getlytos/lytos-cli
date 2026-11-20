@@ -146,7 +146,8 @@ describe("the document stays short, generic and in the method's map", () => {
     expect(read("method/LYTOS.md")).toContain("`rules/team-and-loop.md`");
     expect(read("method/rules/README.md")).toContain("`team-and-loop.md`");
     expect(read("src/lib/scaffold.ts")).toContain("rules/team-and-loop.md");
-    expect(read("src/commands/upgrade.ts")).toContain("rules/team-and-loop.md");
+    // `upgrade` reads its list of replaceable method files from method-files.ts.
+    expect(read("src/lib/method-files.ts")).toContain("rules/team-and-loop.md");
   });
 
   it("LYTOS.md reconciles the roles with the method's personas, in one sentence", () => {

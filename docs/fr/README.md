@@ -78,7 +78,7 @@ Chaque bridge pointe vers le même dossier `.lytos/`, donc changer d'outil ne de
 | `lyt close ISS-XXXX` | Ferme une issue — déplace en done, alerte sur les items non cochés |
 | `lyt close` | Ferme en lot toutes les issues de 4-review/ → 5-done/ (demande confirmation ; `--yes` saute le prompt ; `--dry-run` previewe) |
 | `lyt review [ISS-XXXX]` | Audit cross-model pour les issues en `4-review/` — imprime un prompt autonome ou ingère un bloc audit retourné (`--accept`). À lancer depuis une **session IA fraîche**, idéalement un vendor différent de l'implémenteur. |
-| `lyt upgrade` | Récupère les derniers fichiers méthode dans `.lytos/`. `--migrate-cursor` convertit un legacy `.cursorrules` vers `.cursor/rules/lytos.mdc`. |
+| `lyt upgrade` | Récupère les derniers fichiers méthode dans `.lytos/`. Ce qui est à vous n'est jamais écrit : `quality/kit.md` et `stack.md` (liés à votre stack — il se contente de nommer les gates fournies que votre kit n'a pas), le registre de design, la config, le manifest. Les nouvelles grilles et listes sont ajoutées, mais une version modifiée n'est jamais écrasée, même avec `--force`. `--migrate-cursor` convertit un legacy `.cursorrules` vers `.cursor/rules/lytos.mdc`. |
 | `lyt update` | Met à jour lytos-cli vers la dernière version |
 
 ![lyt show](../screenshots/lyt-show.png)

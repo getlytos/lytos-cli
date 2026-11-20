@@ -84,7 +84,7 @@ Every bridge points at the same `.lytos/` directory, so switching tools does not
 | `lyt review [ISS-XXXX]` | Cross-model audit for issues in `4-review/` — prints a self-contained prompt or ingests a returned audit block (`--accept`). The prompt targets the branch declared by the issue's `branch:` field (and instructs the auditor to check it out); the export warns when `branch:` is empty or missing on origin. Run from a **fresh AI session**, ideally a different vendor than the implementer. Three verdicts: `GO`, `NO_GO`, and `GO_PENDING_HUMAN` — the last one for when every machine gate is green but `verify: human` items remain, which no model may tick |
 | `lyt migrate-frontmatter` | Backfill schema v2 fields (`schema_version`, lifecycle dates) on existing issues. Dry-run by default |
 | `lyt absorb` | Merge the AI-wrapper session journal into an issue's audit fields (cost, model, tokens). Dry-run by default |
-| `lyt upgrade` | Pull the latest method files into `.lytos/`. `--migrate-cursor` converts a legacy `.cursorrules` to `.cursor/rules/lytos.mdc`. |
+| `lyt upgrade` | Pull the latest method files into `.lytos/`. What is yours is never written: `quality/kit.md` and `stack.md` (linked to your stack — it only names the bundled gates your kit lacks), the design register, the config, the manifest. New rubrics and checklists are added but a modified one is never overwritten, even with `--force`. `--migrate-cursor` converts a legacy `.cursorrules` to `.cursor/rules/lytos.mdc`. |
 | `lyt update` | Update lytos-cli to the latest version |
 
 ### Loop primitives

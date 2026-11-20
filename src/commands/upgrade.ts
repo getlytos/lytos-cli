@@ -3,13 +3,28 @@
  *
  * Compares local .lytos/ files with the bundled dist/method/ files.
  * Never touches manifest.md, memory/, or issue-board/ (except templates).
+ *
+ * What belongs to the project is never written (ISS-0159):
+ *   - `quality/kit.md` and `quality/stack.md` are linked to the project's stack
+ *     (real commands in the `tool` column, rows added and removed). They are in
+ *     neither list below, so no flag can reach them; the run only says which
+ *     bundled gates the kit does not have.
+ *   - The quality library (rubrics, checklists) is ADD-ONLY: a missing file is
+ *     added, one that exists is left alone even with --force, because a project
+ *     adapts a rubric to its own architecture (`lib/upgrade-library.ts`).
+ *   - Nothing is written through a symbolic link: a dangling link reads as
+ *     "absent", and a write would create its target wherever it points.
+ *   - With no terminal (a pipe, CI) each replacement question is answered "no"
+ *     out loud, with the way to force it.
+ *   - `design/registry.md`, `config.yml`, `manifest.md` and `memory/` are not
+ *     method files at all.
  */
 
 import { Command } from "commander";
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
-import { join, dirname } from "path";
+import { join, dirname, relative } from "path";
 import { fileURLToPath } from "url";
-import { createInterface } from "readline";
+import { createRequire } from "module";
 import {
   ok,
   info,
@@ -22,43 +37,23 @@ import {
 } from "../lib/output.js";
 import { KANBAN_DIRS } from "../lib/scaffold.js";
 import {
+  bundledKitUrl,
+  deliverLibrary,
+  kitGatesMissing,
+  notWrittenLine,
+} from "../lib/upgrade-library.js";
+import { UPGRADEABLE_FILES } from "../lib/method-files.js";
+import { symlinkOnPath } from "../lib/safe-write.js";
+import { askConfirm, canPrompt } from "../lib/terminal.js";
+import {
   migrateCursorRules,
   type CursorMigrationResult,
 } from "../lib/cursor-migration.js";
 
 const METHOD_DIR = join(dirname(fileURLToPath(import.meta.url)), "method");
 
-const UPGRADEABLE_FILES = [
-  // session-start is a Lytos bootstrap protocol, kept flat
-  "skills/session-start.md",
-  // Task skills follow agentskills.io format: <name>/SKILL.md
-  "skills/code-review/SKILL.md",
-  "skills/testing/SKILL.md",
-  "skills/documentation/SKILL.md",
-  "skills/git-workflow/SKILL.md",
-  "skills/code-structure/SKILL.md",
-  "skills/deployment/SKILL.md",
-  "skills/security/SKILL.md",
-  "skills/api-design/SKILL.md",
-  "rules/default-rules.md",
-  "rules/README.md",
-  "rules/team-and-loop.md",
-  "LYTOS.md",
-  ".gitignore",
-  "templates/sprint.md",
-  "issue-board/templates/issue-feature.md",
-  "issue-board/templates/issue-task.md",
-];
-
-async function askConfirm(question: string): Promise<boolean> {
-  const rl = createInterface({ input: process.stdin, output: process.stderr });
-  return new Promise((resolve) => {
-    rl.question(question, (answer) => {
-      rl.close();
-      resolve(answer.toLowerCase() === "y");
-    });
-  });
-}
+const _require = createRequire(import.meta.url);
+const { version: VERSION } = _require("../package.json");
 
 export const upgradeCommand = new Command("upgrade")
   .description("Update method files in .lytos/ from the bundled version")
@@ -104,11 +99,57 @@ export const upgradeCommand = new Command("upgrade")
       let skipped = 0;
       let upToDate = 0;
 
+      // The library comes FIRST: it is added without asking, so no replacement
+      // question below can stand between a project and it.
+      const library = deliverLibrary(
+        lytosDir,
+        METHOD_DIR,
+        Boolean(opts.dryRun)
+      );
+      for (const relPath of library.added) {
+        console.error(`  ${green("+")} ${dim(relPath)} ${dim("(new)")}`);
+      }
+      for (const { path, link } of library.behindLink) {
+        console.error(notWrittenLine(path, relative(cwd, link)));
+      }
+      added += library.added.length;
+      skipped += library.behindLink.length;
+      upToDate += library.upToDate;
+      if (library.ownedByProject > 0) {
+        info(
+          `${library.ownedByProject} quality library file(s) differ from the bundled version and were left alone — they are yours`
+        );
+      }
+
+      // The kit is the project's own and was not touched. Tell it what the
+      // bundled kit has that it does not (informational; nothing is written).
+      const missingGates = kitGatesMissing(lytosDir, METHOD_DIR);
+      if (missingGates.length > 0) {
+        info(
+          `quality/kit.md is yours and was not touched. ${missingGates.length} gate(s) of the bundled kit are not in your kit: ${missingGates.join(", ")}`
+        );
+        console.error(
+          `    ${dim(`Copy the rows you want from ${bundledKitUrl(VERSION)}; ignore the ones you dropped on purpose.`)}`
+        );
+      }
+
+      // Nobody to answer? Then every replacement question is "no", said out loud.
+      const canAsk = canPrompt(process.env, process.stdin.isTTY);
+
       for (const relPath of UPGRADEABLE_FILES) {
         const localPath = join(lytosDir, relPath);
         const bundledPath = join(METHOD_DIR, relPath);
 
         if (!existsSync(bundledPath)) continue;
+
+        // Never through a symbolic link: checked before existsSync, which
+        // calls a dangling one "absent".
+        const link = symlinkOnPath(localPath, lytosDir);
+        if (link) {
+          console.error(notWrittenLine(relPath, relative(cwd, link)));
+          skipped++;
+          continue;
+        }
 
         const bundled = readFileSync(bundledPath, "utf-8");
 
@@ -144,6 +185,14 @@ export const upgradeCommand = new Command("upgrade")
           continue;
         }
 
+        if (!canAsk) {
+          console.error(
+            `  ${cyan("~")} ${dim(relPath)} ${dim("differs — kept: no terminal to ask on; run `lyt upgrade --force` to replace it")}`
+          );
+          skipped++;
+          continue;
+        }
+
         // Ask user
         process.stderr.write(
           `  ${cyan("~")} ${relPath} differs — update? [y/N] `
@@ -164,7 +213,9 @@ export const upgradeCommand = new Command("upgrade")
       // .gitignore-protected private notes shipped) may be missing them.
       for (const dir of KANBAN_DIRS) {
         const gitkeepPath = join(lytosDir, "issue-board", dir, ".gitkeep");
-        if (existsSync(gitkeepPath)) continue;
+        if (symlinkOnPath(gitkeepPath, lytosDir) || existsSync(gitkeepPath)) {
+          continue;
+        }
 
         if (!opts.dryRun) {
           mkdirSync(dirname(gitkeepPath), { recursive: true });
@@ -230,7 +281,7 @@ export const upgradeCommand = new Command("upgrade")
         if (skipped > 0) parts.push(`${skipped} skipped`);
         if (upToDate > 0) parts.push(`${upToDate} already up to date`);
 
-        if (added === 0 && updated === 0) {
+        if (added === 0 && updated === 0 && skipped === 0) {
           ok(`Already up to date. ${dim(`(${upToDate} files checked)`)}`);
         } else {
           ok(cyan(bold("Method files upgraded")) + " — " + parts.join(" · "));

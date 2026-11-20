@@ -261,3 +261,11 @@ describe("the READMEs describe the 1.6 surface (ISS-0158, ISS-0153, ISS-0154)", 
     expect(doc).toContain("verify: auto:e2e");
   });
 });
+
+describe("the READMEs say what upgrade never writes (ISS-0159)", () => {
+  it.each(["README.md", "docs/fr/README.md"])("%s", (path) => {
+    const row = read(path).split("\n").find((l) => l.startsWith("| `lyt upgrade`")) ?? "";
+    expect(row).toContain("quality/kit.md");
+    expect(row).toContain("--force");
+  });
+});

@@ -18,6 +18,7 @@ import {
   gateCoverage,
   pinnedGateRefs,
   humanItemProblems,
+  missingBundledGates,
   type QualityKit,
 } from "../../src/lib/quality.js";
 import { analyzeDod } from "../../src/lib/dod.js";
@@ -520,5 +521,40 @@ describe("humanItemProblems — the human rule (ISS-0154)", () => {
     expect(r.unpinned.map((i) => i.text)).toEqual(["A"]);
     expect(r.notHuman).toEqual([]);
     expect(r.humanGates).toEqual([]);
+  });
+});
+
+describe("missingBundledGates — what upgrade tells a project's kit it lacks (ISS-0159)", () => {
+  const bundled = `| id | kind | tiers | tool |
+|----|------|-------|------|
+| tests-unit | gate | low,medium,high | <your test command> |
+| doc-L0 | gate | low,medium,high | <docs> |
+| ux-review | reviewer | medium,high | rubric:ux |
+| cost-review | reviewer | low,medium,high | rubric:cost-review |
+`;
+
+  it("lists the bundled ids the local kit does not have, in bundled order", () => {
+    const local = `| id | kind | tiers | tool |
+|----|------|-------|------|
+| tests-unit | gate | low,medium,high | npm test |
+| doc-L0 | gate | low,medium,high | api docs |
+`;
+    expect(missingBundledGates(local, bundled).map((g) => g.id)).toEqual(["ux-review", "cost-review"]);
+  });
+
+  it("matches ids case-insensitively and ignores what the project added itself", () => {
+    const local = `| id | kind | tiers | tool |
+|----|------|-------|------|
+| TESTS-UNIT | gate | low,medium,high | npm test |
+| doc-l0 | gate | low,medium,high | api docs |
+| ux-review | reviewer | medium,high | rubric:ux |
+| cost-review | reviewer | low,medium,high | rubric:cost |
+| permissions | gate | medium,high | npx vitest run permissions |
+`;
+    expect(missingBundledGates(local, bundled)).toEqual([]);
+  });
+
+  it("reports everything when the local file holds no catalog", () => {
+    expect(missingBundledGates("# nothing here\n", bundled)).toHaveLength(4);
   });
 });
