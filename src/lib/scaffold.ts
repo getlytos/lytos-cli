@@ -80,6 +80,8 @@ const REMOTE_FILES = [
   // Gitignore that protects 6-private-notes/ from accidental commits
   { remote: ".gitignore", local: ".gitignore" },
   { remote: "templates/sprint.md", local: "templates/sprint.md" },
+  // The milestone template and the epic template: the intent layer (ADR-0009)
+  { remote: "templates/milestone.md", local: "templates/milestone.md" },
   // README orienting GitHub visitors now that BOARD.md is gitignored (ADR-0002)
   { remote: "issue-board/README.md", local: "issue-board/README.md" },
   {
@@ -89,6 +91,10 @@ const REMOTE_FILES = [
   {
     remote: "issue-board/templates/issue-task.md",
     local: "issue-board/templates/issue-task.md",
+  },
+  {
+    remote: "issue-board/templates/issue-epic.md",
+    local: "issue-board/templates/issue-epic.md",
   },
   // Quality kit — executable Standards pillar (ADR-0005/0007, ISS-0107)
   { remote: "quality/kit.md", local: "quality/kit.md" },

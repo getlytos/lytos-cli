@@ -221,6 +221,47 @@ verifies* the work, not *whether it was done*.
 
 ---
 
+## Three Levels: Milestone, Epic, Leaf
+
+A card says what to build; the level above says why. Three levels, never more. Every field below is
+optional: a project that adopts none of them changes nothing.
+
+| Level | What it is | Closed by |
+|-------|------------|-----------|
+| **Milestone** (`.lytos/milestones/<id>.md`) | A product-level goal with exit criteria: a version. It may span several sprints | The owner's acceptance. It corresponds to a tag and a deployment |
+| **Epic** (`type: epic`) | The intent card: the outcome in product words, acceptance scenarios (they become end-to-end tests), constraints, out of scope, cost class, design links, risk | Its scenarios green AND the owner's acceptance (`human:product-intent`), not the sum of its leaves |
+| **Leaf** (`parent: ISS-XXXX`) | A card the size of one loop iteration, with a machine-verifiable Definition of done | The usual gates |
+
+There are no grandchildren: a leaf that is too big is split into siblings under the same epic.
+`milestone: <id>` goes on an epic or a leaf, `phase` only on an epic. Children, progress and the tree
+are **derived** from the `parent` fields, never written by hand: `npx lyt board`,
+`npx lyt show ISS-XXXX` and `npx lyt milestone <id>` read them. `npx lyt lint` warns on a `parent`
+that is not an epic, a third level, a `phase` on a leaf and a milestone with no file.
+
+### The discovery phase
+
+An epic starts in `phase: discovery`: its intent is still being settled. While it is, **its leaves
+cannot enter the sprint.** `npx lyt move … 2-sprint`, `npx lyt start`, `npx lyt claim` and
+`npx lyt unpark` refuse them, naming the epic, and `npx lyt next` skips them. Creating and refining
+leaves stays free. Two exemptions: a leaf of `type: spike` (a feasibility study or a measurement,
+which produces the evidence the epic needs), and an explicit human override,
+`--discovery-override "<reason>"`, which writes the reason into the card. A card with no parent epic
+is not concerned.
+
+A human freezes the epic (`phase: frozen`) when the **freeze checklist** holds:
+
+1. the intent is written in product words;
+2. the thin slice is chosen;
+3. a feasibility matrix classifies every element (feasible as is, feasible with an adjustment, not
+   feasible or too costly), each with a cost and an alternative;
+4. the discussion with design took at most two rounds, each point ending in one `Decision:` line;
+5. the links to the design artifacts are in place.
+
+A change after the freeze is a change request, not an edit. The templates are
+`issue-board/templates/issue-epic.md` and `templates/milestone.md`.
+
+---
+
 ## How to Apply These Rules
 
 1. Agents load this file **before each task**

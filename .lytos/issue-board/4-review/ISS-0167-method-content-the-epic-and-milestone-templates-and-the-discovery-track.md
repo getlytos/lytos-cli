@@ -7,13 +7,16 @@ effort: M
 complexity: standard
 skill: ""
 skills_aux: []
-status: 1-backlog
-branch: "docs/ISS-0167-the-epic-and-milestone-templates"
+status: 4-review
+branch: docs/ISS-0167-the-epic-and-milestone-templates
 depends: [ISS-0163]
 related: [ISS-0162]
 created: 2026-11-20
 schema_version: 2
 risk: low
+assignee: fredericgalline
+updated: 2026-11-20
+started_at: 2026-11-20
 ---
 # ISS-0167 — Method content: the epic and milestone templates and the discovery track
 
@@ -34,6 +37,6 @@ Add `issue-epic.md` (intent in product words, acceptance scenarios, constraints,
 
 ## Definition of done
 
-- [ ] `init` scaffolds the two templates and `upgrade` adds them without touching a modified file — verify: auto
-- [ ] A test fills the epic template and proves the Ready analysis does not misread it — verify: auto
+- [x] `init` scaffolds the two templates and `upgrade` adds them without touching a modified file — verify: auto
+- [x] A test fills the epic template and proves the Ready analysis does not misread it — verify: auto
 - [ ] The text states the three levels, the freeze checklist and the gate — verify: reviewer:over-engineering

@@ -35,7 +35,10 @@ one-sentence fix. A review never ticks a `verify: human` item.
 two, the loop turns by itself.**
 
 1. **Frame.** The owner states the intent. The orchestrator writes ready cards; the solutioner
-   writes each solution study.
+   writes each solution study. When the intent covers several cards it becomes an epic in
+   `phase: discovery`: the owner, the designer and the solutioner settle the thin slice and the
+   feasibility matrix, and the owner freezes the epic. Its leaves enter the sprint only after the
+   freeze, and `npx lyt next` skips them until then (`rules/default-rules.md`, "Three Levels").
 2. **Build.** `npx lyt next` picks a card; developers `npx lyt start` it, build, and
    `npx lyt move … 4-review`.
 3. **Prove.** The machine gates run. `npx lyt gates ISS-XXXX` lists what the card's `risk` makes
@@ -45,7 +48,7 @@ two, the loop turns by itself.**
 5. **Pack.** `npx lyt report ISS-XXXX` assembles the packet: doubt first, then the green evidence.
 6. **Release, then accept.** Release acts only after the owner's go on irreversible gestures. The
    owner accepts or rejects on the packet; `npx lyt close` stays theirs. The loop never closes its
-   own work.
+   own work. An epic is accepted on its scenarios and the packet, not because its leaves are done.
 
 **The owner does not replay what the machine has proved.** What stays theirs is what no run can
 rule on: intent (`human:product-intent`), a real screen reader (`human:screen-reader`), a legal or
