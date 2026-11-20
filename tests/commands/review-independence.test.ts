@@ -201,6 +201,68 @@ describe("lyt review — the project's configuration", () => {
   });
 });
 
+describe("the refusal says a person must countersign (ISS-0176, F6)", () => {
+  it("names the owner, and tells an automated wrapper never to pass --countersign", () => {
+    const { cwd } = project({ risk: "high" });
+    const r = run(["review", "ISS-0901", "--verdict", "go"], cwd);
+    expect(r.exitCode).toBe(1);
+    expect(r.stderr).toContain("A person must run the same command with --countersign");
+    expect(r.stderr).toContain("an automated wrapper or agent must never pass it");
+    // Any flag a refusal suggests must be named by the wrapper contract (ISS-0177): this one names only --countersign.
+    expect(r.stderr.match(/--[a-z][a-z-]*/g)).toEqual(["--countersign"]);
+  });
+
+  it("says the same for the project that refuses outright: no way through", () => {
+    const { cwd } = project({ risk: "high" }, "independence:\n  below_minimum:\n    high: refuse\n");
+    const r = run(["review", "ISS-0901", "--verdict", "go"], cwd);
+    expect(r.exitCode).toBe(1);
+    expect(r.stderr).not.toContain("--countersign");
+  });
+});
+
+describe("a provider override cannot lift a high-risk review (ISS-0176, F4)", () => {
+  const OVERRIDE = "independence:\n  providers:\n    claude-opus: someoneelse\n";
+  const REVIEW = ["review", "ISS-0901", "--verdict", "go", "--ai-model", "claude-opus-4", "--ai-session", "s2"];
+
+  it("refuses `go` at high risk although the override makes it look like level 1", () => {
+    const { file, cwd } = project({ risk: "high", implementer: "claude-sonnet-4/s1" }, OVERRIDE);
+    const before = read(file);
+    const r = run(REVIEW, cwd);
+    expect(r.exitCode).toBe(1);
+    expect(r.stderr).toContain("provider override");
+    expect(r.stderr).toContain("reassigns");
+    expect(r.stderr).toContain("level 3");
+    expect(read(file)).toBe(before);
+  });
+
+  it("lets the owner countersign it, recording level 3: the one that counted", () => {
+    const { file, cwd } = project({ risk: "high", implementer: "claude-sonnet-4/s1" }, OVERRIDE);
+    expect(run([...REVIEW, "--countersign"], cwd).exitCode).toBe(0);
+    expect(read(file)).toMatch(/^\s+level:\s*3$/m);
+    expect(read(file)).toMatch(/^\s+countersigned_by:\s*alice$/m);
+  });
+
+  it("counts at medium risk, and says it relied on the override", () => {
+    const { file, cwd } = project({ risk: "medium", implementer: "claude-sonnet-4/s1" }, OVERRIDE);
+    const r = run(REVIEW, cwd);
+    expect(r.exitCode).toBe(0);
+    expect(r.stderr).toContain("provider override: ");
+    expect(r.stderr).toContain("reassigns");
+    expect(read(file)).toMatch(/^\s+level:\s*1$/m);
+  });
+
+  it("still lets a NEW model be added at high risk", () => {
+    const { file, cwd } = project(
+      { risk: "high", implementer: "claude-sonnet-4/s1" },
+      "independence:\n  providers:\n    acme: acme-labs\n"
+    );
+    const r = run(["review", "ISS-0901", "--verdict", "go", "--ai-model", "acme-7", "--ai-session", "s2"], cwd);
+    expect(r.exitCode).toBe(0);
+    expect(r.stderr).not.toContain("provider override");
+    expect(read(file)).toMatch(/^review:\s*go$/m);
+  });
+});
+
 describe("lyt review --verdict at lower risk", () => {
   it("records a medium-risk self-review and says it is below the minimum", () => {
     const { file, cwd } = project({ risk: "medium", implementer: "claude-opus-x/s1" });

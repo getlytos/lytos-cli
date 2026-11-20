@@ -10,23 +10,15 @@
  * Zero dependencies.
  */
 
-import { readFileSync } from "fs";
-import { join } from "path";
-import {
-  DEFAULT_DESIGN,
-  designFromConfig,
-  type DesignChoice,
-} from "./design.js";
+import { readConfig } from "./config.js";
+import { designOf, type DesignChoice } from "./design.js";
 
-/** The design answer recorded in `<lytosDir>/config.yml`; `none` when there is none to read. */
+/**
+ * The design answer recorded in `<lytosDir>/config.yml`; `none` when there is
+ * none to read. The file is read by `config.ts`, which never throws: no
+ * `config.yml`, or one that cannot be read, is the normal case for a project
+ * that never answered — it uses no design exchanges.
+ */
 export function readDesign(lytosDir: string): DesignChoice {
-  try {
-    return designFromConfig(
-      readFileSync(join(lytosDir, "config.yml"), "utf-8")
-    );
-  } catch {
-    // No config.yml (or one that cannot be read) is the normal case for a
-    // project that never answered: it uses no design exchanges.
-    return DEFAULT_DESIGN;
-  }
+  return designOf(readConfig(lytosDir).data.design);
 }

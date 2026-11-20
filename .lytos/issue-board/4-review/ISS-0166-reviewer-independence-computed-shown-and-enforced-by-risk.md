@@ -49,7 +49,7 @@ Decision: **A**.
 - [x] `lyt report` shows the level and the minimum for the card's risk — verify: auto
 - [x] At high risk, a level-3 review cannot produce `review: go` alone, and the countersignature is recorded with who and when — verify: auto
 - [x] Negative cases exist for every rule (missing fields, an empty ranking, a risk with no minimum configured) — verify: auto
-- [ ] The rule reads as written in ADR-0010 and cannot be bypassed by editing a field — verify: reviewer:security-review
+- [ ] A verdict recorded below the minimum for the card's risk is refused, and edits made after the verdict show in the packet; a hand-lowered `risk:` before the first verdict, what the declared models claim and what a typed countersignature proves are not prevented, and are listed in ADR-0010 "Known limits" — verify: reviewer:security-review
 
 ## Delivery notes
 

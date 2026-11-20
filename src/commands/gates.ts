@@ -62,7 +62,12 @@ export const gatesCommand = new Command("gates")
     console.log(
       "provider, or a stronger model, or at least a fresh session. Tune it under"
     );
-    console.log("`independence:` in .lytos/config.yml (tighten only).");
+    console.log(
+      "`independence:` in .lytos/config.yml (tighten only). A provider rule that"
+    );
+    console.log(
+      "reassigns a model the shipped table maps is reported and never counted at risk high."
+    );
   })
   .action((issueId: string | undefined, opts: { json?: boolean }) => {
     const cwd = process.cwd();
@@ -173,6 +178,9 @@ export const gatesCommand = new Command("gates")
               risk: independence.risk,
               level: independence.level,
               label: independence.label,
+              appliedLevel: independence.appliedLevel,
+              overrides: independence.overrides,
+              overrideIgnored: independence.overrideIgnored,
               minimum: independence.minimum,
               minimumText: independence.minimumText,
               belowMinimum: independence.belowMinimum,

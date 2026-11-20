@@ -257,6 +257,40 @@ describe("a hand edit cannot make an approval look better than it is", () => {
   });
 });
 
+describe("a provider override is shown, and cannot lift a high-risk review (ISS-0176, F4)", () => {
+  const OVERRIDE = "independence:\n  providers:\n    claude-opus: someoneelse\n";
+  const SONNET = "ai_implementer:\n  model: claude-sonnet-4\n  session: s1\n";
+  const OPUS = "ai_reviewer:\n  model: claude-opus-4\n  session: s2\n";
+
+  it("reports the override in the packet and counts the shipped mapping at high risk", () => {
+    const cwd = project(`risk: high\nreview: go\n${SONNET}${OPUS}`, OVERRIDE);
+    const i = packet(cwd).independence;
+    expect(i.level).toBe(1);
+    expect(i.appliedLevel).toBe("3");
+    expect(i.overrideIgnored).toBe(true);
+    expect(i.overrides).toHaveLength(1);
+    expect(i.opposable).toBe(false);
+    expect(i.configProblems[0]).toContain("reassigns");
+    const md = run(["report", "ISS-0042"], cwd).stdout;
+    expect(md).toContain("provider override");
+    expect(md).toContain("is not opposable");
+    expect(md).toContain("counted as level 3");
+  });
+
+  it("counts the override at medium risk, flagged", () => {
+    const i = packet(project(`risk: medium\nreview: go\n${SONNET}${OPUS}`, OVERRIDE)).independence;
+    expect(i.opposable).toBe(true);
+    expect(i.overrideIgnored).toBe(false);
+    expect(i.flags.join(" ")).toContain("provider override");
+  });
+
+  it("is quiet where there is no override", () => {
+    const i = packet(project(`risk: high\n${SONNET}${OPUS}`)).independence;
+    expect(i.overrides).toEqual([]);
+    expect(i.overrideIgnored).toBe(false);
+  });
+});
+
 describe("the sprint report is unaffected", () => {
   it("still renders", () => {
     const cwd = project(`risk: high\n${IMPL}${SAME}`);

@@ -7,7 +7,7 @@
  * a few real settings, so this module reads it back, as narrowly as it can.
  *
  * What it understands (a small, indentation-based subset of YAML):
- *   - `key: value` — a scalar, quoted or not;
+ *   - `key: value` — a scalar, quoted or not, top-level keys in column 0;
  *   - `key: [a, b, c]` — an inline list of scalars;
  *   - `key:` followed by deeper-indented lines — a nested map of the same
  *     things, or a block list (`- a`), up to four levels deep;
@@ -68,7 +68,42 @@ interface Cursor {
 }
 
 const LIST_ITEM = /^-(\s|$)/;
-const KEY_VALUE = /^("[^"]*"|'[^']*'|[^\s#][^#]*?)\s*:(?:\s+(.*))?$/;
+/** After a colon at `at`: the value, or null when the colon is not a separator. */
+function valueAfter(text: string, at: number): string | null {
+  const next = at + 1;
+  if (next === text.length) return "";
+  return /\s/.test(text[next]) ? text.slice(next).trim() : null;
+}
+
+/** A quoted key, then `:` — `"a b": v`. Null when it does not take that shape. */
+function splitQuoted(text: string): { key: string; value: string } | null {
+  const close = text.indexOf(text[0], 1);
+  if (close < 1) return null;
+  let at = close + 1;
+  while (at < text.length && /\s/.test(text[at])) at++;
+  const value = text[at] === ":" ? valueAfter(text, at) : null;
+  return value === null ? null : { key: text.slice(0, close + 1), value };
+}
+
+/**
+ * Split `key: value` at the first `:` that is followed by a space or the end of
+ * the line — in one pass. This replaces a lazy regular expression whose
+ * backtracking took quadratic time on a long run of spaces (40,000 characters
+ * cost 2.7 s, ISS-0176): every command that reads the config would have paid it.
+ */
+function splitKeyValue(text: string): { key: string; value: string } | null {
+  if (text[0] === '"' || text[0] === "'") {
+    const quoted = splitQuoted(text);
+    if (quoted) return quoted;
+  }
+  if (text === "" || text[0] === "#" || /\s/.test(text[0])) return null;
+  for (let i = 1; i < text.length; i++) {
+    if (text[i] === "#") return null;
+    const value = text[i] === ":" ? valueAfter(text, i) : null;
+    if (value !== null) return { key: text.slice(0, i).trimEnd(), value };
+  }
+  return null;
+}
 
 /** Remove one pair of matching quotes around a value, nothing else. */
 function unquote(raw: string): string {
@@ -178,25 +213,36 @@ function parseList(cur: Cursor, indent: number): string[] {
   return items;
 }
 
+/**
+ * A map with no prototype: a key named `__proto__`, `constructor` or `toString`
+ * is then an ordinary key — never an inherited member, never a swap of the
+ * prototype the rest of the code reads through (ISS-0176).
+ */
+function newMap(): ConfigMap {
+  return Object.create(null) as ConfigMap;
+}
+
 /** `key: value` lines at one indent, with their children. */
 function parseMap(cur: Cursor, indent: number, depth: number): ConfigMap {
-  const map: ConfigMap = {};
+  const map = newMap();
   while (cur.pos < cur.rows.length) {
     const row = cur.rows[cur.pos];
     if (row.indent < indent) break;
     cur.pos++;
-    const kv = row.text.match(KEY_VALUE);
+    const kv = row.indent > indent ? null : splitKeyValue(row.text);
     if (row.indent > indent) skip(cur, row, "unexpected indentation");
     else if (LIST_ITEM.test(row.text))
       skip(cur, row, "a list item where a key was expected");
     else if (!kv) skip(cur, row, "not a `key: value` line");
-    else if (/^[|>]/.test(kv[2] ?? "")) {
+    else if (/^[|>]/.test(kv.value)) {
       skip(cur, row, "multi-line scalars are not supported");
       skipBlock(cur, indent, "part of a multi-line scalar");
     } else {
-      const key = unquote(kv[1]);
+      const key = unquote(kv.key);
       if (key in map) skip(cur, row, "duplicate key: the last one wins");
-      map[key] = kv[2] ? parseValue(kv[2]) : parseChild(cur, indent, depth);
+      map[key] = kv.value
+        ? parseValue(kv.value)
+        : parseChild(cur, indent, depth);
     }
   }
   return map;
@@ -209,9 +255,11 @@ function parseMap(cur: Cursor, indent: number, depth: number): ConfigMap {
 export function parseConfig(text: string): ParsedConfig {
   const ignored: IgnoredLine[] = [];
   const rows = toRows(text, ignored);
-  if (rows.length === 0) return { data: {}, ignored };
+  if (rows.length === 0) return { data: newMap(), ignored };
   const cur: Cursor = { rows, pos: 0, ignored };
-  const data = parseMap(cur, rows[0].indent, 1);
+  // Top-level keys sit in column 0: an indented first line is not a base
+  // indentation, it is reported like any other stray indentation.
+  const data = parseMap(cur, 0, 1);
   while (cur.pos < rows.length) {
     skip(cur, rows[cur.pos], "unexpected indentation");
     cur.pos++;
@@ -223,7 +271,7 @@ export function parseConfig(text: string): ParsedConfig {
 /** Read `<lytosDir>/config.yml`. An absent or unreadable file is an empty config. */
 export function readConfig(lytosDir: string): LoadedConfig {
   const path = join(lytosDir, "config.yml");
-  const empty = { data: {}, ignored: [], path };
+  const empty = { data: newMap(), ignored: [], path };
   if (!existsSync(path)) {
     return { ...empty, present: false, unreadable: false };
   }
