@@ -14,6 +14,7 @@ import {
   type FrontmatterValue,
 } from "./frontmatter.js";
 import { analyzeDod, type DodAnalysis } from "./dod.js";
+import { describeIntent, type IntentDetail } from "./intent-tree.js";
 
 export interface ChecklistItem {
   text: string;
@@ -48,6 +49,8 @@ export interface IssueDetail {
   dependencies: DependencyInfo[];
   dod: DodAnalysis;
   body: string;
+  /** Parent, milestone, phase, leaves and progress (ADR-0009); absent on a card that has none. */
+  intent?: IntentDetail;
 }
 
 export interface IssueSummary {
@@ -126,6 +129,7 @@ export function parseIssueDetail(
     /^---[\s\S]*?---\s*\n(?:#[^\n]*\n)?([\s\S]*)/
   );
   const body = bodyMatch ? bodyMatch[1].trim() : "";
+  const intent = describeIntent(lytosDir, str(fm.id), fm);
 
   return {
     id: str(fm.id),
@@ -149,6 +153,7 @@ export function parseIssueDetail(
     dependencies,
     dod: analyzeDod(content),
     body,
+    ...(intent ? { intent } : {}),
   };
 }
 

@@ -15,6 +15,8 @@ import {
   type IssueDetail,
   type IssueSummary,
 } from "../lib/show.js";
+import type { IntentDetail } from "../lib/intent-tree.js";
+import { leafLine, progressLabel } from "../lib/epic-render.js";
 import {
   ok,
   error,
@@ -24,14 +26,8 @@ import {
   blue,
   cyan,
   dim,
+  progressBar,
 } from "../lib/output.js";
-
-function progressBar(percent: number, width: number = 20): string {
-  const filled = Math.round((percent / 100) * width);
-  const empty = width - filled;
-  const colorFn = percent === 100 ? green : percent >= 50 ? yellow : dim;
-  return `${colorFn("█".repeat(filled))}${dim("░".repeat(empty))}`;
-}
 
 function statusLabel(status: string): string {
   const labels: Record<string, (t: string) => string> = {
@@ -128,7 +124,35 @@ function displayDetail(issue: IssueDetail): void {
     }
   }
 
+  if (issue.intent) displayIntent(issue.intent);
+
   console.error("");
+}
+
+/** The intent layer (ADR-0009): the epic of a leaf, the leaves of an epic. */
+function displayIntent(intent: IntentDetail): void {
+  const rows: string[] = [];
+  if (intent.parent) {
+    const p = intent.parent;
+    rows.push(
+      p.found
+        ? `${blue("Epic:")} ${p.id} ${dim("—")} ${p.title}${p.phase ? ` ${dim(`(${p.phase})`)}` : ""}`
+        : `${blue("Epic:")} ${p.id} ${yellow("(not found)")}`
+    );
+  }
+  if (intent.leaves && intent.phase) {
+    rows.push(`${blue("Phase:")} ${intent.phase}`);
+  }
+  if (intent.milestone) rows.push(`${blue("Milestone:")} ${intent.milestone}`);
+  if (intent.progress && intent.leaves) {
+    rows.push(`${blue("Leaves:")} ${progressLabel(intent.progress)}`);
+  }
+  if (rows.length === 0) return;
+
+  console.error("");
+  for (const row of rows) console.error(`  ${row}`);
+  for (const leaf of intent.leaves ?? [])
+    console.error(`    ${leafLine(leaf)}`);
 }
 
 function displaySummaries(summaries: IssueSummary[]): void {

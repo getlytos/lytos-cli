@@ -16,6 +16,7 @@ import {
   countArchived,
 } from "../lib/board-generator.js";
 import { displayBoard } from "../lib/board-display.js";
+import { displayEpics } from "../lib/epic-render.js";
 import {
   discoverRepos,
   displayOverview,
@@ -143,6 +144,7 @@ export const boardCommand = new Command("board")
 
     // Default mode — display board + write BOARD.md
     displayBoard(data);
+    displayEpics(data.epics);
 
     const boardPath = join(boardDir, "BOARD.md");
     writeFileSync(boardPath, newContent, "utf-8");

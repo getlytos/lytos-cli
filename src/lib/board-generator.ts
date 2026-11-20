@@ -16,6 +16,9 @@ import {
 } from "fs";
 import { join } from "path";
 import { parseFrontmatter, type Frontmatter } from "./frontmatter.js";
+import { isEpic, scalar } from "./intent.js";
+import { collectEpics, type EpicView } from "./intent-tree.js";
+import { renderEpicsMarkdown } from "./epic-render.js";
 
 export interface Issue {
   frontmatter: Frontmatter;
@@ -29,6 +32,11 @@ export interface BoardData {
   issues: Issue[];
   warnings: string[];
   nextNumber: string;
+  /**
+   * Epics with their leaves and progress, derived from the `parent` fields
+   * (ADR-0009). Empty unless some card is an epic.
+   */
+  epics: EpicView[];
 }
 
 const STATUS_FOLDERS = [
@@ -276,7 +284,18 @@ export function collectIssues(boardDir: string): BoardData {
   const globalMax = Math.max(maxNum, archivedMax);
   const nextNumber = `ISS-${String(globalMax + 1).padStart(4, "0")}`;
 
-  return { issues, warnings, nextNumber };
+  // The epics are derived from the cards on every read (ADR-0009). A board with
+  // no epic on it, which is every board that has not adopted the intent layer,
+  // pays nothing for that: no second pass over the cards.
+  const hasEpic = issues.some((i) =>
+    isEpic({ type: scalar(i.frontmatter.type) })
+  );
+  return {
+    issues,
+    warnings,
+    nextNumber,
+    epics: hasEpic ? collectEpics(boardDir) : [],
+  };
 }
 
 /**
@@ -399,6 +418,7 @@ export function generateBoardMarkdown(
     lines.push("_No archived issues yet._");
   }
   lines.push("");
+  if (data.epics.length > 0) lines.push(...renderEpicsMarkdown(data.epics));
   lines.push("---");
   lines.push("");
   lines.push(
@@ -417,6 +437,9 @@ export function boardToJson(data: BoardData): Record<string, unknown> {
     generated: new Date().toISOString().slice(0, 10),
     nextNumber: data.nextNumber,
     warnings: data.warnings,
+    // Only when some card is an epic, so a project that adopts none of the intent
+    // fields reads exactly the JSON it always did.
+    ...(data.epics.length > 0 ? { epics: data.epics } : {}),
     columns: STATUS_FOLDERS.map((folder) => ({
       folder,
       label: STATUS_LABELS[folder],

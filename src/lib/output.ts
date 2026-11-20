@@ -47,3 +47,14 @@ export function warn(msg: string): void {
 export function error(msg: string): void {
   console.error(`${red("✗")} ${msg}`);
 }
+
+/**
+ * A progress bar: filled blocks in green at 100%, yellow from 50%, dim below.
+ * Shared by `lyt show`, `lyt board` and `lyt milestone`.
+ */
+export function progressBar(percent: number, width: number = 20): string {
+  const filled = Math.round((percent / 100) * width);
+  const empty = width - filled;
+  const colorFn = percent === 100 ? green : percent >= 50 ? yellow : dim;
+  return `${colorFn("█".repeat(filled))}${dim("░".repeat(empty))}`;
+}

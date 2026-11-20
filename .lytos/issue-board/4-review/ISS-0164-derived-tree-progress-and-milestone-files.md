@@ -7,13 +7,16 @@ effort: L
 complexity: standard
 skill: ""
 skills_aux: []
-status: 1-backlog
-branch: "feat/ISS-0164-derived-tree-progress-and-milestones"
+status: 4-review
+branch: feat/ISS-0164-derived-tree-progress-and-milestones
 depends: [ISS-0163]
 related: [ISS-0162]
 created: 2026-11-20
 schema_version: 2
 risk: medium
+assignee: fredericgalline
+updated: 2026-11-20
+started_at: 2026-11-20
 ---
 # ISS-0164 — Derived views: the tree and progress in board and show, and milestone files
 
@@ -41,7 +44,7 @@ Decision: **A**, the same principle as `BOARD.md`.
 
 ## Definition of done
 
-- [ ] On a sample project the tree and progress are correct and change when a leaf moves — verify: auto
-- [ ] A milestone's progress is derived from its epics and leaves — verify: auto
-- [ ] A project without the fields sees the board exactly as before — verify: auto
+- [x] On a sample project the tree and progress are correct and change when a leaf moves — verify: auto
+- [x] A milestone's progress is derived from its epics and leaves — verify: auto
+- [x] A project without the fields sees the board exactly as before — verify: auto
 - [ ] Nothing in the output is read from a hand-written list or count — verify: reviewer:architecture-review
