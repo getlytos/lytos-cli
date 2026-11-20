@@ -20,6 +20,7 @@ An agent doing a code review loads the `code-review` skill **and** the project r
 | File | Content |
 |------|---------|
 | `default-rules.md` | Universal rules applicable to any Lytos project |
+| `team-and-loop.md` | The roles of a team and the loop that runs between the owner's two gates — read when you orchestrate several agents |
 
 ---
 

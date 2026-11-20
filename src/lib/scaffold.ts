@@ -68,6 +68,7 @@ const REMOTE_FILES = [
   })),
   { remote: "rules/default-rules.md", local: "rules/default-rules.md" },
   { remote: "rules/README.md", local: "rules/README.md" },
+  { remote: "rules/team-and-loop.md", local: "rules/team-and-loop.md" },
   { remote: "LYTOS.md", local: "LYTOS.md" },
   // Gitignore that protects 6-private-notes/ from accidental commits
   { remote: ".gitignore", local: ".gitignore" },

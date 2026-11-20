@@ -42,6 +42,7 @@ const UPGRADEABLE_FILES = [
   "skills/api-design/SKILL.md",
   "rules/default-rules.md",
   "rules/README.md",
+  "rules/team-and-loop.md",
   "LYTOS.md",
   ".gitignore",
   "templates/sprint.md",
