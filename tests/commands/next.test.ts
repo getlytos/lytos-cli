@@ -96,6 +96,43 @@ describe("lyt next", () => {
     expect(json.blocked).toHaveLength(1);
   });
 
+  it("does not let a reviewer item stand in for a machine gate (ISS-0153)", () => {
+    // ADR-0004 §1/§4: `reviewer` is a model's ruling, not a command that exits non-zero.
+    fixture = createEmptyFixture();
+    const lyt = (p: string) => resolve(fixture.cwd, ".lytos", p);
+    mkdirSync(lyt("issue-board/2-sprint"), { recursive: true });
+    const REVIEWER_ONLY =
+      "## Definition of done\n\n- [ ] No needless abstraction — verify: reviewer:over-engineering\n- [ ] Intent is met — verify: human:product-intent\n";
+    const REVIEWER_PLUS_AUTO =
+      "## Definition of done\n\n- [ ] Ship it — verify: auto:tests-unit\n- [ ] No needless abstraction — verify: reviewer:over-engineering\n";
+    writeFileSync(
+      lyt("issue-board/2-sprint/ISS-0007-r.md"),
+      issue("ISS-0007", { status: "2-sprint", dod: REVIEWER_ONLY, risk: "low" })
+    );
+    writeFileSync(
+      lyt("issue-board/2-sprint/ISS-0008-m.md"),
+      issue("ISS-0008", { status: "2-sprint", dod: REVIEWER_PLUS_AUTO, risk: "low" })
+    );
+    const json = JSON.parse(run("next --json", fixture.cwd).stdout);
+    const blocked = Object.fromEntries(
+      json.blocked.map((b: { id: string; reason: string }) => [b.id, b.reason])
+    );
+    expect(blocked["ISS-0007"]).toBe("no-machine-dod");
+    const detail = json.blocked.find((b: { id: string }) => b.id === "ISS-0007").detail;
+    expect(detail).toMatch(/no machine gate/);
+    expect(detail).toMatch(/reviewer items go to the auditor/);
+    expect(json.pick.id).toBe("ISS-0008");
+    expect(json.pick.dod).toMatchObject({ machine: 1, reviewer: 1 });
+  });
+
+  it("documents every reason `--json` can give, `no-machine-dod` included", () => {
+    fixture = createEmptyFixture();
+    const help = run("next --help", fixture.cwd).stdout;
+    for (const reason of ["deps-pending", "no-dod", "all-human-dod", "no-machine-dod", "not-ready"]) {
+      expect(help, reason).toContain(reason);
+    }
+  });
+
   it("returns pick=null on an empty sprint", () => {
     fixture = createEmptyFixture();
     mkdirSync(resolve(fixture.cwd, ".lytos/issue-board/2-sprint"), { recursive: true });

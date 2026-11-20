@@ -552,6 +552,39 @@ docs_source: vendored
     expect(findings.some((f: { message: string }) => f.message.includes('"lint" no longer applies at low'))).toBe(true);
   });
 
+  it("flags a pin on an id absent from the kit, whatever the mode (ISS-0153)", () => {
+    fixture = createEmptyFixture();
+    createValidLytos(fixture.cwd);
+    writeFileSync(
+      resolve(fixture.cwd, ".lytos/issue-board/2-sprint/ISS-0001-pins.md"),
+      `---
+id: ISS-0001
+title: "Pins"
+status: 2-sprint
+priority: P2-normal
+schema_version: 2
+---
+
+# ISS-0001
+
+## Definition of done
+
+- [ ] Real gate — verify: auto:tests-unit
+- [ ] Ghost gate — verify: auto:ghost-gate
+- [ ] Ghost rubric — verify: reviewer:ghost-rubric
+- [ ] Ghost list — verify: human:ghost-list
+`
+    );
+    const data = JSON.parse(run("doctor --json", fixture.cwd).stdout);
+    const pinFindings = data.findings.filter((f: { message: string }) =>
+      f.message.includes("DoD pins gate(s) absent from the kit")
+    );
+    expect(pinFindings).toHaveLength(1);
+    const msg: string = pinFindings[0].message;
+    for (const ghost of ["ghost-gate", "ghost-rubric", "ghost-list"]) expect(msg).toContain(ghost);
+    expect(msg).not.toContain("tests-unit");
+  });
+
   it("warns when a git repo lacks the lytos-issue merge driver (ISS-0093)", () => {
     fixture = createEmptyFixture();
     createValidLytos(fixture.cwd);

@@ -258,3 +258,39 @@ describe("lyt show (edge cases)", () => {
     expect(result.stderr).toContain("No .lytos/ directory found");
   });
 });
+
+describe("lyt show — DoD verification modes (ISS-0153)", () => {
+  function writeIssue(cwd: string, dod: string): void {
+    const dir = resolve(cwd, ".lytos/issue-board/3-in-progress");
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(
+      join(dir, "ISS-0050-modes.md"),
+      `---\nid: ISS-0050\ntitle: "Modes"\ntype: feat\npriority: P1-high\neffort: S\nstatus: 3-in-progress\ndepends: []\ncreated: 2026-11-20\n---\n\n# ISS-0050 — Modes\n\n## Definition of done\n\n${dod}\n`
+    );
+  }
+
+  it("counts reviewer items apart and keeps the issue loop-eligible on its machine item", () => {
+    fixture = createEmptyFixture();
+    writeIssue(
+      fixture.cwd,
+      "- [ ] Ships — verify: auto:tests-unit\n- [ ] Lean — verify: reviewer:over-engineering\n- [ ] Right — verify: human:product-intent"
+    );
+    const result = run("show ISS-0050", fixture.cwd);
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).toContain("1 auto · 1 reviewer · 1 human");
+    expect(result.stderr).toContain("Loop:");
+    expect(result.stderr).not.toContain("ineligible");
+    expect(result.stderr).not.toContain("without a verify: marker");
+  });
+
+  it("says why an issue with no machine item is not loop work", () => {
+    fixture = createEmptyFixture();
+    writeIssue(
+      fixture.cwd,
+      "- [ ] Lean — verify: reviewer:over-engineering\n- [ ] Right — verify: human:product-intent"
+    );
+    const result = run("show ISS-0050", fixture.cwd);
+    expect(result.stderr).toContain("ineligible");
+    expect(result.stderr).toMatch(/no machine gate: work it by hand; reviewer items go to the auditor/);
+  });
+});

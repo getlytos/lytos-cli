@@ -572,6 +572,7 @@ An audit that says **GO** lets the human run \`lyt close\` to promote the issue.
 Each DoD item may carry a verification marker (ISS-0101):
 
 - \`— verify: auto\` — a **machine gate**. You judge it: the test exists and passes, the behaviour is in the diff, the claim is true. An unchecked or unproven \`auto\` item is a **defect** → NO_GO.
+- \`— verify: reviewer\` — a **ruling against a rubric**. It is yours: no command decides it and no person is needed to. When the marker pins a kit entry (\`reviewer:over-engineering\`), apply the rubric the kit entry points to. A violation you can prove is a **defect** → NO_GO; what you could not check goes under "what I could not verify", never in a tick.
 - \`— verify: human\` — a **judgment call reserved for the accountable human** ("is the wording clear?", "is this readable by a non-technical reader?"). You are not the human. You **cannot** tick these, and their being unticked is **not a defect**.
 
 This distinction has a hard consequence: **never return NO_GO because a \`verify: human\` item is unchecked.** Doing so makes every issue that carries one unpassable — no model can ever tick it, so the issue would bounce forever. That is what the third verdict exists for:

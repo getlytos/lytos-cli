@@ -175,7 +175,13 @@ Every Definition-of-Done item declares **how it is verified**:
 | Marker | Meaning | Who can tick it |
 |--------|---------|-----------------|
 | `— verify: auto` | A machine gate: a test, a typecheck, a lint, a build, a behaviour visible in the diff | The implementer, and any auditor who can re-run it |
+| `— verify: reviewer` | A ruling against a written rubric ("no needless abstraction", "the architecture holds"): no command decides it, but a model reading the diff can | The auditing model |
 | `— verify: human` | A judgment: wording, taste, product intent, "is this readable by a non-technical reader?" | **Only the accountable human** |
+
+Any marker may pin the quality-kit entry that carries it — `verify: auto:tests-unit`,
+`verify: reviewer:over-engineering`, `verify: human:product-intent`. The pin is the id of a kit line
+(the first column of `quality/kit.md`), not the name of a rubric or a checklist file; `npx lyt doctor`
+flags a pin the kit cannot resolve.
 
 An item with no marker defaults to `auto` and is flagged by `npx lyt lint` as unqualified —
 write the marker rather than letting the default decide for you.
@@ -184,8 +190,10 @@ Three consequences that matter in practice:
 
 1. **Tick as you go.** A cross-model audit reads the unchecked list as the truth. Batching ticks
    at end-of-task silently misses items and burns audit rounds.
-2. **An all-`human` DoD is not agent work.** There is no machine gate to prove anything, so
-   `npx lyt next` will not hand it to a loop. Do it by hand.
+2. **A DoD with no `auto` (or unmarked) item is not agent work.** All-`human`, or `human` and `reviewer`
+   only: there is no machine gate to prove anything (a model's ruling is not a gate), so `npx lyt next` will
+   not hand it to a loop (`--json` gives the reason: `all-human-dod`, or `no-machine-dod` when a
+   `reviewer` item is present). Do it by hand; `reviewer` items still go to the auditor.
 3. **An AI auditor may never tick a `verify: human` item, and must never return `NO_GO` because
    one is empty.** Doing so makes every such issue unpassable — no model may tick it, so it would
    bounce between `3-in-progress` and `4-review` forever. The correct verdict is

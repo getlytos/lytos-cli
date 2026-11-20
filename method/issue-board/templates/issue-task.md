@@ -36,8 +36,10 @@ ready — and an agent working it in a loop will park it as `ambiguous-spec` any
 *How we know it's finished.*
 
 *Declare how each item is verified (ADR-0004 §4): `— verify: auto` for a machine gate (test,
-typecheck, lint, build) or `— verify: human` for an item only a human can rule on (taste,
-wording, product intent). Unmarked items default to auto and are flagged by `lyt lint`.*
+typecheck, lint, build), `— verify: reviewer` for a ruling against a rubric, or `— verify: human`
+for an item only a human can rule on (taste, wording, product intent). Each may pin the
+quality-kit entry that carries it (`auto:tests-unit`, `human:product-intent`).
+Unmarked items default to auto and are flagged by `lyt lint`.*
 
 *This matters most in a loop: an auditing model may tick an `auto` item, never a `human` one.
 An issue whose DoD is all-`human` is not loop work. An issue with at least one `auto` item is

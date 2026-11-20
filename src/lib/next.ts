@@ -7,7 +7,10 @@
  *   - its Definition of done holds at least one machine-verifiable item.
  *
  * An issue whose DoD is entirely `verify: human` (or has no DoD) is not loop
- * work: `lyt next` refuses it and explains, leaving it for a human.
+ * work: `lyt next` refuses it and explains, leaving it for a human. The same
+ * goes for a DoD with no machine item that carries `verify: reviewer` items:
+ * a model's ruling is not a command that exits non-zero (ADR-0004 §1, §4,
+ * ISS-0153), so it cannot stand in for the machine gate the loop needs.
  *
  * Read-only. Deterministic order: priority, then id.
  * Zero dependencies.
@@ -33,6 +36,7 @@ export interface NextCandidate {
 export type BlockedReason =
   | "deps-pending"
   | "all-human-dod"
+  | "no-machine-dod"
   | "no-dod"
   | "not-ready";
 
@@ -114,11 +118,16 @@ export function selectNext(lytosDir: string): NextResult {
       continue;
     }
     if (!dod.loopEligible) {
+      // Keep `all-human-dod` for the case it always named; a reviewer item in
+      // the mix gets its own reason so the detail never misdescribes the DoD.
+      const reviewerOnly = dod.reviewer > 0;
       blocked.push({
         id,
         title,
-        reason: "all-human-dod",
-        detail: "DoD is 100% verify: human — for a human, not the loop",
+        reason: reviewerOnly ? "no-machine-dod" : "all-human-dod",
+        detail: reviewerOnly
+          ? `no machine gate in the DoD (${dod.reviewer} verify: reviewer, ${dod.human} verify: human): work it by hand — reviewer items go to the auditor`
+          : "DoD is 100% verify: human — for a human, not the loop",
       });
       continue;
     }

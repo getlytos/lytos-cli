@@ -145,6 +145,30 @@ every string comparison in the repo.
 §4 is revised in place rather than superseded — the revision is the proposal
 surviving contact with its own dogfooding, which is what `Proposed` is for.*
 
+#### Field revision — 2026-11-20 — the marker grammar, and where `reviewer` stands (ISS-0153)
+
+The revision above named three modes, and the parser kept recognising two. `dod.ts` read a bare
+`verify: human` and `verify: auto[:pin]` only, so a project that followed the kit — which tells it
+to write `verify: reviewer:over-engineering` and `verify: human:product-intent` — got
+"Definition-of-Done item without a verify: marker" from `lyt lint`, and worse, the unrecognised
+`reviewer` item defaulted to `auto`: it was counted as a machine gate and blocked the review
+packet as a gate "not green" that no command could ever turn green.
+
+**Grammar.** One marker, three modes, an optional kit pin on each: `verify: (auto|reviewer|human)[:pin]`,
+anchored at the end of the item, case-insensitive, set off by a dash, parentheses, asterisks or
+underscores. A malformed pin (`human:`, `auto:`) is still an unqualified item, never a silent accept.
+
+**Eligibility.** `reviewer` does **not** count as machine-verifiable for §1. The reasoning is §4's own:
+`auto` is "a command that exits non-zero", and a model's ruling is not "a gate [that] can say NO
+mechanically, independent of the model's confidence". Invariant 3 asks for a machine-verifiable item,
+so a DoD with no `auto` (or unmarked: an unmarked item defaults to `auto`) item — made only of `reviewer`
+and `human` items — is not loop work. `lyt next` refuses it with its own
+reason (`no-machine-dod`; `all-human-dod` keeps naming the all-`human` case).
+
+**Ownership.** `reviewer` is not `human` either. An auditing model may rule on it (§4), so an unticked
+`reviewer` item is a *pending ruling* — the review packet lists it under "Reviewer rulings pending",
+not under the human checklist and not under "Gates not green".
+
 ### 5. Adversarial cross-model review
 
 The reviewer model must differ from the implementer model (different provider

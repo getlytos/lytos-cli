@@ -20,7 +20,7 @@
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
 import { parseFrontmatter, type FrontmatterValue } from "./frontmatter.js";
-import { dodSection } from "./dod.js";
+import { extractDodItems } from "./dod.js";
 
 export type GateKind = "gate" | "reviewer" | "human";
 export type RiskTier = "low" | "medium" | "high";
@@ -364,18 +364,20 @@ export function unresolvedGateRefs(content: string, kit: QualityKit): string[] {
  *
  * The pin is the gate id, whatever the verification mode carries it:
  * `verify: auto:secrets-scan`, `verify: reviewer:over-engineering`,
- * `verify: human:product-intent`. Only `auto:` was recognised before, which
- * left the two kinds that most need carrying — `reviewer` and `human`, the ones
- * no command will ever run — with no way to say a DoD item discharges them.
+ * `verify: human:product-intent`. It is read from the parsed DoD items — the one
+ * grammar in `dod.ts` — and not by a second expression over the text: the two
+ * once disagreed (a space before the colon, a second marker on the item), so
+ * `doctor` resolved a pin the parser did not see, or missed one it did.
+ *
+ * `extractDodItems` reads the Definition-of-done section alone, fences excluded:
+ * a fiche quoting the pin syntax in prose — an audit response explaining what to
+ * add, say — must not count as having added it.
  */
 export function pinnedGateRefs(content: string): string[] {
   const refs = new Set<string>();
-  const re = /verify:\s*(?:auto|reviewer|human):([a-z0-9][a-z0-9-]*)/gi;
-  let m: RegExpExecArray | null;
-  // The DoD section only. A fiche quoting the pin syntax in prose — an audit
-  // response explaining what to add, say — must not count as having added it.
-  const scope = dodSection(content);
-  while ((m = re.exec(scope)) !== null) refs.add(m[1].toLowerCase());
+  for (const item of extractDodItems(content)) {
+    if (item.pin) refs.add(item.pin);
+  }
   return [...refs];
 }
 
