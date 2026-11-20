@@ -9,6 +9,9 @@ import { Command } from "commander";
 import { existsSync } from "fs";
 import { resolve } from "path";
 import { locateIssue } from "../lib/issue-ops.js";
+import { describeMinimum } from "../lib/independence-policy.js";
+import { loadSettings } from "../lib/independence-settings.js";
+import { describeIndependence } from "../lib/independence-view.js";
 import {
   loadKit,
   gatesForRisk,
@@ -52,6 +55,14 @@ export const gatesCommand = new Command("gates")
     console.log(
       "gates from .lytos/quality/kit.md. A project may only tighten, never loosen."
     );
+    console.log("");
+    console.log(
+      "The same risk sets the minimum reviewer independence (ADR-0010): a different"
+    );
+    console.log(
+      "provider, or a stronger model, or at least a fresh session. Tune it under"
+    );
+    console.log("`independence:` in .lytos/config.yml (tighten only).");
   })
   .action((issueId: string | undefined, opts: { json?: boolean }) => {
     const cwd = process.cwd();
@@ -78,6 +89,7 @@ export const gatesCommand = new Command("gates")
 
     // Whole matrix when no issue is given.
     if (!issueId) {
+      const settings = loadSettings(lytosDir);
       if (opts.json) {
         console.log(
           JSON.stringify(
@@ -85,7 +97,12 @@ export const gatesCommand = new Command("gates")
               matrix: TIERS.map((t) => ({
                 risk: t,
                 gates: gatesForRisk(kit, t),
+                independence: {
+                  minimum: settings.minimum[t],
+                  belowMinimum: settings.belowMinimum[t],
+                },
               })),
+              independenceProblems: settings.problems,
             },
             null,
             2
@@ -101,8 +118,12 @@ export const gatesCommand = new Command("gates")
           console.error(
             `    ${KIND_LABEL[gate.kind](gate.kind)} ${cyan(gate.id)} ${dim(`— ${gate.tool}`)}`
           );
+        console.error(
+          `    ${blue("independence")} ${dim(`— ${describeMinimum(settings.minimum[t])}; below it: ${settings.belowMinimum[t]}`)}`
+        );
         console.error("");
       }
+      for (const problem of settings.problems) warn(problem);
       return;
     }
 
@@ -129,6 +150,7 @@ export const gatesCommand = new Command("gates")
     const human = required.filter((g) => g.kind === "human");
 
     const coverage = gateCoverage(required, issue.content);
+    const independence = describeIndependence(lytosDir, issue.frontmatter);
 
     if (opts.json) {
       console.log(
@@ -146,6 +168,18 @@ export const gatesCommand = new Command("gates")
               pinned: coverage.pinned.map((g) => g.id),
               unpinnedButRun: coverage.unpinnedButRun.map((g) => g.id),
               uncarried: coverage.uncarried.map((g) => g.id),
+            },
+            independence: {
+              risk: independence.risk,
+              level: independence.level,
+              label: independence.label,
+              minimum: independence.minimum,
+              minimumText: independence.minimumText,
+              belowMinimum: independence.belowMinimum,
+              meetsMinimum: independence.meetsMinimum,
+              standing: independence.standing,
+              flags: independence.flags,
+              problems: independence.configProblems,
             },
           },
           null,
@@ -172,6 +206,14 @@ export const gatesCommand = new Command("gates")
           `    ${KIND_LABEL[g.kind](g.kind)} ${cyan(g.id)} ${dim(`— ${g.tool}`)}`
         );
     }
+    console.error(`  ${blue("Independence:")}`);
+    console.error(
+      `    ${dim(`minimum ${independence.minimumText}; below it: ${independence.belowMinimum}`)}`
+    );
+    console.error(
+      `    ${dim(`this card: level ${independence.label} — ${independence.standing}`)}`
+    );
+    for (const problem of independence.configProblems) warn(problem);
     // "Resolve the gates due and flag the missing ones" (ISS-0114). Missing
     // means: mandatory here, and nothing in the Definition of Done carries it.
     // Only reviewer/human entries are flagged — CI runs a `gate` whether or not

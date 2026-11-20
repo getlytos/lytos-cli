@@ -24,8 +24,19 @@ import {
   hasExistingAudit,
   listPendingReviews,
   parseAuditResponse,
+  recordAiReviewer,
+  type ApplyVerdictOptions,
+  type ApplyVerdictResult,
   type ReviewVerdict,
 } from "../lib/review.js";
+import { parseFrontmatter } from "../lib/frontmatter.js";
+import { loadSettings } from "../lib/independence-settings.js";
+import {
+  IndependenceError,
+  verdictNotice,
+  type IndependencePlan,
+} from "../lib/independence-plan.js";
+import { describeIndependence } from "../lib/independence-view.js";
 import {
   ok,
   info,
@@ -59,6 +70,61 @@ function warnDeclaredBranch(
         `push it (or fix the \`branch:\` field): the auditor cannot check out a branch origin doesn't have.`
     );
   }
+}
+
+/**
+ * Record a verdict, applying the reviewer-independence rule (ADR-0010). A
+ * refusal is a normal outcome, not a crash: say why, say nothing was written,
+ * and exit 1 (the validation-failure code of the CLI rules).
+ */
+function recordVerdict(
+  args: Omit<ApplyVerdictOptions, "settings"> & { cwd: string }
+): ApplyVerdictResult {
+  const { cwd, ...options } = args;
+  const settings = loadSettings(join(cwd, ".lytos"));
+  for (const problem of settings.problems) warn(problem);
+  try {
+    return applyVerdict({ ...options, settings });
+  } catch (e) {
+    if (!(e instanceof IndependenceError)) throw e;
+    error(e.message);
+    info("Nothing was written: the card is unchanged.");
+    process.exit(1);
+  }
+}
+
+/** Say how independent the review that was just recorded is. */
+function announceIndependence(plan: IndependencePlan): void {
+  const notice = verdictNotice(plan);
+  if (!notice) return;
+  if (notice.kind === "ok") info(notice.text);
+  else warn(notice.text);
+}
+
+/**
+ * After `--accept` of an approving audit: the card's independence as it now
+ * stands, and what recording `go` will need. The audit block itself is
+ * evidence — it never writes `review:`.
+ */
+function announceAudit(cwd: string, issueFilePath: string): void {
+  const fm = parseFrontmatter(readFileSync(issueFilePath, "utf-8"));
+  if (!fm) return;
+  const view = describeIndependence(join(cwd, ".lytos"), fm);
+  const head = `Independence: level ${view.label} (risk ${view.risk}: ${view.minimumText}).`;
+  if (view.standing === "meets") {
+    info(head);
+  } else if (view.standing === "needs-countersignature") {
+    warn(
+      `${head} Below the minimum: recording \`--verdict go\` will need --countersign, the owner's countersignature.`
+    );
+  } else if (view.standing === "refused") {
+    warn(
+      `${head} Below the minimum, and this project refuses such a review: get a more independent one.`
+    );
+  } else {
+    warn(`${head} Below the minimum: it will be flagged in the packet.`);
+  }
+  for (const f of view.flags) info(`Assumed: ${f}`);
 }
 
 function findBoardDir(cwd: string): string | null {
@@ -124,6 +190,11 @@ export const reviewCommand = new Command("review")
     "--ai-prompt <ref>",
     "Prompt/skill ref used for the review (default: skills/code-review/SKILL.md)"
   )
+  .option(
+    "--countersign",
+    "With --verdict go|go-pending-human: record the owner's countersignature of a review whose independence is below the minimum for the card's risk (records who, when, and \"weak independence\")",
+    false
+  )
   .on("--help", () => {
     console.log("");
     console.log("Examples:");
@@ -158,6 +229,22 @@ export const reviewCommand = new Command("review")
     console.log(
       "      --ai-model 'gpt-5' --ai-session codex-api   # record which AI did the review (ai_reviewer)"
     );
+    console.log(
+      "  lyt review ISS-0050 --verdict go --countersign   # the owner accepts a weak-independence review"
+    );
+    console.log("");
+    console.log(
+      "Independence (ADR-0010): an approval is measured against the minimum for the"
+    );
+    console.log(
+      "card's risk, from ai_implementer and ai_reviewer (--ai-model, --ai-session)."
+    );
+    console.log(
+      "At high risk a level-3 review (same model) cannot record `go` alone: it waits"
+    );
+    console.log(
+      "for --countersign. Tune it under `independence:` in .lytos/config.yml."
+    );
     console.log("");
     console.log("Use a fresh AI session for the audit — ideally a different");
     console.log("vendor or model than the one that implemented the issue.");
@@ -176,6 +263,7 @@ export const reviewCommand = new Command("review")
         aiModel?: string;
         aiSession?: string;
         aiPrompt?: string;
+        countersign?: boolean;
       }
     ) => {
       const cwd = process.cwd();
@@ -261,11 +349,13 @@ export const reviewCommand = new Command("review")
                 prompt_ref: opts.aiPrompt,
               }
             : undefined;
-        const result = applyVerdict({
+        const result = recordVerdict({
+          cwd,
           boardDir,
           issueFilePath: issueFile,
           verdict,
           aiReviewer,
+          countersign: opts.countersign,
         });
 
         console.error("");
@@ -288,7 +378,15 @@ export const reviewCommand = new Command("review")
             `${cyan(bold(issueId))} verdict recorded: pending — stays in 4-review/.`
           );
         }
+        announceIndependence(result.independence);
         return;
+      }
+
+      if (opts.countersign) {
+        error(
+          "--countersign goes with --verdict go (or go-pending-human): it countersigns a recorded approval."
+        );
+        process.exit(2);
       }
 
       // Mode 3: --accept → ingest a returned audit block.
@@ -319,6 +417,14 @@ export const reviewCommand = new Command("review")
           process.exit(2);
         }
 
+        // `--ai-model` / `--ai-session` apply here too: the audit is
+        // ingested now, the verdict is recorded later, and the card must
+        // already say who did the audit when it is.
+        recordAiReviewer(issueFile, {
+          model: opts.aiModel,
+          session: opts.aiSession,
+          prompt_ref: opts.aiPrompt,
+        });
         const result = applyAudit({
           boardDir,
           issueFilePath: issueFile,
@@ -347,6 +453,7 @@ export const reviewCommand = new Command("review")
             info(`New location: ${result.newPath}`);
           }
         }
+        if (parsed.verdict !== "NO_GO") announceAudit(cwd, result.newPath);
         return;
       }
 

@@ -19,6 +19,7 @@ import {
   MERGE_DRIVER_COMMAND,
   MERGE_DRIVER_NAME,
 } from "./merge-driver.js";
+import { loadSettings } from "./independence-settings.js";
 import {
   loadKit,
   validateKit,
@@ -93,6 +94,9 @@ export function diagnose(lytosDir: string): DiagnosticResult {
 
   // 9. Quality kit presence + coherence (ADR-0005/0007, ISS-0107)
   findings.push(...checkQualityKit(lytosDir));
+
+  // 10. The reviewer-independence settings in config.yml (ADR-0010, ISS-0166)
+  findings.push(...checkIndependenceConfig(lytosDir));
 
   const errors = findings.filter((f) => f.severity === "error").length;
   const warnings = findings.filter((f) => f.severity === "warning").length;
@@ -536,6 +540,22 @@ function checkMergeDriverInstall(lytosDir: string): DiagnosticFinding[] {
  * Any rules/*.md carrying the section (English or French wording)
  * satisfies the check.
  */
+/**
+ * Reviewer-independence settings (ISS-0166): everything in `.lytos/config.yml`
+ * the CLI could not use — an invalid value, a looser-than-default minimum, a
+ * line it did not understand. The defaults stay in force (the stricter side), so
+ * these are warnings, never errors; a project with no config gets nothing.
+ */
+function checkIndependenceConfig(lytosDir: string): DiagnosticFinding[] {
+  return loadSettings(lytosDir).problems.map((problem) => ({
+    severity: "warning",
+    category: "independence-config",
+    file: "config.yml",
+    message: `Reviewer independence settings: ${problem}`,
+    fix: "Fix the `independence:` section of .lytos/config.yml (ranking, providers, minimum, below_minimum) — see `lyt gates --help`",
+  }));
+}
+
 /**
  * Quality kit (ISS-0107): presence, structural coherence, and DoD gate-refs.
  * Absence is info-level (the kit is additive); a malformed kit is a warning.

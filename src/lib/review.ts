@@ -26,6 +26,16 @@ import {
   type Frontmatter,
 } from "./frontmatter.js";
 import { currentGitUser, isValidBranchName, today } from "./issue-ops.js";
+import {
+  planIndependence,
+  resolveAiReviewer,
+  type GivenAiReviewer,
+  type IndependencePlan,
+} from "./independence-plan.js";
+import {
+  defaultSettings,
+  type IndependenceSettings,
+} from "./independence-policy.js";
 
 export interface PendingReview {
   id: string;
@@ -798,6 +808,14 @@ export function applyAudit(options: ApplyAuditOptions): ApplyAuditResult {
  */
 export type ReviewVerdict = "go" | "go-pending-human" | "no-go" | "pending";
 
+/** The values `review:` may take — anything else is refused at the write. */
+export const REVIEW_VERDICTS: readonly ReviewVerdict[] = [
+  "go",
+  "go-pending-human",
+  "no-go",
+  "pending",
+];
+
 export interface ApplyVerdictOptions {
   boardDir: string;
   issueFilePath: string;
@@ -806,16 +824,59 @@ export interface ApplyVerdictOptions {
   reviewer?: string;
   /**
    * The AI that performed the review (ADR-0001 schema v2 `ai_reviewer`).
-   * Written as a nested object when at least `model` is given.
-   * `reviewer` stays the accountable HUMAN (git user) ; `ai_reviewer`
+   * Merged over what the card already records, and written when anything is
+   * given. `reviewer` stays the accountable HUMAN (git user) ; `ai_reviewer`
    * records which model/session/prompt actually did the audit.
    */
-  aiReviewer?: { model?: string; session?: string; prompt_ref?: string };
+  aiReviewer?: GivenAiReviewer;
+  /**
+   * Record the owner's countersignature of an approval whose independence is
+   * below the minimum for the card's risk (ADR-0010 §3). Refused when there is
+   * nothing to countersign.
+   */
+  countersign?: boolean;
+  /**
+   * The independence settings (`.lytos/config.yml`). Absent means the shipped
+   * defaults, which are also the floor: a caller that forgets to load the
+   * configuration still gets the high-risk rule.
+   */
+  settings?: IndependenceSettings;
 }
 
 export interface ApplyVerdictResult {
   newPath: string;
   moved: boolean;
+  /** What the independence rule computed and decided for this verdict. */
+  independence: IndependencePlan;
+}
+
+/**
+ * The frontmatter a verdict leaves on the card: the v2 review fields, the AI
+ * reviewer when this call gave one, and the independence record (or its
+ * removal) the rule planned.
+ */
+function stampVerdict(
+  fm: Frontmatter,
+  stamp: {
+    verdict: ReviewVerdict;
+    reviewer: string;
+    aiBlock: { [k: string]: string } | null;
+    plan: IndependencePlan;
+  }
+): Frontmatter {
+  const updated: Frontmatter = {
+    ...fm,
+    review: stamp.verdict,
+    review_at: today(),
+    reviewer: stamp.reviewer,
+    schema_version: "2",
+    updated: today(),
+  };
+  if (stamp.aiBlock) updated.ai_reviewer = stamp.aiBlock;
+  for (const key of stamp.plan.clear) delete updated[key];
+  Object.assign(updated, stamp.plan.set);
+  if (stamp.verdict === "no-go") updated.status = "3-in-progress";
+  return updated;
 }
 
 /**
@@ -823,9 +884,20 @@ export interface ApplyVerdictResult {
  * back to 3-in-progress so the visual board state matches the verdict.
  * Idempotent on existing values: re-running with `go` after `pending`
  * just overwrites the field.
+ *
+ * An approval (`go`, `go-pending-human`) is first measured against the
+ * reviewer-independence rule (ADR-0010): when it may not be recorded as asked
+ * this THROWS an `IndependenceError` before any file is touched.
  */
 export function applyVerdict(opts: ApplyVerdictOptions): ApplyVerdictResult {
   const { boardDir, issueFilePath, verdict } = opts;
+  // The independence rule keys on the verdict: an unknown word must not slip
+  // past it by being none of the four.
+  if (!REVIEW_VERDICTS.includes(verdict)) {
+    throw new Error(
+      `Invalid verdict "${verdict}". Use one of: ${REVIEW_VERDICTS.join(", ")}.`
+    );
+  }
   const original = readFileSync(issueFilePath, "utf-8");
   const fm = parseFrontmatter(original);
   if (!fm) {
@@ -833,32 +905,27 @@ export function applyVerdict(opts: ApplyVerdictOptions): ApplyVerdictResult {
   }
 
   const reviewer = opts.reviewer ?? currentGitUser();
-  const updated: Frontmatter = {
-    ...fm,
-    review: verdict,
-    review_at: today(),
-    reviewer,
-    schema_version: "2",
-    updated: today(),
-  };
-  // ADR-0001 `ai_reviewer`: which AI actually performed the audit. Only
-  // written when the caller supplies it (the CLI can't know which model
-  // the human ran the prompt through). `prompt_ref` defaults to the
-  // code-review skill the prompt is built from.
-  if (opts.aiReviewer && opts.aiReviewer.model) {
-    const ai: { [k: string]: string } = { model: opts.aiReviewer.model };
-    if (opts.aiReviewer.session) ai.session = opts.aiReviewer.session;
-    ai.prompt_ref = opts.aiReviewer.prompt_ref ?? "skills/code-review/SKILL.md";
-    updated.ai_reviewer = ai;
-  }
-  if (verdict === "no-go") {
-    updated.status = "3-in-progress";
-  }
+  const ai = resolveAiReviewer(fm.ai_reviewer, opts.aiReviewer);
+  const plan = planIndependence({
+    fm,
+    verdict,
+    reviewer: ai.identity,
+    reviewerGiven: ai.block !== null,
+    countersign: opts.countersign === true,
+    settings: opts.settings ?? defaultSettings(),
+    user: reviewer,
+    date: today(),
+  });
 
-  const fmStr = serializeFrontmatter(updated);
+  const updated = stampVerdict(fm, {
+    verdict,
+    reviewer,
+    aiBlock: ai.block,
+    plan,
+  });
   const bodyMatch = original.match(/^---[\s\S]*?---\s*\n([\s\S]*)$/);
   const body = bodyMatch ? bodyMatch[1] : "";
-  const rewritten = fmStr + "\n" + body;
+  const rewritten = serializeFrontmatter(updated) + "\n" + body;
 
   let targetPath = issueFilePath;
   let moved = false;
@@ -872,7 +939,37 @@ export function applyVerdict(opts: ApplyVerdictOptions): ApplyVerdictResult {
     writeFileSync(issueFilePath, rewritten, "utf-8");
   }
 
-  return { newPath: targetPath, moved };
+  return { newPath: targetPath, moved, independence: plan };
+}
+
+/**
+ * Record the AI reviewer on a card without writing a verdict — what `--accept`
+ * does with `--ai-model` and `--ai-session`, so that the independence of the
+ * audit it ingests is on the card when someone later records the verdict.
+ * Returns false (and writes nothing) when the call gave no field.
+ */
+export function recordAiReviewer(
+  issueFilePath: string,
+  given: GivenAiReviewer
+): boolean {
+  const original = readFileSync(issueFilePath, "utf-8");
+  const fm = parseFrontmatter(original);
+  if (!fm) throw new Error(`No frontmatter in ${issueFilePath}`);
+  const ai = resolveAiReviewer(fm.ai_reviewer, given);
+  if (!ai.block) return false;
+  const updated: Frontmatter = {
+    ...fm,
+    ai_reviewer: ai.block,
+    schema_version: "2",
+    updated: today(),
+  };
+  const bodyMatch = original.match(/^---[\s\S]*?---\s*\n([\s\S]*)$/);
+  writeFileSync(
+    issueFilePath,
+    serializeFrontmatter(updated) + "\n" + (bodyMatch ? bodyMatch[1] : ""),
+    "utf-8"
+  );
+  return true;
 }
 
 /**
