@@ -10,7 +10,11 @@
 
 import { existsSync, readFileSync, writeFileSync, readdirSync } from "fs";
 import { join, relative } from "path";
-import { parseFrontmatter, type Frontmatter } from "./frontmatter.js";
+import {
+  parseFrontmatter,
+  splitFrontmatter,
+  type Frontmatter,
+} from "./frontmatter.js";
 
 export const SCHEMA_VERSION = "2";
 
@@ -245,15 +249,15 @@ export function applyMigration(lytosDir: string, plan: MigrationPlan): number {
  * every field is already present (idempotency guard).
  */
 function insertFields(content: string, added: AddedField[]): string | null {
-  const match = content.match(/^(---\r?\n[\s\S]*?\r?\n)(---\r?\n?)([\s\S]*)$/);
-  if (!match) return null;
+  const parts = splitFrontmatter(content);
+  if (!parts) return null;
 
-  const [, head, fence, body] = match;
   const lines = added
-    .filter((a) => !new RegExp(`^${a.field}:`, "m").test(head))
+    .filter((a) => !new RegExp(`^${a.field}:`, "m").test(parts.head))
     .map((a) => `${a.field}: ${a.value}`);
 
   if (lines.length === 0) return null;
 
-  return head + lines.join("\n") + "\n" + fence + body;
+  // The closing fence and everything after it are put back as they were.
+  return parts.head + lines.join("\n") + "\n---" + parts.rest;
 }

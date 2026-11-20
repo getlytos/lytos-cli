@@ -296,3 +296,18 @@ describe("designFromConfig — what config.yml says about design", () => {
     }
   });
 });
+
+describe("parseEntry — the body starts where the parser closes the frontmatter (ISS-0180)", () => {
+  it("counts no word of the frontmatter as body when the closing line has text after the dashes", () => {
+    const text = "---\nid: ISS-0163/001\nepic: ISS-0163\nfrom: design\ntype: gap\nstatus: open\n--- closed here\n";
+    const { problems } = parseEntry(text, "ISS-0163", "001-x.md");
+    expect(problems).toEqual(["body is empty: say the point of the entry in a few lines"]);
+  });
+
+  it("keeps a --- rule of the body in the body, and counts what follows it", () => {
+    const body = "First point.\n\n---\n\nSecond point.";
+    const { entry: e, problems } = parseEntry(entry({}, body), "ISS-0163", "001-x.md");
+    expect(problems).toEqual([]);
+    expect(e?.words).toBe(5);
+  });
+});

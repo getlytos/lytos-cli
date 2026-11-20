@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { bodyOf, parseFrontmatter, serializeFrontmatter } from "../../src/lib/frontmatter.js";
+import { bodyOf, parseFrontmatter, serializeFrontmatter, splitFrontmatter } from "../../src/lib/frontmatter.js";
 
 function wrap(yaml: string): string {
   return `---\n${yaml}\n---\nbody\n`;
@@ -323,5 +323,41 @@ describe("bodyOf — the body is cut where the parser closes the frontmatter (IS
     }
     expect(text.match(/^---$/gm)).toHaveLength(3); // open, close, and the rule in the body
     expect(text.endsWith("# T\n\n---\nrule above\n")).toBe(true);
+  });
+});
+
+describe("splitFrontmatter — the block cut at the parser's closing line (ISS-0180)", () => {
+  it("puts everything up to the closing dashes in head, and the rest after them", () => {
+    const content = "---\nid: a\ntitle: x ---\n--- notes\n\nbody\n";
+    const parts = splitFrontmatter(content)!;
+    expect(parts.head).toBe("---\nid: a\ntitle: x ---\n");
+    expect(parts.rest).toBe(" notes\n\nbody\n");
+    expect(parts.head + "---" + parts.rest).toBe(content);
+  });
+
+  it("keeps the carriage return of a Windows file in the head", () => {
+    const parts = splitFrontmatter("---\r\nid: a\r\n---\r\nbody\r\n")!;
+    expect(parts.head).toBe("---\r\nid: a\r\n");
+    expect(parts.rest).toBe("\r\nbody\r\n");
+  });
+
+  it("is null when there is no block, as parseFrontmatter is", () => {
+    for (const content of ["no frontmatter\n", "---\nid: a\n", ""]) {
+      expect(splitFrontmatter(content), JSON.stringify(content)).toBeNull();
+      expect(parseFrontmatter(content), JSON.stringify(content)).toBeNull();
+    }
+  });
+
+  it("agrees with the parser and with bodyOf on where the block ends", () => {
+    for (const content of [
+      "---\nid: a\n---\nbody\n",
+      "---\nid: a\nnote: see ---\n---\n\nbody\n---\nrule\n",
+      "---  \nid: a\n---\n",
+    ]) {
+      const parts = splitFrontmatter(content)!;
+      expect(parseFrontmatter(content)).not.toBeNull();
+      expect(parseFrontmatter(parts.head + "---\n")).toEqual(parseFrontmatter(content));
+      expect(bodyOf(content).length).toBeLessThanOrEqual(parts.rest.length);
+    }
   });
 });
