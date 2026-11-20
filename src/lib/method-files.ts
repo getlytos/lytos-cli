@@ -46,6 +46,16 @@ export const QUALITY_LIBRARY_FILES: readonly string[] = [
 ];
 
 /**
+ * The guide to the design exchange entries (ISS-0169). Only a project whose
+ * `config.yml` says `design: claude-design` gets it: written by `init`, added by
+ * `upgrade`, and add-only like the quality library. A project with any other
+ * answer never receives it. Paths are relative to `method/` and to `.lytos/`.
+ */
+export const DESIGN_EXCHANGES_FILES: readonly string[] = [
+  "design/exchanges/README.md",
+];
+
+/**
  * Method files `lyt upgrade` may REPLACE (paths relative to `method/` and to
  * `.lytos/`): a missing one is added, a different one is replaced only after a
  * `y` or with `--force`. The kit and the stack contract are deliberately not

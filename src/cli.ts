@@ -21,6 +21,7 @@ import { closeCommand } from "./commands/close.js";
 import { claimCommand, unclaimCommand } from "./commands/claim.js";
 import { migrateFrontmatterCommand } from "./commands/migrate-frontmatter.js";
 import { absorbCommand } from "./commands/absorb.js";
+import { exchangesCommand } from "./commands/exchanges.js";
 import { mergeIssueDriverCommand } from "./commands/merge-issue.js";
 import { upgradeCommand } from "./commands/upgrade.js";
 import { ok, error, bold, cyan, green } from "./lib/output.js";
@@ -90,6 +91,9 @@ program.on("--help", () => {
   console.log(
     "  lyt absorb                 # dry-run: merge the AI session journal into the active issue"
   );
+  console.log(
+    "  lyt exchanges              # open design exchanges, derived (design: claude-design projects only)"
+  );
   console.log("");
   console.log(
     "  Loop primitives (ADR-0004) — the CLI exposes them; the wrapper/App orchestrate:"
@@ -140,6 +144,7 @@ program.addCommand(claimCommand);
 program.addCommand(unclaimCommand);
 program.addCommand(migrateFrontmatterCommand);
 program.addCommand(absorbCommand);
+program.addCommand(exchangesCommand);
 // Hidden: called by git as a merge driver, never by hand.
 program.addCommand(mergeIssueDriverCommand, { hidden: true });
 program.addCommand(upgradeCommand);

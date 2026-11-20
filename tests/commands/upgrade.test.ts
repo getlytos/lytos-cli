@@ -426,6 +426,67 @@ describe("lyt upgrade — what is the project's own (ISS-0159)", () => {
     expect(existsSync(lytos(cwd, "quality/kit.md"))).toBe(false);
   });
 
+  describe("the design exchanges guide (ISS-0169)", () => {
+    const GUIDE = "design/exchanges/README.md";
+    const claudeDesign = (): string => {
+      fixture = createEmptyFixture();
+      expect(run("init --yes --tool none --design claude-design", fixture.cwd).exitCode).toBe(0);
+      return fixture.cwd;
+    };
+
+    it("is added to a project that said claude-design and has not got it yet, and only on a real run", () => {
+      const cwd = claudeDesign();
+      rmSync(lytos(cwd, "design/exchanges"), { recursive: true });
+      const dry = run("upgrade --dry-run", cwd);
+      expect(dry.stderr).toContain(GUIDE);
+      expect(existsSync(lytos(cwd, GUIDE))).toBe(false);
+      const real = run("upgrade", cwd);
+      expect(real.exitCode).toBe(0);
+      expect(real.stderr).toContain(`${GUIDE}`);
+      expect(readFileSync(lytos(cwd, GUIDE), "utf-8")).toBe(bundled(GUIDE));
+    });
+
+    it("is the project's own once written: a changed guide is left alone, even with --force", () => {
+      const cwd = claudeDesign();
+      writeFileSync(lytos(cwd, GUIDE), "# Our own rules\n");
+      for (const args of ["upgrade", "upgrade --force"]) {
+        const r = run(args, cwd);
+        expect(r.exitCode).toBe(0);
+        expect(r.stderr).toContain("1 design exchanges guide file(s) differ from the bundled version and were left alone");
+        expect(readFileSync(lytos(cwd, GUIDE), "utf-8")).toBe("# Our own rules\n");
+      }
+    });
+
+    it.each(["none", "other"])("is never added to a project whose answer is %s, and never mentioned", (design) => {
+      fixture = createEmptyFixture();
+      expect(run(`init --yes --tool none --design ${design}`, fixture.cwd).exitCode).toBe(0);
+      for (const args of ["upgrade --dry-run", "upgrade", "upgrade --force"]) {
+        const r = run(args, fixture.cwd);
+        expect(r.exitCode).toBe(0);
+        expect(r.stderr, args).not.toMatch(/exchanges|design/i);
+      }
+      expect(existsSync(lytos(fixture.cwd, "design"))).toBe(false);
+    });
+
+    it("is never added to a project with no config.yml", () => {
+      const cwd = freshProject();
+      rmSync(lytos(cwd, "config.yml"));
+      expect(run("upgrade", cwd).exitCode).toBe(0);
+      expect(existsSync(lytos(cwd, "design"))).toBe(false);
+    });
+
+    it("is not written through a symbolic link", () => {
+      const cwd = claudeDesign();
+      const outside = join(cwd, "outside-folder");
+      rmSync(lytos(cwd, "design/exchanges"), { recursive: true });
+      symlinkSync(outside, lytos(cwd, "design/exchanges"));
+      const r = run("upgrade", cwd);
+      expect(r.exitCode).toBe(0);
+      expect(r.stderr).toMatch(/design\/exchanges\/README\.md not written.*symbolic link/);
+      expect(existsSync(outside)).toBe(false);
+    });
+  });
+
   it("never touches the register, the config, the manifest or the memory", () => {
     fixture = createEmptyFixture();
     expect(run("init --yes --tool none --design claude-design", fixture.cwd).exitCode).toBe(0);

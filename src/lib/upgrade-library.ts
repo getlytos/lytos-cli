@@ -15,7 +15,11 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { dirname, join } from "path";
-import { QUALITY_LIBRARY_FILES } from "./method-files.js";
+import { readDesign } from "./design-config.js";
+import {
+  DESIGN_EXCHANGES_FILES,
+  QUALITY_LIBRARY_FILES,
+} from "./method-files.js";
 import { missingBundledGates } from "./quality.js";
 import { symlinkOnPath } from "./safe-write.js";
 import { yellow } from "./output.js";
@@ -31,11 +35,15 @@ export interface LibraryResult {
   behindLink: Array<{ path: string; link: string }>;
 }
 
-/** Add the library files a project lacks. Never rewrites one that exists. */
+/**
+ * Add the files a project lacks, from `files` (the quality library by default).
+ * Never rewrites one that exists.
+ */
 export function deliverLibrary(
   lytosDir: string,
   methodDir: string,
-  dryRun: boolean
+  dryRun: boolean,
+  files: readonly string[] = QUALITY_LIBRARY_FILES
 ): LibraryResult {
   const result: LibraryResult = {
     added: [],
@@ -44,7 +52,7 @@ export function deliverLibrary(
     behindLink: [],
   };
 
-  for (const relPath of QUALITY_LIBRARY_FILES) {
+  for (const relPath of files) {
     const bundledPath = join(methodDir, relPath);
     if (!existsSync(bundledPath)) continue;
     const localPath = join(lytosDir, relPath);
@@ -70,6 +78,29 @@ export function deliverLibrary(
     }
   }
   return result;
+}
+
+/**
+ * Everything `upgrade` adds without asking, each with the label its report uses:
+ * the quality library, and — only for a project whose `config.yml` says
+ * `design: claude-design` — the design exchanges guide (ISS-0169). Any other
+ * project is told nothing about the guide.
+ */
+export function deliverAdditions(
+  lytosDir: string,
+  methodDir: string,
+  dryRun: boolean
+): Array<[string, LibraryResult]> {
+  const additions: Array<[string, LibraryResult]> = [
+    ["quality library", deliverLibrary(lytosDir, methodDir, dryRun)],
+  ];
+  if (readDesign(lytosDir) === "claude-design") {
+    additions.push([
+      "design exchanges guide",
+      deliverLibrary(lytosDir, methodDir, dryRun, DESIGN_EXCHANGES_FILES),
+    ]);
+  }
+  return additions;
 }
 
 /**

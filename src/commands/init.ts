@@ -356,7 +356,7 @@ export const initCommand = new Command("init")
   .option("--lang <lang>", "Language (en, fr)", "")
   .option(
     "--design <design>",
-    "Design tool: claude-design (also creates .lytos/design/registry.md), other, or none. Asked on an interactive terminal only; without one the default is none."
+    "Design tool: claude-design (also creates .lytos/design/registry.md and the exchanges guide), other, or none. Asked on an interactive terminal only; without one the default is none."
   )
   .option("--yes", "Skip prompts, use defaults", false)
   .option("--force", "Override existing .lytos/ directory", false)
