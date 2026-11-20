@@ -7,7 +7,7 @@ effort: M
 complexity: standard
 skill: ""
 skills_aux: []
-status: 4-review
+status: 5-done
 branch: feat/ISS-0165-the-discovery-gate
 depends: [ISS-0163]
 related: [ISS-0162]
@@ -17,6 +17,8 @@ risk: medium
 assignee: fredericgalline
 updated: 2026-11-20
 started_at: 2026-11-20
+completed_at: 2026-11-20
+commits: [ddb8c0f, e27e974, f3cae8f, 4629f73, 1c6e272, 889b647, 0aaa03d, ba6e11a, 27d1fd2, b5e8493, 3fd4185, a54e2a5, 957f8b6]
 ---
 # ISS-0165 — The discovery gate: the leaves of an unfrozen epic cannot enter the sprint
 

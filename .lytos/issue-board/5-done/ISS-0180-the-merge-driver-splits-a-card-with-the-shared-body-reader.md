@@ -1,21 +1,23 @@
 ---
 id: ISS-0180
-title: "The merge driver splits a card with the shared body reader"
+title: The merge driver splits a card with the shared body reader
 type: fix
 priority: P1-high
 effort: XS
 complexity: light
 skill: ""
 skills_aux: []
-status: 4-review
-branch: "fix/ISS-0180-merge-driver-body-split"
+status: 5-done
+branch: fix/ISS-0180-merge-driver-body-split
 depends: []
 related: [ISS-0093, ISS-0175]
 created: 2026-11-20
 schema_version: 2
 risk: medium
+updated: 2026-11-20
+completed_at: 2026-11-20
+commits: [2d014d8, f81dab0, 1d3c619, 72b00eb, 8b4bd2d, d38175e, 073a849, 323050d, 5ff5be1, ab448e7, e27e974, f3cae8f, 4629f73, 1c6e272, 889b647, 0aaa03d, ba6e11a, 27d1fd2, b5e8493, 3fd4185, a54e2a5, 957f8b6]
 ---
-
 # ISS-0180 — The merge driver splits a card with the shared body reader
 
 ## Context

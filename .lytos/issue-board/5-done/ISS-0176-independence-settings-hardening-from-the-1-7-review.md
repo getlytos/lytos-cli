@@ -7,15 +7,17 @@ effort: M
 complexity: heavy
 skill: ""
 skills_aux: []
-status: 4-review
-branch: "fix/ISS-0176-independence-settings-hardening"
+status: 5-done
+branch: fix/ISS-0176-independence-settings-hardening
 depends: []
 related: [ISS-0166, ISS-0169]
 created: 2026-11-20
 schema_version: 2
 risk: high
+updated: 2026-11-20
+completed_at: 2026-11-20
+commits: [85bf211, d38175e, 073a849, 323050d, 5ff5be1, ab448e7, e27e974, f3cae8f, 4629f73, 1c6e272, 889b647, 0aaa03d, ba6e11a, 27d1fd2, b5e8493, 3fd4185, a54e2a5, 957f8b6]
 ---
-
 # ISS-0176 — Harden the independence settings after the 1.7 review: provider overrides, the config parser, one reader, the guarantee
 
 ## Context

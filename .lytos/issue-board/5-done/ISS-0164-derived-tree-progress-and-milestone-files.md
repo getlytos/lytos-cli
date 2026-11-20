@@ -7,7 +7,7 @@ effort: L
 complexity: standard
 skill: ""
 skills_aux: []
-status: 4-review
+status: 5-done
 branch: feat/ISS-0164-derived-tree-progress-and-milestones
 depends: [ISS-0163]
 related: [ISS-0162]
@@ -17,6 +17,8 @@ risk: medium
 assignee: fredericgalline
 updated: 2026-11-20
 started_at: 2026-11-20
+completed_at: 2026-11-20
+commits: [d486170, f3cae8f, 4629f73, 1c6e272, 889b647, 0aaa03d, ba6e11a, 27d1fd2, b5e8493, 3fd4185, a54e2a5, 957f8b6]
 ---
 # ISS-0164 — Derived views: the tree and progress in board and show, and milestone files
 
@@ -47,4 +49,8 @@ Decision: **A**, the same principle as `BOARD.md`.
 - [x] On a sample project the tree and progress are correct and change when a leaf moves — verify: auto
 - [x] A milestone's progress is derived from its epics and leaves — verify: auto
 - [x] A project without the fields sees the board exactly as before — verify: auto
-- [ ] Nothing in the output is read from a hand-written list or count — verify: reviewer:architecture-review
+- [x] Nothing in the output is read from a hand-written list or count — verify: reviewer:architecture-review
+
+## Evidence (review)
+
+Covered by the two independent reviews of 1.7 (a stronger model of the same provider, read-only, level 2, 2026-11-20), both GO with reserves: No finding against the derived views: the board, show and milestone output are computed on each call from the cards; both reviews ran the architecture rubric.

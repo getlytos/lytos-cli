@@ -1,21 +1,23 @@
 ---
 id: ISS-0179
-title: "The skill counts in the init briefing and the session-start list are stale, and a test now derives them"
+title: The skill counts in the init briefing and the session-start list are stale, and a test now derives them
 type: docs
 priority: P2-normal
 effort: XS
 complexity: light
 skill: ""
 skills_aux: []
-status: 4-review
-branch: "docs/ISS-0179-skill-counts-and-session-start"
+status: 5-done
+branch: docs/ISS-0179-skill-counts-and-session-start
 depends: []
 related: [ISS-0168]
 created: 2026-11-20
 schema_version: 2
 risk: low
+updated: 2026-11-20
+completed_at: 2026-11-20
+commits: [c02a545, 073a849, 323050d, 5ff5be1, ab448e7, e27e974, f3cae8f, 4629f73, 1c6e272, 889b647, 0aaa03d, ba6e11a, 27d1fd2, b5e8493, 3fd4185, a54e2a5, 957f8b6]
 ---
-
 # ISS-0179 — The skill counts in the init briefing and the session-start list are stale, and a test now derives them
 
 ## Context

@@ -1,21 +1,23 @@
 ---
 id: ISS-0174
-title: "The lyt upgrade question is erased by the terminal, so the command looks stuck"
+title: The lyt upgrade question is erased by the terminal, so the command looks stuck
 type: fix
 priority: P1-high
 effort: XS
 complexity: light
 skill: ""
 skills_aux: []
-status: 4-review
-branch: "fix/ISS-0174-lyt-upgrade-question-is-erased-by-the-terminal"
+status: 5-done
+branch: fix/ISS-0174-lyt-upgrade-question-is-erased-by-the-terminal
 depends: []
 related: []
 created: 2026-11-20
 schema_version: 2
 risk: low
+updated: 2026-11-20
+completed_at: 2026-11-20
+commits: [3c364c2, 889b647, 0aaa03d, ba6e11a, 27d1fd2, b5e8493, 3fd4185, a54e2a5, 957f8b6]
 ---
-
 # ISS-0174 — The lyt upgrade question is erased by the terminal, so the command looks stuck
 
 ## Context

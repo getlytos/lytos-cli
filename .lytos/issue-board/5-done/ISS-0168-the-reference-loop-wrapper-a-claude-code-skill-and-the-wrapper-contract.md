@@ -7,7 +7,7 @@ effort: M
 complexity: standard
 skill: ""
 skills_aux: []
-status: 4-review
+status: 5-done
 branch: feat/ISS-0168-the-reference-loop-wrapper
 depends: []
 related: [ISS-0162]
@@ -17,6 +17,8 @@ risk: low
 assignee: fredericgalline
 updated: 2026-11-20
 started_at: 2026-11-20
+completed_at: 2026-11-20
+commits: [bbbd9a5, ba6e11a, 27d1fd2, b5e8493, 3fd4185, a54e2a5, 957f8b6]
 ---
 # ISS-0168 — The reference loop wrapper: a Claude Code skill and the wrapper contract
 
