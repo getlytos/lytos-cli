@@ -8,8 +8,8 @@ complexity: light
 domain: [release]
 skill: ""
 skills_aux: []
-status: 4-review
-branch: "chore/ISS-0160-release-lytos-cli-1-6-0"
+status: 5-done
+branch: chore/ISS-0160-release-lytos-cli-1-6-0
 depends: [ISS-0153, ISS-0154, ISS-0155, ISS-0156, ISS-0157, ISS-0158, ISS-0159]
 created: 2026-11-20
 updated: 2026-11-20
@@ -17,6 +17,8 @@ schema_version: 2
 risk: medium
 assignee: fredericgalline
 started_at: 2026-11-20
+completed_at: 2026-11-20
+commits: [b4ff975]
 ---
 # ISS-0160 — Prepare the release of lytos-cli 1.6.0
 

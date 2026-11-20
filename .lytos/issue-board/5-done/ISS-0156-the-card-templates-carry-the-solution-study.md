@@ -8,8 +8,8 @@ complexity: light
 domain: [method, templates]
 skill: ""
 skills_aux: []
-status: 4-review
-branch: "feat/ISS-0156-the-card-templates-carry-the-solution-study-and-a-solution-line-in-ready"
+status: 5-done
+branch: feat/ISS-0156-the-card-templates-carry-the-solution-study-and-a-solution-line-in-ready
 depends: [ISS-0155]
 created: 2026-11-20
 updated: 2026-11-20
@@ -17,6 +17,8 @@ schema_version: 2
 risk: low
 assignee: fredericgalline
 started_at: 2026-11-20
+completed_at: 2026-11-20
+commits: [e605b02]
 ---
 # ISS-0156 — The card templates carry the solution study and a Solution line in Ready
 

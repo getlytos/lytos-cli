@@ -8,8 +8,8 @@ complexity: standard
 domain: [method, docs]
 skill: documentation
 skills_aux: []
-status: 4-review
-branch: "docs/ISS-0157-document-the-team-roles-and-the-product-loop"
+status: 5-done
+branch: docs/ISS-0157-document-the-team-roles-and-the-product-loop
 depends: [ISS-0155]
 created: 2026-11-20
 updated: 2026-11-20
@@ -17,6 +17,8 @@ schema_version: 2
 risk: low
 assignee: fredericgalline
 started_at: 2026-11-20
+completed_at: 2026-11-20
+commits: [29cc5a9]
 ---
 # ISS-0157 — Document the team roles and the product loop
 

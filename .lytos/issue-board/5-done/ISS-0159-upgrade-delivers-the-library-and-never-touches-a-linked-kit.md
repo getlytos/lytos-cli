@@ -8,8 +8,8 @@ complexity: standard
 domain: [cli, upgrade]
 skill: ""
 skills_aux: []
-status: 4-review
-branch: "feat/ISS-0159-lyt-upgrade-delivers-the-new-quality-library-and-never-touches-a-linked-kit"
+status: 5-done
+branch: feat/ISS-0159-lyt-upgrade-delivers-the-new-quality-library-and-never-touches-a-linked-kit
 depends: [ISS-0155, ISS-0157]
 created: 2026-11-20
 updated: 2026-11-20
@@ -17,6 +17,8 @@ schema_version: 2
 risk: high
 assignee: fredericgalline
 started_at: 2026-11-20
+completed_at: 2026-11-20
+commits: [6416add]
 ---
 # ISS-0159 — lyt upgrade delivers the new quality library and never touches a linked kit
 

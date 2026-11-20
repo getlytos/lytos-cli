@@ -8,8 +8,8 @@ complexity: standard
 domain: [method, quality-kit]
 skill: ""
 skills_aux: []
-status: 4-review
-branch: "feat/ISS-0155-ship-the-review-rubrics-the-human-checklists-and-the-new-kit-lines"
+status: 5-done
+branch: feat/ISS-0155-ship-the-review-rubrics-the-human-checklists-and-the-new-kit-lines
 depends: [ISS-0153, ISS-0154]
 created: 2026-11-20
 updated: 2026-11-20
@@ -17,6 +17,8 @@ schema_version: 2
 risk: medium
 assignee: fredericgalline
 started_at: 2026-11-20
+completed_at: 2026-11-20
+commits: [8e0b5d4]
 ---
 # ISS-0155 — Ship the review rubrics, the human checklists and the new kit lines
 
