@@ -96,6 +96,31 @@ describe("lytos init", () => {
     );
   });
 
+  it("ships the reference loop skill next to the other task skills (ISS-0168)", () => {
+    fixture = createEmptyFixture();
+    expect(run('init --name "Test Project" --tool none --yes', fixture.cwd).exitCode).toBe(0);
+    const written = join(fixture.cwd, ".lytos", "skills", "reference-loop", "SKILL.md");
+    expect(existsSync(written)).toBe(true);
+    expect(readFileSync(written, "utf-8")).toBe(
+      readFileSync(resolve(__dirname, "../../method/skills/reference-loop/SKILL.md"), "utf-8")
+    );
+  });
+
+  it("writes every skill file the method ships, so a skill added to method/skills cannot be left out (ISS-0168)", () => {
+    fixture = createEmptyFixture();
+    expect(run('init --name "Test Project" --tool none --yes', fixture.cwd).exitCode).toBe(0);
+    const methodSkills = resolve(__dirname, "../../method/skills");
+    const shipped = readdirSync(methodSkills, { recursive: true, withFileTypes: true })
+      .filter((e) => e.isFile())
+      .map((e) => join(e.parentPath, e.name).slice(methodSkills.length + 1));
+    expect(shipped.length).toBeGreaterThanOrEqual(10);
+    for (const path of shipped) {
+      const written = join(fixture.cwd, ".lytos", "skills", path);
+      expect(existsSync(written), path).toBe(true);
+      expect(readFileSync(written, "utf-8"), path).toBe(readFileSync(join(methodSkills, path), "utf-8"));
+    }
+  });
+
   it("installs the lytos-issue merge driver in a git repo (ISS-0093)", () => {
     fixture = createEmptyFixture();
     const { execSync } = require("child_process");

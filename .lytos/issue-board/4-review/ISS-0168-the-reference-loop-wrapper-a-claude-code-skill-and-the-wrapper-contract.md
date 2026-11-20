@@ -7,13 +7,16 @@ effort: M
 complexity: standard
 skill: ""
 skills_aux: []
-status: 1-backlog
-branch: "feat/ISS-0168-the-reference-loop-wrapper"
+status: 4-review
+branch: feat/ISS-0168-the-reference-loop-wrapper
 depends: []
 related: [ISS-0162]
 created: 2026-11-20
 schema_version: 2
 risk: low
+assignee: fredericgalline
+updated: 2026-11-20
+started_at: 2026-11-20
 ---
 # ISS-0168 — The reference loop wrapper: a Claude Code skill and the wrapper contract
 
@@ -41,7 +44,7 @@ Decision: **A**.
 
 ## Definition of done
 
-- [ ] A test proves every `lyt` command the skill cites exists in the CLI help — verify: auto
-- [ ] A test proves every park reason the skill names is in the taxonomy — verify: auto
-- [ ] The five stop cases and the never-close rule are stated — verify: auto
-- [ ] The skill is delivered by `init` and `upgrade` — verify: auto
+- [x] A test proves every `lyt` command the skill cites exists in the CLI help — verify: auto
+- [x] A test proves every park reason the skill names is in the taxonomy — verify: auto
+- [x] The five stop cases and the never-close rule are stated — verify: auto
+- [x] The skill is delivered by `init` and `upgrade` — verify: auto
