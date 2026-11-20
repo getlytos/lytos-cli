@@ -135,7 +135,7 @@ describe("every command and flag the skill cites exists in the CLI", () => {
   it("names every reason `lyt next` gives for a blocked card, and only those", () => {
     const help = cliOutput(["next", "--help"]);
     const inHelp = [...help.matchAll(/^ {2}([a-z]+(?:-[a-z]+)+)\s{2,}/gm)].map((m) => m[1]);
-    expect(inHelp.length).toBe(5);
+    expect(inHelp.length).toBe(6);
     const step = contract.split("\n").find((l) => l.startsWith("1. **Select.**"))!;
     const named = codeSpans(step).filter((s) => /^[a-z]+(-[a-z]+)+$/.test(s));
     expect(named.sort()).toEqual(inHelp.sort());

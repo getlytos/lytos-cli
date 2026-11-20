@@ -44,6 +44,9 @@ export const nextCommand = new Command("next")
     );
     console.log("                  (a model's ruling is not a gate)");
     console.log("  not-ready       the Definition of Ready is not met");
+    console.log(
+      "  epic-in-discovery  the parent epic is still in phase: discovery (ADR-0009)"
+    );
   })
   .action((opts: { json?: boolean }) => {
     const cwd = process.cwd();

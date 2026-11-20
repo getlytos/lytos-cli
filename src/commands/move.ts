@@ -24,6 +24,13 @@ import {
   today,
 } from "../lib/issue-ops.js";
 import { ok, info, warn, error, bold, cyan, green } from "../lib/output.js";
+import { entersSprint } from "../lib/discovery-gate.js";
+import {
+  enforceDiscoveryGate,
+  OVERRIDE_HELP,
+  OVERRIDE_OPTION,
+} from "../lib/discovery-gate-cli.js";
+import type { Frontmatter } from "../lib/frontmatter.js";
 
 /** Stages `lyt move` accepts as a target. */
 const MOVABLE_STAGES = ["0-icebox", "1-backlog", "2-sprint", "4-review"];
@@ -48,6 +55,7 @@ export const moveCommand = new Command("move")
     "Move even when origin is ahead or the issue is claimed on origin",
     false
   )
+  .option(OVERRIDE_OPTION, OVERRIDE_HELP)
   .option("--json", "Output result as JSON", false)
   .on("--help", () => {
     console.log("");
@@ -58,6 +66,16 @@ export const moveCommand = new Command("move")
       "  lyt move ISS-0053 1-backlog    # send it back to the backlog"
     );
     console.log("  lyt move ISS-0053 4-review --json");
+    console.log("");
+    console.log(
+      "A leaf of an epic in phase: discovery cannot enter the sprint"
+    );
+    console.log(
+      "(1-backlog, 0-icebox or parked to 2-sprint) unless it is a spike or you"
+    );
+    console.log(
+      'override with --discovery-override "<reason>" (recorded in the card).'
+    );
     console.log("");
     console.log("Stages with a dedicated verb are refused on purpose:");
     console.log(
@@ -71,7 +89,7 @@ export const moveCommand = new Command("move")
     (
       issueId: string,
       stage: string,
-      opts: { force?: boolean; json?: boolean }
+      opts: { force?: boolean; json?: boolean; discoveryOverride?: string }
     ) => {
       const cwd = process.cwd();
       const lytosDir = resolve(cwd, ".lytos");
@@ -147,6 +165,16 @@ export const moveCommand = new Command("move")
         process.exit(0);
       }
 
+      // The discovery gate (ADR-0009 §3): a leaf of an epic still in discovery
+      // does not enter the sprint. Local and cheap, so it runs before the
+      // network check; nothing has been changed when it refuses.
+      const gate: Frontmatter = entersSprint(issue.dir, stage)
+        ? enforceDiscoveryGate(lytosDir, issue.frontmatter, {
+            override: opts.discoveryOverride,
+            json: opts.json,
+          })
+        : {};
+
       // Same origin-freshness check as `lyt start` — a move is a board
       // mutation too, and racing a stale origin corrupts the shared state.
       if (!opts.force) {
@@ -175,7 +203,7 @@ export const moveCommand = new Command("move")
       }
 
       const from = issue.dir;
-      moveIssue(lytosDir, issue, stage, { updated: today() });
+      moveIssue(lytosDir, issue, stage, { updated: today(), ...gate });
       regenerateBoard(lytosDir);
 
       if (opts.json) {

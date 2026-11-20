@@ -65,6 +65,14 @@ export interface ParentView {
   found: boolean;
 }
 
+/** The record of a human override of the discovery gate, as written in the card. */
+export interface OverrideView {
+  reason: string;
+  date: string;
+  epic: string;
+  by: string;
+}
+
 /** What `lyt show` adds for a card that takes part in the intent layer. */
 export interface IntentDetail {
   parent?: ParentView;
@@ -73,6 +81,8 @@ export interface IntentDetail {
   /** Present on an epic: its leaves and their progress. */
   leaves?: LeafView[];
   progress?: Progress;
+  /** Present on a leaf that was let into the sprint by a human override (ISS-0165). */
+  discoveryOverride?: OverrideView;
 }
 
 /** Numeric-aware so that ISS-0009 sorts before ISS-0010 and ISS-10000 after. */
@@ -209,5 +219,14 @@ export function describeIntent(
   }
   const parentId = parentIdOf(self);
   if (parentId !== "") detail.parent = parentView(parentId, cards);
+  const record = fm.discovery_override;
+  if (typeof record === "object" && !Array.isArray(record) && record.reason) {
+    detail.discoveryOverride = {
+      reason: record.reason,
+      date: record.date ?? "",
+      epic: record.epic ?? "",
+      by: record.by ?? "",
+    };
+  }
   return detail;
 }

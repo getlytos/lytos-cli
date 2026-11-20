@@ -24,8 +24,11 @@ import {
 /** The card type that marks an epic (an intent card). */
 export const EPIC_TYPE = "epic";
 
-/** The two phases of an epic: until `frozen`, its leaves are not sprint work. */
-export const PHASES = ["discovery", "frozen"];
+/** While an epic is in this phase, its leaves are not sprint work (ADR-0009 §3). */
+export const DISCOVERY_PHASE = "discovery";
+
+/** The two phases of an epic. */
+export const PHASES = [DISCOVERY_PHASE, "frozen"];
 
 /** Where milestone files live, relative to `.lytos/`. */
 export const MILESTONES_DIR = "milestones";

@@ -31,6 +31,7 @@ import {
   yellow,
   dim,
 } from "../lib/output.js";
+import { enforceDiscoveryGate } from "../lib/discovery-gate-cli.js";
 
 /** Closed taxonomy of park reasons (ADR-0004 §3). */
 export const PARK_REASONS = [
@@ -190,6 +191,9 @@ export const unparkCommand = new Command("unpark")
       }
       process.exit(1);
     }
+
+    // The discovery gate (ADR-0009 §3): back into the sprint is an entry too.
+    enforceDiscoveryGate(lytosDir, issue.frontmatter, { json: opts.json });
 
     // Clear the park metadata on the way out.
     delete issue.frontmatter.park_reason;
