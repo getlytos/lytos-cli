@@ -66,3 +66,5 @@ The loop halts, and says why, in exactly five cases:
 5. **Two failures in a row** — the same card fails twice in a row. A third attempt is a guess.
 
 Outside these five, the loop does not interrupt the owner.
+
+The reference wrapper that runs this loop, with the contract any wrapper must honor, is the skill `skills/reference-loop/SKILL.md`.

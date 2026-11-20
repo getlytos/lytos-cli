@@ -63,6 +63,7 @@ export const UPGRADEABLE_FILES: readonly string[] = [
   "skills/deployment/SKILL.md",
   "skills/security/SKILL.md",
   "skills/api-design/SKILL.md",
+  "skills/reference-loop/SKILL.md",
   "rules/default-rules.md",
   "rules/README.md",
   "rules/team-and-loop.md",

@@ -60,6 +60,8 @@ const TASK_SKILLS = [
   "deployment",
   "security",
   "api-design",
+  // The reference loop wrapper (ISS-0168): a skill plus the contract of what any wrapper must do
+  "reference-loop",
 ];
 
 const REMOTE_FILES = [

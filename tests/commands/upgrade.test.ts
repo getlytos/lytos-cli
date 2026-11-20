@@ -457,6 +457,27 @@ describe("lyt upgrade — what is the project's own (ISS-0159)", () => {
     run("upgrade --force", cwd);
     expect(readFileSync(path, "utf-8")).toBe(bundled("rules/team-and-loop.md"));
   });
+
+  it("delivers the reference loop skill like the other task skills: added when missing, replaced only with --force (ISS-0168)", () => {
+    const cwd = freshProject();
+    const path = lytos(cwd, "skills/reference-loop/SKILL.md");
+
+    // A project initialised before the skill existed gets it without being asked.
+    rmSync(join(cwd, ".lytos", "skills", "reference-loop"), { recursive: true });
+    expect(run("upgrade --dry-run", cwd).stderr).toContain("skills/reference-loop/SKILL.md");
+    expect(existsSync(path)).toBe(false);
+    const added = run("upgrade", cwd);
+    expect(added.exitCode).toBe(0);
+    expect(added.stderr).toContain("skills/reference-loop/SKILL.md");
+    expect(readFileSync(path, "utf-8")).toBe(bundled("skills/reference-loop/SKILL.md"));
+
+    // A project that adapted it keeps its copy unless it forces.
+    writeFileSync(path, "my own loop\n");
+    expect(run("upgrade --dry-run", cwd).stderr).toContain("(differs)");
+    expect(readFileSync(path, "utf-8")).toBe("my own loop\n");
+    run("upgrade --force", cwd);
+    expect(readFileSync(path, "utf-8")).toBe(bundled("skills/reference-loop/SKILL.md"));
+  });
 });
 
 describe("lyt upgrade — with no terminal, and through symbolic links (ISS-0159)", () => {
