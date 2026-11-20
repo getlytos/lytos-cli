@@ -6,7 +6,7 @@
  * nothing else.
  */
 
-import { mkdirSync, writeFileSync } from "fs";
+import { mkdirSync, readFileSync, renameSync, writeFileSync } from "fs";
 import { join } from "path";
 import { createEmptyFixture, type Fixture } from "./fixtures.js";
 
@@ -77,10 +77,27 @@ export function writeCard(
   return path;
 }
 
+/** Move a card between folders the way `lyt move` does: the file and its `status`. */
+export function moveCard(cwd: string, id: string, from: string, to: string): void {
+  const board = join(cwd, ".lytos", "issue-board");
+  const source = join(board, from, `${id}-card.md`);
+  const target = join(board, to, `${id}-card.md`);
+  mkdirSync(join(board, to), { recursive: true });
+  renameSync(source, target);
+  writeFileSync(
+    target,
+    readFileSync(target, "utf-8").replace(`status: ${from}`, `status: ${to}`)
+  );
+}
+
 export interface MilestoneOptions {
   title?: string;
   /** `open` (default) or `closed`. */
   status?: string;
+  /** Exit criteria, written as `- [ ]` / `- [x]` items; `true` means ticked. */
+  criteria?: Array<[string, boolean]>;
+  /** Raw file content, written as is (to test a malformed milestone). */
+  raw?: string;
 }
 
 /** Write `.lytos/milestones/<id>.md`; returns its path. */
@@ -99,10 +116,17 @@ export function writeMilestone(
     `# ${id}`,
     "",
   ];
+  if (options.criteria) {
+    lines.push("## Exit criteria", "");
+    for (const [text, done] of options.criteria) {
+      lines.push(`- [${done ? "x" : " "}] ${text}`);
+    }
+    lines.push("");
+  }
 
   const folder = join(cwd, ".lytos", "milestones");
   mkdirSync(folder, { recursive: true });
   const path = join(folder, `${id}.md`);
-  writeFileSync(path, lines.join("\n"));
+  writeFileSync(path, options.raw ?? lines.join("\n"));
   return path;
 }

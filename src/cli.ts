@@ -12,6 +12,7 @@ import { startCommand } from "./commands/start.js";
 import { moveCommand } from "./commands/move.js";
 import { parkCommand, unparkCommand } from "./commands/park.js";
 import { nextCommand } from "./commands/next.js";
+import { milestoneCommand } from "./commands/milestone.js";
 import { budgetCommand } from "./commands/budget.js";
 import { gatesCommand } from "./commands/gates.js";
 import { reportCommand } from "./commands/report.js";
@@ -102,6 +103,9 @@ program.on("--help", () => {
     "  lyt next                   # the next loop-eligible issue in the sprint (read-only)"
   );
   console.log(
+    "  lyt milestone v1.7         # a milestone and its progress, derived from its epics and leaves (read-only)"
+  );
+  console.log(
     "  lyt park ISS-0053 --reason ambiguous-spec   # halt instead of guessing"
   );
   console.log(
@@ -134,6 +138,7 @@ program.addCommand(moveCommand);
 program.addCommand(parkCommand);
 program.addCommand(unparkCommand);
 program.addCommand(nextCommand);
+program.addCommand(milestoneCommand);
 program.addCommand(budgetCommand);
 program.addCommand(gatesCommand);
 program.addCommand(reportCommand);
