@@ -48,6 +48,18 @@ Recorded as ADRs; read the ADR rather than a summary of it. What matters at sess
 revised in place rather than superseded precisely because it was never accepted — a proposal
 surviving contact with its own dogfooding is what `Proposed` is for.
 
+### What `lyt upgrade` may write (ISS-0159)
+
+Three kinds of file under `.lytos/`, three rules. **Method files** (skills, default rules,
+`team-and-loop.md`, templates): added when missing, replaced only on a `y` or `--force`.
+**The quality library** (`quality/rubrics/`, `quality/checklists/`, listed in
+`src/lib/method-files.ts`): add-only — a project adapts its rubrics, and `--force` must not undo
+that. **The project's own** (`quality/kit.md` and `stack.md`, linked to its stack; the design
+register; `config.yml`; manifest; memory; board): never written. The kit is not merged into: the run
+only names the bundled gates it lacks. A test builds a linked kit and proves it survives
+`upgrade --force` byte for byte. `lyt init --force` is the older, broader gesture and still
+re-scaffolds everything it generates (the design register excepted).
+
 ### The three helpers a new checker should reuse
 
 Fiche text is prose containing code, and three checkers learned the same lesson separately (see
