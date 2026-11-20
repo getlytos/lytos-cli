@@ -89,7 +89,7 @@ schema_version: 2
 
 *How we know this issue is finished. The bigger the issue, the more precise the done criteria should be.*
 
-*Declare how each item is verified (ADR-0004 §4): `— verify: auto` for a machine gate (test, typecheck, lint, build) or `— verify: human` for a human checklist item. Unmarked items default to auto and are flagged by `lyt lint`. A DoD with at least one `verify: auto` item is loop-eligible; an all-`human` DoD is not loop work.*
+*Declare how each item is verified (ADR-0004 §4): `— verify: auto` for a machine gate (test, typecheck, lint, build), `— verify: reviewer` for a ruling against a rubric (a model can rule, no command can), or `— verify: human` for a human checklist item. Each may pin the quality-kit entry that carries it (`auto:tests-unit`, `reviewer:over-engineering`, `human:product-intent`). Unmarked items default to auto and are flagged by `lyt lint`. A DoD with at least one `verify: auto` item is loop-eligible; a DoD with no `auto` (or unmarked) item is not loop work.*
 
 - [ ] Verifiable criterion 1 — verify: auto
 - [ ] Verifiable criterion 2 — verify: auto

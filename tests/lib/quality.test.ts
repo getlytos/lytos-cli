@@ -121,6 +121,35 @@ describe("unresolvedGateRefs", () => {
     expect(unresolvedGateRefs(content, kit)).toEqual(["ghost-gate"]);
   });
 
+  it("resolves the pin of a reviewer or human marker, and flags an unknown one (ISS-0153)", () => {
+    const content =
+      "## Definition of done\n\n- [ ] a — verify: reviewer:over-engineering\n- [ ] b — verify: human:screen-reader\n- [ ] c — verify: reviewer:ghost-rubric\n- [ ] d — verify: human:ghost-list\n";
+    expect(unresolvedGateRefs(content, kit)).toEqual(["ghost-rubric", "ghost-list"]);
+  });
+
+  it("reads the very same marker as the DoD parser — one grammar, not two (ISS-0153)", () => {
+    const dod = (item: string) => `## Definition of done\n\n- [ ] ${item}\n`;
+    const cases: Array<[string, string[]]> = [
+      // A space before the colon: the DoD parser accepts it, the old ref scan refused it.
+      ["x — verify : human:screen-reader", ["screen-reader"]],
+      // Two markers on one item: the terminal one decides, and it is bare.
+      ["x — verify: auto:tests-unit — verify: human", []],
+      // A marker that is not at the end is prose, not a marker.
+      ["see verify: auto:tests-unit for details", []],
+      // The forms the kit documents.
+      ["x — *verify: reviewer:over-engineering*", ["over-engineering"]],
+      ["x — (verify: auto:doc-L0)", ["doc-l0"]],
+      ["x — verify: human:", []],
+      ["x — verify: humans:screen-reader", []],
+    ];
+    for (const [item, expected] of cases) {
+      expect(pinnedGateRefs(dod(item)), item).toEqual(expected);
+      // ...and it is exactly what the parser says the item pins.
+      const parsed = analyzeDod(dod(item)).items[0];
+      expect(parsed.pin === null ? [] : [parsed.pin], item).toEqual(expected);
+    }
+  });
+
   it("returns nothing when all refs resolve", () => {
     expect(
       unresolvedGateRefs("## Definition of done\n\n- [ ] x — verify: auto:deps-audit", kit)

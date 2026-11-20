@@ -341,3 +341,75 @@ This project exists for real reasons.
     expect(result.stderr).toContain("Empty description");
   });
 });
+
+describe("lyt lint — DoD verify markers (ISS-0153)", () => {
+  function writeV2Issue(cwd: string, dod: string): void {
+    writeFileSync(
+      resolve(cwd, ".lytos", "issue-board", "4-review", "ISS-0001-markers.md"),
+      `---
+id: ISS-0001
+title: "Markers"
+status: 4-review
+priority: P2-normal
+schema_version: 2
+---
+
+# ISS-0001
+
+## Definition of done
+
+${dod}
+`
+    );
+  }
+
+  function markerWarnings(cwd: string): string[] {
+    const data = JSON.parse(run("lint --json", cwd).stdout);
+    return data.findings
+      .filter((f: { message: string }) => f.message.includes("without a verify: marker"))
+      .map((f: { message: string }) => f.message);
+  }
+
+  it("accepts every documented marker form, pinned or not", () => {
+    fixture = createEmptyFixture();
+    createValidLytos(fixture.cwd);
+    writeV2Issue(
+      fixture.cwd,
+      [
+        "- [ ] a — verify: auto",
+        "- [ ] b — verify: auto:tests-unit",
+        "- [ ] c — verify: reviewer",
+        "- [ ] d — verify: reviewer:over-engineering",
+        "- [ ] e — verify: human",
+        "- [ ] f — verify: human:product-intent",
+        "- [ ] g — *verify: human:screen-reader*",
+        "- [ ] h – (verify: Reviewer:Architecture-Review)",
+        "- [ ] i - _verify: auto:doc-L0_",
+      ].join("\n")
+    );
+    expect(markerWarnings(fixture.cwd)).toEqual([]);
+  });
+
+  it("still reports an unmarked item and a malformed pin", () => {
+    fixture = createEmptyFixture();
+    createValidLytos(fixture.cwd);
+    writeV2Issue(
+      fixture.cwd,
+      "- [ ] ok — verify: auto\n- [ ] no marker at all\n- [ ] empty pin — verify: human:\n- [ ] unknown mode — verify: maybe"
+    );
+    expect(markerWarnings(fixture.cwd)).toEqual([
+      "3 Definition-of-Done item(s) without a verify: marker",
+    ]);
+  });
+
+  it("names all three modes in its fix suggestion", () => {
+    fixture = createEmptyFixture();
+    createValidLytos(fixture.cwd);
+    writeV2Issue(fixture.cwd, "- [ ] no marker at all");
+    const data = JSON.parse(run("lint --json", fixture.cwd).stdout);
+    const finding = data.findings.find((f: { message: string }) => f.message.includes("verify: marker"));
+    expect(finding.severity).toBe("warning");
+    for (const mode of ["auto", "reviewer", "human"]) expect(finding.fix).toContain(mode);
+    expect(run("lint", fixture.cwd).exitCode).toBe(0); // a warning never fails the run
+  });
+});

@@ -34,6 +34,16 @@ export const nextCommand = new Command("next")
       "are done, and its Definition of done has at least one verify: auto item."
     );
     console.log("An all-'verify: human' DoD is for a human, not the loop.");
+    console.log("");
+    console.log("With --json, each blocked issue carries a reason:");
+    console.log("  deps-pending    a dependency is not done yet");
+    console.log("  no-dod          no Definition of done to gate the work");
+    console.log("  all-human-dod   every DoD item is verify: human");
+    console.log(
+      "  no-machine-dod  no verify: auto item, with verify: reviewer items present"
+    );
+    console.log("                  (a model's ruling is not a gate)");
+    console.log("  not-ready       the Definition of Ready is not met");
   })
   .action((opts: { json?: boolean }) => {
     const cwd = process.cwd();
@@ -54,7 +64,7 @@ export const nextCommand = new Command("next")
     console.error("");
     if (result.pick) {
       const p = result.pick;
-      const counts = `${p.dod.machine} auto${p.dod.human > 0 ? ` · ${p.dod.human} human` : ""}`;
+      const counts = `${p.dod.machine} auto${p.dod.reviewer > 0 ? ` · ${p.dod.reviewer} reviewer` : ""}${p.dod.human > 0 ? ` · ${p.dod.human} human` : ""}`;
       ok(`Next: ${cyan(bold(p.id))} ${dim("—")} ${cyan(bold(p.title))}`);
       console.error(
         `  ${blue("Priority:")} ${p.priority}  ${dim("·")}  ${blue("Effort:")} ${p.effort}  ${dim("·")}  ${blue("DoD:")} ${counts}`

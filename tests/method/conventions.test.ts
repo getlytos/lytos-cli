@@ -45,6 +45,47 @@ describe("the verify: convention is documented where issues are written (ISS-010
   });
 });
 
+describe("the three verify: modes are documented where they are written (ISS-0153)", () => {
+  it.each([FEATURE_TEMPLATE, TASK_TEMPLATE])("%s names reviewer and the pin", (path) => {
+    const doc = read(path);
+    expect(doc).toContain("verify: reviewer");
+    expect(doc).toMatch(/pin/i);
+  });
+
+  it("an unmarked item counts as auto, so the rules and templates say `no auto or unmarked item`", () => {
+    // `machine = auto + unmarked` in dod.ts: "no `auto` item" alone would be inexact.
+    for (const path of [RULES, FEATURE_TEMPLATE, ".lytos/rules/cli-rules.md"]) {
+      expect(read(path), path).toMatch(/no `auto` \(or unmarked\) item/);
+    }
+  });
+
+  it("a pin is the id of a kit line, not the name of a rubric or a checklist file", () => {
+    for (const path of [RULES, ".lytos/rules/cli-rules.md"]) {
+      expect(read(path), path).toMatch(/id of a (quality-)?kit line/);
+    }
+    expect(read(".lytos/rules/cli-rules.md")).not.toMatch(/reviewer:<rubric>|human:<checklist>/);
+  });
+
+  it("the rules name the reasons `lyt next` refuses a DoD for", () => {
+    const rules = read(RULES);
+    expect(rules).toContain("`all-human-dod`");
+    expect(rules).toContain("`no-machine-dod`");
+  });
+
+  it("the generated rules give reviewer its own row and its own owner", () => {
+    const rules = read(RULES);
+    expect(rules).toContain("`— verify: reviewer`");
+    expect(rules).toMatch(/auditing model/i);
+    expect(rules).toMatch(/reviewer:over-engineering/);
+  });
+
+  it("ADR-0004 records the marker grammar and the eligibility decision", () => {
+    const adr = read(".lytos/adr/ADR-0004-autonomous-loop-under-governance.md");
+    expect(adr).toContain("verify: (auto|reviewer|human)[:pin]");
+    expect(adr).toMatch(/`reviewer` does \*\*not\*\* count as machine-verifiable/);
+  });
+});
+
 describe("Definition of Ready is defined and documented (ISS-0115)", () => {
   it.each([FEATURE_TEMPLATE, TASK_TEMPLATE])("%s carries a Ready section", (path) => {
     const doc = read(path);

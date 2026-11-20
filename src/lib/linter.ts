@@ -299,7 +299,7 @@ function lintIssues(lytosDir: string): {
       validateV2Fields(fm, relPath, findings);
 
       // DoD verification mode (ADR-0004 §4, ISS-0101): on schema v2 issues,
-      // flag Definition-of-Done items that lack a `verify: auto|human` marker.
+      // flag Definition-of-Done items that lack a `verify: auto|reviewer|human` marker.
       if (String(fm.schema_version) === "2") {
         const dod = analyzeDod(content);
         if (dod.hasDod && dod.unqualified > 0) {
@@ -307,7 +307,7 @@ function lintIssues(lytosDir: string): {
             severity: "warning",
             file: relPath,
             message: `${dod.unqualified} Definition-of-Done item(s) without a verify: marker`,
-            fix: "Append '— verify: auto' or '— verify: human' to each DoD item (ADR-0004 §4)",
+            fix: "Append '— verify: auto', '— verify: reviewer' or '— verify: human' (each may pin a kit entry: 'auto:<id>') to each DoD item (ADR-0004 §4)",
           });
         }
 

@@ -86,19 +86,19 @@ function displayDetail(issue: IssueDetail): void {
   // Loop-eligibility (ADR-0004 §1) from the DoD verification modes (ISS-0101)
   if (issue.dod.hasDod) {
     const d = issue.dod;
-    const counts = `${d.machine} auto${d.human > 0 ? ` · ${d.human} human` : ""}`;
+    const counts = `${d.machine} auto${d.reviewer > 0 ? ` · ${d.reviewer} reviewer` : ""}${d.human > 0 ? ` · ${d.human} human` : ""}`;
     if (d.loopEligible) {
       console.error(
-        `  ${blue("Loop:")} ${green("éligible")} ${dim(`(DoD ${counts})`)}`
+        `  ${blue("Loop:")} ${green("eligible")} ${dim(`(DoD ${counts})`)}`
       );
     } else {
       console.error(
-        `  ${blue("Loop:")} ${yellow("inéligible")} ${dim("(DoD 100% human — à traiter à la main)")}`
+        `  ${blue("Loop:")} ${yellow("ineligible")} ${dim(`(DoD ${counts} — no machine gate: work it by hand; reviewer items go to the auditor)`)}`
       );
     }
     if (d.unqualified > 0) {
       console.error(
-        `  ${dim(`↳ ${d.unqualified} item(s) de DoD sans marqueur verify: — 'lyt lint' le signale`)}`
+        `  ${dim(`↳ ${d.unqualified} DoD item(s) without a verify: marker — 'lyt lint' flags them`)}`
       );
     }
     console.error("");

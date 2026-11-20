@@ -73,6 +73,41 @@ describe("lyt report", () => {
     expect(p.audit.model).toBe("claude-opus");
   });
 
+  it("lists reviewer items apart from the machine gates and the human checklist (ISS-0153)", () => {
+    fixture = createEmptyFixture();
+    createFixture(fixture.cwd);
+    const file = resolve(fixture.cwd, ".lytos/issue-board/4-review/ISS-0042-x.md");
+    writeFileSync(
+      file,
+      `---
+id: ISS-0042
+title: "A change"
+status: 4-review
+risk: high
+---
+
+# ISS-0042 — A change
+
+## Definition of done
+
+- [x] Core done — verify: auto:tests-unit
+- [x] No needless abstraction — verify: reviewer:over-engineering
+- [ ] Architecture holds — verify: reviewer
+- [ ] Intent is met — verify: human:product-intent
+`
+    );
+    const p = JSON.parse(run("report ISS-0042 --json", fixture.cwd).stdout);
+    expect(p.autoDone).toHaveLength(1);
+    expect(p.autoPending).toHaveLength(0); // a reviewer item is not a gate that is "not green"
+    expect(p.reviewerDone).toHaveLength(1);
+    expect(p.reviewerPending).toHaveLength(1);
+    expect(p.human).toHaveLength(1);
+    const md = run("report ISS-0042", fixture.cwd).stdout;
+    expect(md).toContain("Reviewer rulings pending");
+    expect(md).toContain("Architecture holds");
+    expect(md).not.toContain("Gates not green");
+  });
+
   it("renders doubt before green evidence", () => {
     fixture = createEmptyFixture();
     createFixture(fixture.cwd);
@@ -93,7 +128,7 @@ function createSprintFixture(cwd: string): void {
   writeFileSync(lyt("sprint.md"), "# Sprint\n\nbudget_usd: 10\n");
   writeFileSync(
     lyt("issue-board/2-sprint/ISS-0001.md"),
-    `---\nid: ISS-0001\nstatus: 2-sprint\ncost_usd: 15\n---\n\n## Definition of done\n\n- [x] a — verify: auto\n- [ ] b — verify: human\n`
+    `---\nid: ISS-0001\nstatus: 2-sprint\ncost_usd: 15\n---\n\n## Definition of done\n\n- [x] a — verify: auto\n- [ ] b — verify: human\n- [ ] c — verify: reviewer:over-engineering\n- [x] d — verify: reviewer\n`
   );
   writeFileSync(
     lyt("issue-board/parked/ISS-0002.md"),
@@ -110,6 +145,8 @@ describe("lyt report --sprint", () => {
     expect(r.counts.parked).toBe(1);
     expect(r.parkedByReason["ambiguous-spec"]).toBe(1);
     expect(r.pendingHumanChecklists).toBe(1);
+    // A reviewer item is a ruling still owed by the auditor: neither a gate, nor a person's call.
+    expect(r.pendingReviewerRulings).toBe(1);
     expect(r.coverage).toEqual({ done: 1, total: 1, pct: 100 });
     expect(r.budget.overBudget).toBe(true); // 15 > 10
   });
@@ -120,5 +157,6 @@ describe("lyt report --sprint", () => {
     const md = run("report --sprint", fixture.cwd).stdout;
     expect(md.indexOf("Decide first")).toBeLessThan(md.indexOf("Evidence (green)"));
     expect(md).toContain("ambiguous-spec");
+    expect(md).toContain("Reviewer rulings pending**: 1");
   });
 });

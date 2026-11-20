@@ -35,6 +35,8 @@ export interface ReviewPacket {
   human: DodItem[]; // verify: human — the review checklist
   autoPending: DodItem[]; // machine items not yet green — these block
   autoDone: DodItem[];
+  reviewerPending: DodItem[]; // verify: reviewer — the auditor has not ruled yet
+  reviewerDone: DodItem[];
   requiredGates: QualityGate[];
   audit: {
     assignee: string;
@@ -104,9 +106,17 @@ export function buildPacket(
   const risk = riskOf(fm.risk);
   const dod = analyzeDod(issue.content);
 
+  // Three buckets, three owners: a machine gate (auto, or unmarked and so
+  // defaulted to auto), the auditing model (reviewer), a person (human).
   const human = dod.items.filter((i) => i.verify === "human");
-  const autoDone = dod.items.filter((i) => i.verify !== "human" && i.done);
-  const autoPending = dod.items.filter((i) => i.verify !== "human" && !i.done);
+  const machine = dod.items.filter(
+    (i) => i.verify === "auto" || i.verify === null
+  );
+  const reviewer = dod.items.filter((i) => i.verify === "reviewer");
+  const autoDone = machine.filter((i) => i.done);
+  const autoPending = machine.filter((i) => !i.done);
+  const reviewerDone = reviewer.filter((i) => i.done);
+  const reviewerPending = reviewer.filter((i) => !i.done);
 
   const kit = loadKit(lytosDir);
   const requiredGates = kit ? gatesForRisk(kit, risk) : [];
@@ -126,6 +136,8 @@ export function buildPacket(
     human,
     autoPending,
     autoDone,
+    reviewerPending,
+    reviewerDone,
     requiredGates,
     audit: {
       assignee: str(fm.assignee),
@@ -172,6 +184,13 @@ export function renderPacket(p: ReviewPacket): string {
     out.push(`- **Gates not green** (${p.autoPending.length}):`);
     for (const i of p.autoPending) out.push(`  - [ ] ${i.text}`);
   }
+  if (p.reviewerPending.length > 0) {
+    hasDoubt = true;
+    out.push(
+      `- **Reviewer rulings pending** (${p.reviewerPending.length}) — the auditor has not ruled on:`
+    );
+    for (const i of p.reviewerPending) out.push(`  - [ ] ${i.text}`);
+  }
   if (p.human.length > 0) {
     hasDoubt = true;
     out.push(
@@ -209,6 +228,12 @@ export function renderPacket(p: ReviewPacket): string {
   out.push(
     `- Machine DoD items done: ${p.autoDone.length}/${p.autoDone.length + p.autoPending.length}`
   );
+  const reviewerTotal = p.reviewerDone.length + p.reviewerPending.length;
+  if (reviewerTotal > 0) {
+    out.push(
+      `- Reviewer DoD items ruled: ${p.reviewerDone.length}/${reviewerTotal}`
+    );
+  }
   out.push("");
 
   // ── Audit ────────────────────────────────────────────────────
@@ -234,6 +259,8 @@ export interface SprintReport {
   counts: Record<string, number>;
   parkedByReason: Record<string, number>;
   pendingHumanChecklists: number;
+  /** `verify: reviewer` items the auditor has not ruled on yet, across the pipeline. */
+  pendingReviewerRulings: number;
   coverage: { done: number; total: number; pct: number };
   budget: BudgetReport;
 }
@@ -249,6 +276,7 @@ export function buildSprintReport(lytosDir: string): SprintReport {
   };
   const parkedByReason: Record<string, number> = {};
   let pendingHuman = 0;
+  let pendingReviewer = 0;
   let done = 0;
   let total = 0;
 
@@ -269,6 +297,7 @@ export function buildSprintReport(lytosDir: string): SprintReport {
       pendingHuman += dod.items.filter(
         (i) => i.verify === "human" && !i.done
       ).length;
+      pendingReviewer += dod.reviewerPending;
       done += dod.autoDone;
       total += dod.machine;
     }
@@ -284,6 +313,7 @@ export function buildSprintReport(lytosDir: string): SprintReport {
     counts,
     parkedByReason,
     pendingHumanChecklists: pendingHuman,
+    pendingReviewerRulings: pendingReviewer,
     coverage: {
       done,
       total,
@@ -304,6 +334,7 @@ export function renderSprintReport(r: SprintReport): string {
     out.push(`- **Parked** (${r.counts.parked}):`);
     for (const [reason, n] of parkedEntries) out.push(`  - ${reason}: ${n}`);
   }
+  out.push(`- **Reviewer rulings pending**: ${r.pendingReviewerRulings}`);
   out.push(`- **Human checklists pending**: ${r.pendingHumanChecklists}`);
   if (r.budget.overBudget)
     for (const b of r.budget.breaches) out.push(`- **Over budget**: ${b}`);

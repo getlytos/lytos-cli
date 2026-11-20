@@ -87,10 +87,12 @@ On schema v2 issues, **every Definition-of-Done item declares how it is verified
 | Marker | Meaning | Where it lands |
 |--------|---------|----------------|
 | `— verify: auto` | A machine gate (test, typecheck, lint, build) | the automated gates |
+| `— verify: reviewer` | A ruling against a rubric (a model can rule, no command can) | the reviewer's verdict |
 | `— verify: human` | A judgment/taste/intent item | the human review checklist |
 
+- Each marker may pin a kit entry: `<mode>:<kit id>` — `auto:tests-unit`, `reviewer:over-engineering`, `human:product-intent`. A pin is the id of a kit line (first column of `quality/kit.md`), never the name of a rubric or a checklist file: `human:intent` is an unknown pin, `human:product-intent` resolves.
 - Unmarked items default to `auto` and are **flagged by `lyt lint`** — qualify them explicitly.
-- A DoD with **at least one `verify: auto`** item is loop-eligible. An **all-`human`** DoD is not loop work — the loop refuses it and leaves it for a human.
+- A DoD with **at least one `verify: auto`** item is loop-eligible. A DoD with no `auto` (or unmarked) item (all-`human`, or `human` and `reviewer` only) is not loop work — the loop refuses it and leaves it for a human (ADR-0004 §1, §4).
 - `lyt show ISS-X` surfaces the auto/human counts and the loop-eligibility flag.
 
 ---
