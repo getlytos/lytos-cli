@@ -1,19 +1,22 @@
 ---
 id: ISS-0169
-title: "Design exchange entries and the derived index"
+title: Design exchange entries and the derived index
 type: feat
 priority: P2-normal
 effort: M
 complexity: standard
 skill: ""
 skills_aux: []
-status: 1-backlog
-branch: "feat/ISS-0169-design-exchange-entries"
+status: 4-review
+branch: feat/ISS-0169-design-exchange-entries
 depends: []
 related: [ISS-0162]
 created: 2026-11-20
 schema_version: 2
 risk: low
+assignee: fredericgalline
+updated: 2026-11-20
+started_at: 2026-11-20
 ---
 # ISS-0169 — Design exchange entries and the derived index
 
@@ -41,6 +44,6 @@ Decision: **A**.
 
 ## Definition of done
 
-- [ ] The index lists open entries only, one line each, and is derived, never hand-written — verify: auto
-- [ ] A project with `design: none` sees nothing new and nothing breaks — verify: auto
-- [ ] A resolved entry drops out of the index — verify: auto
+- [x] The index lists open entries only, one line each, and is derived, never hand-written — verify: auto
+- [x] A project with `design: none` sees nothing new and nothing breaks — verify: auto
+- [x] A resolved entry drops out of the index — verify: auto

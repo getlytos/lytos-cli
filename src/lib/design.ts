@@ -3,14 +3,17 @@
  *
  * `lyt init` may ask one question — "Do you use Claude Design for design?" — and
  * records the answer in `.lytos/config.yml` as `design:`. Only `claude-design`
- * makes the scaffold write anything (the register), and nothing else in the CLI
- * reads the key: this must never be a brake. A project that does not use Claude
- * Design is not asked when it cannot answer (no terminal, CI, `--yes`), gets no
- * file, no warning and no gate.
+ * makes the scaffold write anything (the register and the exchanges guide), and
+ * only `lyt exchanges` reads the key back (ISS-0169): this must never be a
+ * brake. A project that does not use Claude Design is not asked when it cannot
+ * answer (no terminal, CI, `--yes`), gets no file, no warning and no gate, and
+ * the one command that reads the key says that exchanges are not in use and
+ * changes nothing.
  *
  * Everything here is pure except the injected `ask`, so the behaviour is
- * testable without a terminal. The key is only ever WRITTEN: nothing reads it
- * back, so a re-init asks or defaults again rather than carrying a record.
+ * testable without a terminal. Reading the file is left to the caller:
+ * `designFromConfig` takes its text. `init` itself never reads the key back, so
+ * a re-init asks or defaults again rather than carrying a record.
  *
  * Zero dependencies.
  */
@@ -78,4 +81,20 @@ export async function resolveDesign(
     if (answer !== "unclear") return answer;
   }
   return DEFAULT_DESIGN;
+}
+
+/**
+ * What the text of `.lytos/config.yml` says about design: the value of a
+ * top-level `design:` key, or `none` when the key is absent, empty or not one of
+ * the known choices. Never throws: a config this function cannot read is a
+ * project that does not use design exchanges, not a broken one.
+ */
+export function designFromConfig(text: string): DesignChoice {
+  const match = text.match(
+    /^design:[ \t]*["']?([A-Za-z-]+)["']?[ \t]*(?:#.*)?$/m
+  );
+  const value = match?.[1].toLowerCase() ?? "";
+  return (DESIGN_CHOICES as readonly string[]).includes(value)
+    ? (value as DesignChoice)
+    : DEFAULT_DESIGN;
 }

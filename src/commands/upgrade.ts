@@ -18,6 +18,9 @@
  *     out loud, with the way to force it.
  *   - `design/registry.md`, `config.yml`, `manifest.md` and `memory/` are not
  *     method files at all.
+ *   - The design exchanges guide (`design/exchanges/README.md`) is added, add-only
+ *     like the library, to a project whose `config.yml` says `design:
+ *     claude-design` and to no other (ISS-0169).
  */
 
 import { Command } from "commander";
@@ -38,7 +41,7 @@ import {
 import { KANBAN_DIRS } from "../lib/scaffold.js";
 import {
   bundledKitUrl,
-  deliverLibrary,
+  deliverAdditions,
   kitGatesMissing,
   notWrittenLine,
 } from "../lib/upgrade-library.js";
@@ -101,24 +104,26 @@ export const upgradeCommand = new Command("upgrade")
 
       // The library comes FIRST: it is added without asking, so no replacement
       // question below can stand between a project and it.
-      const library = deliverLibrary(
+      const deliveries = deliverAdditions(
         lytosDir,
         METHOD_DIR,
         Boolean(opts.dryRun)
       );
-      for (const relPath of library.added) {
-        console.error(`  ${green("+")} ${dim(relPath)} ${dim("(new)")}`);
-      }
-      for (const { path, link } of library.behindLink) {
-        console.error(notWrittenLine(path, relative(cwd, link)));
-      }
-      added += library.added.length;
-      skipped += library.behindLink.length;
-      upToDate += library.upToDate;
-      if (library.ownedByProject > 0) {
-        info(
-          `${library.ownedByProject} quality library file(s) differ from the bundled version and were left alone — they are yours`
-        );
+      for (const [label, delivery] of deliveries) {
+        for (const relPath of delivery.added) {
+          console.error(`  ${green("+")} ${dim(relPath)} ${dim("(new)")}`);
+        }
+        for (const { path, link } of delivery.behindLink) {
+          console.error(notWrittenLine(path, relative(cwd, link)));
+        }
+        added += delivery.added.length;
+        skipped += delivery.behindLink.length;
+        upToDate += delivery.upToDate;
+        if (delivery.ownedByProject > 0) {
+          info(
+            `${delivery.ownedByProject} ${label} file(s) differ from the bundled version and were left alone — they are yours`
+          );
+        }
       }
 
       // The kit is the project's own and was not touched. Tell it what the

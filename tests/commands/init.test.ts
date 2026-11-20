@@ -587,6 +587,15 @@ describe("lytos init — the optional design answer (ISS-0158)", () => {
     );
   });
 
+  it("--design claude-design also writes the design exchanges guide, from the bundled one (ISS-0169)", () => {
+    fixture = createEmptyFixture();
+    expect(run(`init ${BASE} --design claude-design --yes`, fixture.cwd).exitCode).toBe(0);
+    const guide = join(fixture.cwd, ".lytos", "design", "exchanges", "README.md");
+    expect(readFileSync(guide, "utf-8")).toBe(
+      readFileSync(resolve(__dirname, "../../method/design/exchanges/README.md"), "utf-8")
+    );
+  });
+
   it.each(["none", "other"])("--design %s records the answer and generates nothing", (choice) => {
     fixture = createEmptyFixture();
     expect(run(`init ${BASE} --design ${choice} --yes`, fixture.cwd).exitCode).toBe(0);
@@ -726,6 +735,31 @@ describe("lytos init — the optional design answer (ISS-0158)", () => {
       const r = runNoTty(`init ${BASE} --force --design claude-design --yes`, fixture.cwd);
       expect(r.exitCode).toBe(0);
       expect(r.stderr).toMatch(/not written.*symbolic link|symbolic link.*not written/);
+      expect(existsSync(outside)).toBe(false);
+    });
+
+    it("never overwrites an existing exchanges guide either, and says so (ISS-0169)", () => {
+      fixture = createEmptyFixture();
+      expect(run(`init ${BASE} --design claude-design --yes`, fixture.cwd).exitCode).toBe(0);
+      const guide = join(fixture.cwd, ".lytos", "design", "exchanges", "README.md");
+      writeFileSync(guide, "# Our own rules for exchanges\n");
+      const r = runNoTty(`init ${BASE} --force --design claude-design --yes`, fixture.cwd);
+      expect(r.exitCode).toBe(0);
+      expect(readFileSync(guide, "utf-8")).toBe("# Our own rules for exchanges\n");
+      expect(r.stderr).toContain("Kept existing .lytos/design/exchanges/README.md");
+      expect(r.stderr).toContain("the design exchanges guide is yours");
+    });
+
+    it("refuses to write the exchanges guide through a symbolic folder (ISS-0169)", () => {
+      fixture = createEmptyFixture();
+      const { mkdirSync, symlinkSync } = require("fs");
+      const outside = join(fixture.cwd, "outside-folder");
+      expect(run(`init ${BASE} --design none --yes`, fixture.cwd).exitCode).toBe(0);
+      mkdirSync(join(fixture.cwd, ".lytos", "design"), { recursive: true });
+      symlinkSync(outside, join(fixture.cwd, ".lytos", "design", "exchanges"));
+      const r = runNoTty(`init ${BASE} --force --design claude-design --yes`, fixture.cwd);
+      expect(r.exitCode).toBe(0);
+      expect(r.stderr).toMatch(/exchanges\/README\.md not written.*symbolic link/);
       expect(existsSync(outside)).toBe(false);
     });
 
