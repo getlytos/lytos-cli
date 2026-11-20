@@ -1,0 +1,5 @@
+# The maintainer owns everything; the sensitive paths are listed so a reviewer is always requested.
+*                      @FredericGalline
+/.github/              @FredericGalline
+/.lytos/               @FredericGalline
+/method/               @FredericGalline
