@@ -226,3 +226,38 @@ describe("the card templates carry the solution study (ISS-0156)", () => {
     expect(read(".lytos/rules/default-rules.md")).toBe(read(RULES));
   });
 });
+
+describe("the READMEs describe the 1.6 surface (ISS-0158, ISS-0153, ISS-0154)", () => {
+  it.each([
+    ["README.md", /Do you use Claude Design for design\?/],
+    ["docs/fr/README.md", /Utilisez-vous Claude Design pour le design \?/],
+  ])("%s documents the optional design question and --design", (path, question) => {
+    const doc = read(path);
+    expect(doc).toMatch(question);
+    expect(doc).toContain("--design <claude-design|other|none>");
+    expect(doc).toContain(".lytos/design/registry.md");
+    expect(doc).toMatch(/design:/);
+    // The promise that matters: it is never a brake.
+    expect(doc).toMatch(/never a brake|jamais un frein/i);
+  });
+
+  it.each(["README.md", "docs/fr/README.md"])("%s says an unmarked item counts as auto", (path) => {
+    const doc = read(path);
+    expect(doc).toMatch(/unmarked item counts as `auto`|item non marqué compte comme `auto`/);
+    expect(doc).not.toMatch(/with no `auto` item is not loop work|sans item `auto` n'est pas/);
+  });
+
+  it("the README documents the reasons `lyt next --json` gives", () => {
+    const row = read("README.md").split("\n").find((l) => l.startsWith("| `lyt next`")) ?? "";
+    for (const reason of ["deps-pending", "no-dod", "all-human-dod", "no-machine-dod", "not-ready"]) {
+      expect(row, reason).toContain(reason);
+    }
+  });
+
+  it.each(["README.md", "docs/fr/README.md"])("%s documents the three verify: markers and the human rule", (path) => {
+    const doc = read(path);
+    for (const marker of ["verify: auto", "verify: reviewer", "verify: human"]) expect(doc).toContain(marker);
+    expect(doc).toContain("verify: human:product-intent");
+    expect(doc).toContain("verify: auto:e2e");
+  });
+});

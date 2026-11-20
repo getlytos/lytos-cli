@@ -7,7 +7,7 @@
 
 import { describe, it, expect, afterEach } from "vitest";
 import { execSync } from "child_process";
-import { existsSync, readFileSync, readdirSync, writeFileSync } from "fs";
+import { existsSync, readFileSync, readdirSync, rmSync, writeFileSync } from "fs";
 import { resolve, join } from "path";
 import {
   createEmptyFixture,
@@ -15,6 +15,7 @@ import {
   type Fixture,
 } from "../helpers/fixtures.js";
 import { QUALITY_LIBRARY_FILES } from "../../src/lib/method-files.js";
+import { leaksIn } from "../helpers/shipped-content.js";
 
 const CLI = resolve(__dirname, "../../dist/cli.js");
 
@@ -525,5 +526,213 @@ describe("lytos init", () => {
     expect(manifest).toContain("Python");
     expect(manifest).toContain("FastAPI");
     expect(manifest).toContain("Pytest");
+  });
+});
+
+describe("lytos init — the optional design answer (ISS-0158)", () => {
+  const BASE = '--name "Test Project" --tool none --lang en --profile developer';
+  const config = (cwd: string): string => readFileSync(join(cwd, ".lytos", "config.yml"), "utf-8");
+  const register = (cwd: string): string => join(cwd, ".lytos", "design", "registry.md");
+
+  /**
+   * Run the binary the way a pipe or CI does — stdin is not a terminal, nothing to
+   * answer with — and keep stderr even on success (the plain helper drops it).
+   */
+  function runNoTty(args: string, cwd: string, env: Record<string, string> = {}) {
+    const { spawnSync } = require("child_process");
+    const argv = (args.match(/(?:[^\s"]+|"[^"]*")+/g) ?? []).map((a: string) => a.replace(/^"|"$/g, ""));
+    const result = spawnSync("node", [CLI, ...argv], {
+      cwd,
+      encoding: "utf-8",
+      input: "",
+      env: { ...process.env, ...env },
+      timeout: 20000,
+    });
+    return { stdout: result.stdout || "", stderr: result.stderr || "", exitCode: result.status ?? 0 };
+  }
+
+  it("--design claude-design records the answer and creates the register from the generic template", () => {
+    fixture = createEmptyFixture();
+    const r = run(`init ${BASE} --design claude-design --yes`, fixture.cwd);
+    expect(r.exitCode).toBe(0);
+    expect(config(fixture.cwd)).toContain("design: claude-design");
+    expect(existsSync(register(fixture.cwd))).toBe(true);
+    expect(readFileSync(register(fixture.cwd), "utf-8")).toBe(
+      readFileSync(resolve(__dirname, "../../method/design/registry.md"), "utf-8")
+    );
+  });
+
+  it.each(["none", "other"])("--design %s records the answer and generates nothing", (choice) => {
+    fixture = createEmptyFixture();
+    expect(run(`init ${BASE} --design ${choice} --yes`, fixture.cwd).exitCode).toBe(0);
+    expect(config(fixture.cwd)).toContain(`design: ${choice}`);
+    expect(existsSync(join(fixture.cwd, ".lytos", "design"))).toBe(false);
+  });
+
+  it("defaults to none under --yes, with nothing generated", () => {
+    fixture = createEmptyFixture();
+    expect(run(`init ${BASE} --yes`, fixture.cwd).exitCode).toBe(0);
+    expect(config(fixture.cwd)).toContain("design: none");
+    expect(existsSync(join(fixture.cwd, ".lytos", "design"))).toBe(false);
+  });
+
+  it("asks nothing and answers none with no terminal, even without --yes", () => {
+    fixture = createEmptyFixture();
+    const r = runNoTty(`init ${BASE}`, fixture.cwd);
+    expect(r.exitCode).toBe(0);
+    expect(r.stderr).not.toMatch(/Claude Design/i);
+    expect(config(fixture.cwd)).toContain("design: none");
+    expect(existsSync(join(fixture.cwd, ".lytos", "design"))).toBe(false);
+  });
+
+  it("asks nothing in CI", () => {
+    fixture = createEmptyFixture();
+    const r = runNoTty(`init ${BASE}`, fixture.cwd, { CI: "true" });
+    expect(r.exitCode).toBe(0);
+    expect(r.stderr).not.toMatch(/Claude Design/i);
+    expect(config(fixture.cwd)).toContain("design: none");
+  });
+
+  it("still honours --design with no terminal", () => {
+    fixture = createEmptyFixture();
+    expect(runNoTty(`init ${BASE} --design claude-design`, fixture.cwd, { CI: "true" }).exitCode).toBe(0);
+    expect(existsSync(register(fixture.cwd))).toBe(true);
+  });
+
+  it("exits 2 on an unknown value, naming the valid ones, and creates nothing", () => {
+    fixture = createEmptyFixture();
+    const r = run(`init ${BASE} --design figma --yes`, fixture.cwd);
+    expect(r.exitCode).toBe(2);
+    expect(r.stderr).toContain('Unknown --design "figma"');
+    expect(r.stderr).toContain("claude-design, other, none");
+    expect(existsSync(join(fixture.cwd, ".lytos"))).toBe(false);
+  });
+
+  it("refuses a bad --design before asking or detecting anything", () => {
+    fixture = createEmptyFixture();
+    const r = runNoTty("init --design figma", fixture.cwd);
+    expect(r.exitCode).toBe(2);
+    expect(r.stderr).toContain('Unknown --design "figma"');
+    expect(r.stderr).not.toContain("Detecting project stack");
+    expect(existsSync(join(fixture.cwd, ".lytos"))).toBe(false);
+  });
+
+  it("--dry-run writes nothing", () => {
+    fixture = createEmptyFixture();
+    expect(run(`init ${BASE} --design claude-design --dry-run --yes`, fixture.cwd).exitCode).toBe(0);
+    expect(existsSync(join(fixture.cwd, ".lytos", "config.yml"))).toBe(false);
+    expect(existsSync(register(fixture.cwd))).toBe(false);
+  });
+
+  it("lists --design in --help", () => {
+    fixture = createEmptyFixture();
+    const r = run("init --help", fixture.cwd);
+    expect(r.stdout).toContain("--design <design>");
+    expect(r.stdout).toContain("lyt init --design claude-design");
+  });
+
+  describe("is never a brake", () => {
+    function project(design: string): string {
+      const f = createEmptyFixture();
+      expect(run(`init ${BASE} --design ${design} --yes`, f.cwd).exitCode).toBe(0);
+      return f.cwd;
+    }
+
+    it("doctor, lint and gates say exactly the same with claude-design as with none", () => {
+      const none = project("none");
+      const claude = project("claude-design");
+      try {
+        // doctor's `filesChecked` counts the register itself (one more markdown file);
+        // what must not move is what it FINDS.
+        const findings = (cwd: string) => {
+          const d = JSON.parse(run("doctor --json", cwd).stdout);
+          return { findings: d.findings, errors: d.errors, warnings: d.warnings, infos: d.infos, score: d.score };
+        };
+        expect(findings(claude)).toEqual(findings(none));
+        expect(JSON.parse(run("lint --json", claude).stdout)).toEqual(JSON.parse(run("lint --json", none).stdout));
+        // `gates` prints to stderr, which the plain helper drops on success.
+        const matrix = (cwd: string) => runNoTty("gates", cwd).stderr;
+        expect(matrix(claude)).not.toBe("");
+        expect(matrix(claude)).toBe(matrix(none));
+        // ...and neither doctor nor lint mentions the design answer at all.
+        for (const cwd of [none, claude]) {
+          for (const args of ["doctor --json", "lint --json"]) {
+            expect(run(args, cwd).stdout, args).not.toMatch(/design/i);
+          }
+        }
+      } finally {
+        rmSync(none, { recursive: true, force: true });
+        rmSync(claude, { recursive: true, force: true });
+        fixture = createEmptyFixture();
+      }
+    });
+
+    it("never touches an existing register: init --force keeps it, whatever the answer", () => {
+      fixture = createEmptyFixture();
+      expect(run(`init ${BASE} --design claude-design --yes`, fixture.cwd).exitCode).toBe(0);
+      const mine = "# My register\n\n- https://example.invalid/artifact — v12\n";
+      writeFileSync(register(fixture.cwd), mine);
+
+      // A scripted re-init with no answer: the register is untouched.
+      let r = run(`init ${BASE} --force --yes`, fixture.cwd);
+      expect(r.exitCode).toBe(0);
+      expect(readFileSync(register(fixture.cwd), "utf-8")).toBe(mine);
+      expect(config(fixture.cwd)).toMatch(/^design: (none|claude-design|other)$/m);
+
+      // Asking for it again does not overwrite it either, and says so.
+      r = runNoTty(`init ${BASE} --force --design claude-design --yes`, fixture.cwd);
+      expect(readFileSync(register(fixture.cwd), "utf-8")).toBe(mine);
+      expect(r.stderr).toContain("Kept existing");
+
+      // An explicit "none" records the new answer and still deletes nothing.
+      r = run(`init ${BASE} --force --design none --yes`, fixture.cwd);
+      expect(config(fixture.cwd)).toContain("design: none");
+      expect(readFileSync(register(fixture.cwd), "utf-8")).toBe(mine);
+    });
+
+    it("refuses to write the register through a symbolic link (dangling or not)", () => {
+      fixture = createEmptyFixture();
+      const { mkdirSync, symlinkSync } = require("fs");
+      const outside = join(fixture.cwd, "outside-target.md");
+      // A dangling link where the register would go: existsSync says "absent", a write would create the target.
+      expect(run(`init ${BASE} --design none --yes`, fixture.cwd).exitCode).toBe(0);
+      mkdirSync(join(fixture.cwd, ".lytos", "design"), { recursive: true });
+      symlinkSync(outside, register(fixture.cwd));
+      const r = runNoTty(`init ${BASE} --force --design claude-design --yes`, fixture.cwd);
+      expect(r.exitCode).toBe(0);
+      expect(r.stderr).toMatch(/not written.*symbolic link|symbolic link.*not written/);
+      expect(existsSync(outside)).toBe(false);
+    });
+
+    it("a second init without --force is refused and changes nothing, as before", () => {
+      fixture = createEmptyFixture();
+      expect(run(`init ${BASE} --design claude-design --yes`, fixture.cwd).exitCode).toBe(0);
+      const before = readFileSync(register(fixture.cwd), "utf-8");
+      const r = run(`init ${BASE} --design none --yes`, fixture.cwd);
+      expect(r.exitCode).toBe(2);
+      expect(r.stderr).toContain("already exists");
+      expect(config(fixture.cwd)).toContain("design: claude-design");
+      expect(readFileSync(register(fixture.cwd), "utf-8")).toBe(before);
+    });
+  });
+
+  describe("the register template is generic", () => {
+    const template = readFileSync(resolve(__dirname, "../../method/design/registry.md"), "utf-8");
+
+    it("carries the structure: links, nature, current version, versions and cards, rules", () => {
+      for (const part of ["Link:", "Nature:", "Current version:", "| Version | Content | Cards |", "## Rules of this register"]) {
+        expect(template).toContain(part);
+      }
+      // Four rules, as the project it was modeled on keeps them.
+      expect(template.match(/^\d\. /gm)).toHaveLength(4);
+    });
+
+    it("holds no real link and no date, and nothing private", () => {
+      expect(template).not.toMatch(/https?:\/\//);
+      expect(template).not.toMatch(/claude\.ai\/artifact/);
+      expect(template).not.toMatch(/20\d\d-\d\d-\d\d/);
+      // Generic checks, plus the private terms a maintainer may provide locally; no names are kept here.
+      expect(leaksIn(template)).toEqual([]);
+    });
   });
 });

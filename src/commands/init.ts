@@ -12,6 +12,11 @@ import { createInterface } from "readline";
 import { detectStack } from "../lib/detect-stack.js";
 import { scaffold, ALL_BRIDGE_TOOLS, type LytosTool } from "../lib/scaffold.js";
 import {
+  parseDesignOption,
+  resolveDesign,
+  type DesignChoice,
+} from "../lib/design.js";
+import {
   info,
   ok,
   warn,
@@ -24,6 +29,7 @@ import {
   yellow,
 } from "../lib/output.js";
 import { checkForUpdates } from "../lib/update-check.js";
+import { canPrompt } from "../lib/terminal.js";
 import { createRequire } from "module";
 
 const _require = createRequire(import.meta.url);
@@ -348,6 +354,10 @@ export const initCommand = new Command("init")
     ""
   )
   .option("--lang <lang>", "Language (en, fr)", "")
+  .option(
+    "--design <design>",
+    "Design tool: claude-design (also creates .lytos/design/registry.md), other, or none. Asked on an interactive terminal only; without one the default is none."
+  )
   .option("--yes", "Skip prompts, use defaults", false)
   .option("--force", "Override existing .lytos/ directory", false)
   .option(
@@ -365,11 +375,23 @@ export const initCommand = new Command("init")
     console.log("  lyt init --all-tools");
     console.log("  lyt init --tool claude --force --overwrite-bridges");
     console.log("  lyt init --tool none --lang fr --profile lead");
+    console.log("  lyt init --design claude-design");
     console.log("  lyt init --all-tools --dry-run");
   })
   .action(async (opts) => {
     const cwd = process.cwd();
     const lytosDir = resolve(cwd, ".lytos");
+
+    // Refuse a bad --design before asking anything: nobody should answer four
+    // questions to be told the fifth value was wrong.
+    if (opts.design !== undefined) {
+      try {
+        parseDesignOption(opts.design);
+      } catch (e) {
+        error(e instanceof Error ? e.message : String(e));
+        process.exit(2);
+      }
+    }
 
     // Check if .lytos already exists
     if (existsSync(lytosDir) && !opts.force) {
@@ -499,6 +521,30 @@ export const initCommand = new Command("init")
     }
     if (tools.length === 0) tools = ["none"];
 
+    // Design (ISS-0158): one optional question, asked only where a person can
+    // answer it. No terminal, CI or --yes: no prompt, and the answer is `none`.
+    let design: DesignChoice;
+    try {
+      design = await resolveDesign({
+        flag: opts.design,
+        interactive: !opts.yes && canPrompt(process.env, process.stdin.isTTY),
+        ask: (retry) =>
+          prompt(
+            lang === "fr"
+              ? retry
+                ? "Réponds par oui, non ou autre outil"
+                : "Utilises-tu Claude Design pour le design ? [oui / non / autre outil]"
+              : retry
+                ? "Please answer yes, no or other tool"
+                : "Do you use Claude Design for design? [yes / no / other tool]",
+            lang === "fr" ? "non" : "no"
+          ),
+      });
+    } catch (e) {
+      error(e instanceof Error ? e.message : String(e));
+      process.exit(2);
+    }
+
     // Dry run notice
     if (opts.dryRun) {
       console.error("");
@@ -523,6 +569,7 @@ export const initCommand = new Command("init")
       cwd,
       dryRun: opts.dryRun,
       overwriteBridges: opts.overwriteBridges,
+      design,
     });
 
     // Report

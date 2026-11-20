@@ -68,7 +68,7 @@ Chaque bridge pointe vers le même dossier `.lytos/`, donc changer d'outil ne de
 
 | Commande | Ce qu'elle fait |
 |----------|-----------------|
-| `lyt init` | Génère `.lytos/` dans un projet (interactif, détecte la stack) |
+| `lyt init` | Génère `.lytos/` dans un projet (interactif, détecte la stack). Sur un terminal interactif, pose une question facultative — utilisez-vous Claude Design — à laquelle `--design <claude-design\|other\|none>` répond d'avance ; voir [Facultatif : un registre Claude Design](#facultatif--un-registre-claude-design) |
 | `lyt board` | Régénère BOARD.md depuis le frontmatter YAML des issues |
 | `lyt archive` | Déplace les issues terminées de `5-done/` vers `archive/<quarter>/` (défaut : plus de 7 jours). `--all`, `--older-than <Nd>`, `--dry-run` |
 | `lyt lint` | Valide la structure et le contenu de `.lytos/` |
@@ -92,7 +92,7 @@ project/
 └── .lytos/
     ├── manifest.md              # Intent — identité du projet et contraintes
     ├── LYTOS.md                 # Référence de la méthode
-    ├── config.yml               # Préférences langue et profil
+    ├── config.yml               # Préférences langue, profil et design
     ├── skills/                  # Design — protocole Lytos + task skills agentskills.io
     │   ├── session-start.md     # Protocole de bootstrap Lytos (flat)
     │   ├── code-structure/SKILL.md
@@ -104,7 +104,13 @@ project/
     │   ├── security/SKILL.md
     │   └── api-design/SKILL.md  # 8 task skills (format agentskills.io)
     ├── rules/                   # Standards — critères de qualité
-    │   └── default-rules.md
+    │   ├── default-rules.md
+    │   └── team-and-loop.md     # Les rôles d'une équipe et la boucle entre les deux portes du propriétaire
+    ├── quality/                 # Standards rendus exécutables
+    │   ├── kit.md               # Catalogue de gates : machine, revue par un modèle, jugement humain — par risque
+    │   ├── stack.md             # Contrat de stack
+    │   ├── rubrics/             # Les grilles qu'une relecture suit (FORMAT.md + 8 grilles)
+    │   └── checklists/          # Les listes qu'une personne parcourt (4)
     ├── issue-board/             # Progress — kanban
     │   ├── BOARD.md
     │   ├── 0-icebox/
@@ -142,6 +148,28 @@ Pour remplacer explicitement un bridge par le template fourni — utile quand vo
 lyt init --force                          # régénère, préserve les bridges (défaut)
 lyt init --force --overwrite-bridges      # régénère, remplace aussi les bridges
 ```
+
+### Facultatif : un registre Claude Design
+
+`lyt init` pose **une** question facultative, uniquement sur un terminal interactif hors CI : *Utilisez-vous Claude Design pour le design ?* — `yes`, `no` ou `other tool` ; Entrée vaut non. `--design <claude-design|other|none>` y répond d'avance. Sans terminal (un pipe, la CI, `--yes`), aucune question n'est posée et la réponse est `none`.
+
+La réponse est consignée dans `.lytos/config.yml` sous la clé `design:`. Seul `claude-design` crée quelque chose : `.lytos/design/registry.md`, un registre de vos artefacts Claude Design — liens, version courante, quelles cartes couvrent quelle version, écarts rendus à l'outil de design. Un registre existant n'est jamais écrasé, même par `init --force`.
+
+Ce n'est jamais un frein : `none` et `other` ne génèrent rien, `lyt doctor` et `lyt lint` ne disent rien du design, aucune gate n'en dépend.
+
+### Marqueurs de la Definition of Done
+
+Chaque item de Definition of Done dit **qui le vérifie** par un marqueur final, et `lyt lint` signale ceux qui n'en ont pas :
+
+| Marqueur | Vérifié par | Compte comme vérifiable par machine (éligible à la boucle) ? |
+|----------|-------------|---------------------------------------------------------------|
+| `— verify: auto` | Une commande qui sort en erreur (test, typecheck, lint, build) | Oui |
+| `— verify: reviewer` | Le modèle qui audite, face à une grille écrite | Non |
+| `— verify: human` | Une personne, parce que rien d'autre ne peut trancher | Non |
+
+Chaque marqueur peut épingler la ligne du kit qualité qui le porte : `verify: auto:tests-unit`, `verify: reviewer:over-engineering`, `verify: human:product-intent`. Une épingle est l'id d'une ligne du kit (première colonne de `quality/kit.md`), pas le nom d'une grille ou d'une liste ; `lyt doctor` signale une épingle que le kit n'a pas. Un item non marqué compte comme `auto` et `lyt lint` le signale. Une DoD sans item `auto` (ou non marqué) n'est pas du travail de boucle.
+
+`verify: human` est le dernier recours : légitime seulement si un testeur de bout en bout n'a pas pu contrôler l'item lui-même, dans un navigateur ou avec Playwright — sinon c'est `verify: auto:e2e`. Un item humain porte toujours une épingle nommant une ligne `human` du kit, et `lyt lint` **avertit** (jamais d'erreur) quand ce n'est pas le cas.
 
 ---
 
