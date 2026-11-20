@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { parseFrontmatter, serializeFrontmatter } from "../../src/lib/frontmatter.js";
+import { bodyOf, parseFrontmatter, serializeFrontmatter } from "../../src/lib/frontmatter.js";
 
 function wrap(yaml: string): string {
   return `---\n${yaml}\n---\nbody\n`;
@@ -262,5 +262,66 @@ describe("serializeFrontmatter — empty string values (ISS-0150)", () => {
     expect(reparsed.skill).toBe("");
     expect(reparsed).toEqual(parsed);
     expect(serialized.split("\n").some((l) => /\s$/.test(l))).toBe(false);
+  });
+});
+
+describe("bodyOf — the body is cut where the parser closes the frontmatter (ISS-0175)", () => {
+  it("returns what follows the closing line, without the blank lines after it", () => {
+    expect(bodyOf("---\nid: a\n---\n\n# Title\n\ntext\n")).toBe("# Title\n\ntext\n");
+    expect(bodyOf("---\nid: a\n---\n# Title\n")).toBe("# Title\n");
+  });
+
+  it("keeps the indentation of the first line of the body", () => {
+    expect(bodyOf("---\nid: a\n---\n\n    indented\n")).toBe("    indented\n");
+  });
+
+  it("keeps horizontal rules and later --- lines in the body", () => {
+    expect(bodyOf("---\nid: a\n---\nintro\n\n---\n\nmore\n")).toBe("intro\n\n---\n\nmore\n");
+  });
+
+  it("is empty when there is no closing line, or no frontmatter", () => {
+    expect(bodyOf("---\nid: a\n")).toBe("");
+    expect(bodyOf("no frontmatter\n")).toBe("");
+    expect(bodyOf("---\nid: a\n---")).toBe("");
+  });
+
+  it("ignores a --- that ends a line of the frontmatter instead of starting one", () => {
+    const content = [
+      "---",
+      "id: ISS-0001",
+      "title: A title ---",
+      "discovery_override:",
+      "  reason: agreed ---",
+      "  by: Someone",
+      "---",
+      "",
+      "# Body",
+      "",
+    ].join("\n");
+    expect(bodyOf(content)).toBe("# Body\n");
+    // The parser agrees on where the frontmatter ends.
+    const fm = parseFrontmatter(content)!;
+    expect(fm.title).toBe("A title ---");
+    expect((fm.discovery_override as Record<string, string>).by).toBe("Someone");
+  });
+
+  it("closes on the same line as the parser, whatever follows the dashes", () => {
+    const content = "---\nid: a\n--- trailing words\nbody\n";
+    expect(parseFrontmatter(content)).not.toBeNull();
+    expect(bodyOf(content)).toBe("body\n");
+  });
+
+  it("reads a card with Windows line endings", () => {
+    expect(bodyOf("---\r\nid: a\r\n---\r\n\r\n# T\r\n")).toBe("# T\r\n");
+  });
+
+  it("is stable: rewriting the frontmatter with it never adds or drops a line", () => {
+    const content = "---\nid: a\ntitle: x ---\n---\n# T\n\n---\nrule above\n";
+    let text = content;
+    for (let i = 0; i < 3; i++) {
+      text = serializeFrontmatter(parseFrontmatter(text)!) + "\n" + bodyOf(text);
+    }
+    expect(text.match(/^---$/gm)).toHaveLength(3); // open, close, and the rule in the body
+    expect(text.endsWith("# T\n\n---\nrule above\n")).toBe(true);
   });
 });

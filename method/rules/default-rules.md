@@ -241,12 +241,14 @@ that is not an epic, a third level, a `phase` on a leaf and a milestone with no 
 ### The discovery phase
 
 An epic starts in `phase: discovery`: its intent is still being settled. While it is, **its leaves
-cannot enter the sprint.** `npx lyt move … 2-sprint`, `npx lyt start`, `npx lyt claim` and
-`npx lyt unpark` refuse them, naming the epic, and `npx lyt next` skips them. Creating and refining
-leaves stays free. Two exemptions: a leaf of `type: spike` (a feasibility study or a measurement,
-which produces the evidence the epic needs), and an explicit human override,
-`--discovery-override "<reason>"`, which writes the reason into the card. A card with no parent epic
-is not concerned.
+cannot leave the backlog.** `npx lyt move` out of the backlog (to the sprint or to review),
+`npx lyt start`, `npx lyt claim`, `npx lyt unpark` and `npx lyt close` refuse them, naming the epic,
+and `npx lyt next` skips them. Creating and refining leaves stays free, and a send-back from the
+sprint or beyond is not asked again. Two exemptions: a leaf of `type: spike` (a feasibility study or
+a measurement, which produces the evidence the epic needs), and an explicit override,
+`--discovery-override "<reason>"`, which writes a complete record (reason, date, author, epic) into
+the card. The override is a person's decision: an agent or a wrapper never passes it. A card with no
+parent epic is not concerned, and `npx lyt lint` flags a leaf that got past the gate.
 
 A human freezes the epic (`phase: frozen`) when the **freeze checklist** holds:
 

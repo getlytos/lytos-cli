@@ -15,6 +15,7 @@ import {
 import { join } from "path";
 import { execFileSync } from "child_process";
 import {
+  bodyOf,
   parseFrontmatter,
   serializeFrontmatter,
   type Frontmatter,
@@ -100,9 +101,7 @@ export function moveIssue(
   }
 
   const fmStr = serializeFrontmatter(updatedFm);
-  const bodyMatch = issue.content.match(/^---[\s\S]*?---\s*\n([\s\S]*)$/);
-  const body = bodyMatch ? bodyMatch[1] : "";
-  const newContent = fmStr + "\n" + body;
+  const newContent = fmStr + "\n" + bodyOf(issue.content);
 
   writeFileSync(issue.filePath, newContent);
   renameSync(issue.filePath, targetPath);

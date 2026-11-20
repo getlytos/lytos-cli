@@ -20,7 +20,7 @@ import {
 import { parseIssueDetail } from "../lib/show.js";
 import { type Frontmatter } from "../lib/frontmatter.js";
 import { EPIC_TYPE } from "../lib/intent.js";
-import { SPIKE_TYPE } from "../lib/discovery-gate.js";
+import { SPIKE_TYPE } from "../lib/discovery-override.js";
 import {
   enforceDiscoveryGate,
   OVERRIDE_HELP,

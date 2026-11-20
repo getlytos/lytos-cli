@@ -15,6 +15,7 @@
 
 import { dirname } from "path";
 import type { Frontmatter } from "./frontmatter.js";
+import { readOverride } from "./discovery-override.js";
 import {
   isEpic,
   isSet,
@@ -219,14 +220,8 @@ export function describeIntent(
   }
   const parentId = parentIdOf(self);
   if (parentId !== "") detail.parent = parentView(parentId, cards);
-  const record = fm.discovery_override;
-  if (typeof record === "object" && !Array.isArray(record) && record.reason) {
-    detail.discoveryOverride = {
-      reason: record.reason,
-      date: record.date ?? "",
-      epic: record.epic ?? "",
-      by: record.by ?? "",
-    };
-  }
+  // Only an override that counts is shown as one (ISS-0175).
+  const override = readOverride(fm);
+  if (override.state === "valid") detail.discoveryOverride = override.record;
   return detail;
 }

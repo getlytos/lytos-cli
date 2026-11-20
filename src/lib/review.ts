@@ -21,6 +21,7 @@ import {
 import { execFileSync } from "child_process";
 import { join, dirname } from "path";
 import {
+  bodyOf,
   parseFrontmatter,
   serializeFrontmatter,
   type Frontmatter,
@@ -923,9 +924,7 @@ export function applyVerdict(opts: ApplyVerdictOptions): ApplyVerdictResult {
     aiBlock: ai.block,
     plan,
   });
-  const bodyMatch = original.match(/^---[\s\S]*?---\s*\n([\s\S]*)$/);
-  const body = bodyMatch ? bodyMatch[1] : "";
-  const rewritten = serializeFrontmatter(updated) + "\n" + body;
+  const rewritten = serializeFrontmatter(updated) + "\n" + bodyOf(original);
 
   let targetPath = issueFilePath;
   let moved = false;
@@ -963,10 +962,9 @@ export function recordAiReviewer(
     schema_version: "2",
     updated: today(),
   };
-  const bodyMatch = original.match(/^---[\s\S]*?---\s*\n([\s\S]*)$/);
   writeFileSync(
     issueFilePath,
-    serializeFrontmatter(updated) + "\n" + (bodyMatch ? bodyMatch[1] : ""),
+    serializeFrontmatter(updated) + "\n" + bodyOf(original),
     "utf-8"
   );
   return true;

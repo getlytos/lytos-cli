@@ -265,3 +265,126 @@ describe("lintIntent — never an error", () => {
     expect(found.every((f) => f.severity === "warning")).toBe(true);
   });
 });
+
+describe("lintIntent — a leaf past the backlog under an epic in discovery (ISS-0175, F8)", () => {
+  const VALID = '\n  reason: "agreed with the owner"\n  date: 2026-11-20\n  epic: ISS-0010\n  by: Someone';
+
+  function discoveryEpic(fields: Record<string, string> = { phase: "discovery" }): string {
+    const cwd = setup();
+    writeCard(cwd, "ISS-0010", { type: "epic", title: "Big outcome", fields });
+    return cwd;
+  }
+
+  const gateFindings = (cwd: string) => findings(cwd).filter((f) => f.message.includes("discovery"));
+
+  it.each(["2-sprint", "3-in-progress", "4-review", "5-done"])("warns on a leaf in %s, naming the epic and the way out", (dir) => {
+    const cwd = discoveryEpic();
+    writeCard(cwd, "ISS-0011", { dir, fields: { parent: "ISS-0010" } });
+    const found = gateFindings(cwd);
+    expect(found).toHaveLength(1);
+    expect(found[0].severity).toBe("warning");
+    expect(found[0].file).toContain(`${dir}/ISS-0011`);
+    expect(found[0].message).toContain("ISS-0010");
+    expect(found[0].message).toContain("Big outcome");
+    expect(found[0].message).toContain(dir);
+    expect(found[0].fix).toContain("phase: frozen");
+    expect(found[0].fix).toContain("type: spike");
+    expect(found[0].fix).toMatch(/a person/i);
+  });
+
+  it("does not warn on a leaf that is still in the icebox, the backlog or parked", () => {
+    const cwd = discoveryEpic();
+    for (const [i, dir] of ["0-icebox", "1-backlog", "parked"].entries()) {
+      writeCard(cwd, `ISS-001${i + 1}`, { dir, fields: { parent: "ISS-0010" } });
+    }
+    expect(gateFindings(cwd)).toEqual([]);
+  });
+
+  it("does not warn on a spike, nor on a leaf with a complete override made for its epic", () => {
+    const cwd = discoveryEpic();
+    writeCard(cwd, "ISS-0011", { type: "spike", dir: "2-sprint", fields: { parent: "ISS-0010" } });
+    writeCard(cwd, "ISS-0012", { dir: "2-sprint", fields: { parent: "ISS-0010", discovery_override: VALID } });
+    expect(findings(cwd)).toEqual([]);
+  });
+
+  it("does warn when the override is bare, incomplete or made for another epic", () => {
+    const cwd = discoveryEpic();
+    writeCard(cwd, "ISS-0011", { dir: "2-sprint", fields: { parent: "ISS-0010", discovery_override: "\n  reason: x" } });
+    writeCard(cwd, "ISS-0012", {
+      dir: "2-sprint",
+      fields: { parent: "ISS-0010", discovery_override: VALID.replace("ISS-0010", "ISS-0099") },
+    });
+    expect(gateFindings(cwd).filter((f) => f.message.includes("is in 2-sprint"))).toHaveLength(2);
+  });
+
+  it("does not warn when the epic is frozen, has no phase, is archived, or the card has no epic", () => {
+    for (const fields of [{ phase: "frozen" }, {}]) {
+      const cwd = discoveryEpic(fields);
+      writeCard(cwd, "ISS-0011", { dir: "2-sprint", fields: { parent: "ISS-0010" } });
+      expect(gateFindings(cwd)).toEqual([]);
+    }
+    const cwd = setup();
+    writeCard(cwd, "ISS-0010", { type: "epic", dir: "archive/2026-Q4", status: "5-done", fields: { phase: "discovery" } });
+    writeCard(cwd, "ISS-0011", { dir: "5-done", fields: { parent: "ISS-0010" } });
+    writeCard(cwd, "ISS-0012", { type: "fix", dir: "2-sprint" });
+    expect(gateFindings(cwd)).toEqual([]);
+  });
+
+  it("does not warn on the epic itself, wherever it sits", () => {
+    const cwd = setup();
+    writeCard(cwd, "ISS-0010", { type: "epic", dir: "2-sprint", fields: { phase: "discovery" } });
+    expect(gateFindings(cwd)).toEqual([]);
+  });
+});
+
+describe("lintIntent — a discovery_override that does not count (ISS-0175, F3)", () => {
+  const record = (over: Record<string, string> = {}, drop: string[] = []) => {
+    const base: Record<string, string> = { reason: "agreed", date: "2026-11-20", epic: "ISS-0010", by: "Someone" };
+    const merged = { ...base, ...over };
+    for (const key of drop) delete merged[key];
+    return "\n" + Object.entries(merged).map(([k, v]) => `  ${k}: ${JSON.stringify(v)}`).join("\n");
+  };
+
+  function leafWith(value: string, parent = "ISS-0010"): string {
+    const cwd = setup();
+    writeCard(cwd, "ISS-0010", { type: "epic", title: "Big outcome", fields: { phase: "frozen" } });
+    writeCard(cwd, "ISS-0020", { type: "epic", title: "Other", fields: { phase: "frozen" } });
+    writeCard(cwd, "ISS-0011", { dir: "2-sprint", fields: { parent, discovery_override: value } });
+    return cwd;
+  }
+
+  const overrideFindings = (cwd: string) => findings(cwd).filter((f) => f.message.includes("discovery_override"));
+
+  it("says nothing about a complete record made for the current parent", () => {
+    expect(overrideFindings(leafWith(record()))).toEqual([]);
+  });
+
+  it.each(["reason", "date", "by", "epic"])("warns on a record with no %s, names it, and says it does not exempt", (missing) => {
+    const found = overrideFindings(leafWith(record({}, [missing])));
+    expect(found).toHaveLength(1);
+    expect(found[0].severity).toBe("warning");
+    expect(found[0].message).toContain(missing);
+    expect(found[0].message).toMatch(/does not (count|exempt)/);
+    expect(found[0].fix).toContain("--discovery-override");
+    expect(found[0].fix).toMatch(/a person/i);
+  });
+
+  it("warns on a bare record, a bad date, and a record made for another epic", () => {
+    expect(overrideFindings(leafWith("\n  reason: x"))).toHaveLength(1);
+    const bad = overrideFindings(leafWith(record({ date: "yesterday" })));
+    expect(bad).toHaveLength(1);
+    expect(bad[0].message).toContain("date");
+    const other = overrideFindings(leafWith(record(), "ISS-0020"));
+    expect(other).toHaveLength(1);
+    expect(other[0].message).toContain("ISS-0010");
+    expect(other[0].message).toContain("ISS-0020");
+  });
+
+  it("is a warning only, and reports nothing for a card that carries no record", () => {
+    const cwd = setup();
+    writeCard(cwd, "ISS-0010", { type: "epic", fields: { phase: "frozen" } });
+    writeCard(cwd, "ISS-0011", { dir: "2-sprint", fields: { parent: "ISS-0010" } });
+    expect(overrideFindings(cwd)).toEqual([]);
+    expect(findings(leafWith("\n  reason: x")).every((f) => f.severity === "warning")).toBe(true);
+  });
+});

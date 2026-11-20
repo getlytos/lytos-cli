@@ -233,11 +233,14 @@ describe("the rules state the three levels, the freeze checklist and the gate", 
   });
 
   it("states the gate: what is refused, what skips, the two exemptions, who is not concerned", () => {
-    expect(section).toMatch(/its leaves\s+cannot enter the sprint/);
-    for (const verb of ["move", "start", "claim", "unpark", "next"]) expect(section).toContain(`npx lyt ${verb}`);
+    expect(section).toMatch(/its leaves\s+cannot leave the backlog/);
+    for (const verb of ["move", "start", "claim", "unpark", "close", "next"]) expect(section).toContain(`npx lyt ${verb}`);
+    expect(section).toMatch(/send-back/);
+    expect(section).toMatch(/override is a person's decision/);
+    expect(section).toMatch(/an agent or a wrapper never passes it/);
     expect(section).toContain("type: spike");
     expect(section).toContain('--discovery-override "<reason>"');
-    expect(section).toMatch(/A card with no parent epic\s+is not concerned/);
+    expect(section).toMatch(/A card with no\s+parent epic\s+is not concerned/);
   });
 
   it("lists the five lines of the freeze, and says a later change is a change request", () => {
@@ -252,7 +255,7 @@ describe("the rules state the three levels, the freeze checklist and the gate", 
   it("names only commands and options the CLI has", () => {
     const help = execFileSync("node", [CLI, "--help"], { encoding: "utf-8" });
     for (const m of section.matchAll(/npx lyt ([a-z-]+)/g)) expect(help, m[1]).toMatch(new RegExp(`\\b${m[1]}\\b`));
-    for (const verb of ["move", "start"]) {
+    for (const verb of ["move", "start", "close"]) {
       expect(execFileSync("node", [CLI, verb, "--help"], { encoding: "utf-8" }), verb).toContain("--discovery-override");
     }
   });

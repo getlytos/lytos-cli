@@ -29,8 +29,16 @@ function parseInlineList(raw: string): string[] {
     .filter((v) => v.length > 0);
 }
 
+/**
+ * The frontmatter block: an opening `---` line, then everything up to the FIRST
+ * line that starts with `---`. One expression for the parser and for every
+ * writer that has to cut a card in two (`bodyOf`), so they cannot disagree on
+ * where the frontmatter ends: a line that merely ENDS in `---` closes nothing.
+ */
+const FRONTMATTER_BLOCK = /^---\s*\n([\s\S]*?)\n---/;
+
 export function parseFrontmatter(content: string): Frontmatter | null {
-  const match = content.match(/^---\s*\n([\s\S]*?)\n---/);
+  const match = content.match(FRONTMATTER_BLOCK);
   if (!match) return null;
 
   const frontmatter: Frontmatter = {};
@@ -97,6 +105,24 @@ export function parseFrontmatter(content: string): Frontmatter | null {
   }
 
   return frontmatter;
+}
+
+/**
+ * The body of a card: what follows the closing `---` line of its frontmatter,
+ * without the blank lines right after it. Empty when there is no closing line.
+ *
+ * The closing line is the one `parseFrontmatter` stops at, and the rest of that
+ * line goes with it. Every writer that rewrites a card (`lyt move`, `start`,
+ * `claim`, `review`) puts `serializeFrontmatter(...) + "\n" + bodyOf(content)`
+ * back, so cutting anywhere else corrupts the card (ISS-0175).
+ */
+export function bodyOf(content: string): string {
+  const match = content.match(FRONTMATTER_BLOCK);
+  if (!match) return "";
+  const afterDashes = content.slice((match.index ?? 0) + match[0].length);
+  const newline = afterDashes.indexOf("\n");
+  if (newline === -1) return "";
+  return afterDashes.slice(newline + 1).replace(/^(?:[ \t]*\r?\n)+/, "");
 }
 
 function quoteIfNeeded(value: string): string {

@@ -15,7 +15,11 @@ import {
   today,
   checkOriginFresh,
 } from "../lib/issue-ops.js";
-import { serializeFrontmatter, type Frontmatter } from "../lib/frontmatter.js";
+import {
+  bodyOf,
+  serializeFrontmatter,
+  type Frontmatter,
+} from "../lib/frontmatter.js";
 import { ok, error, info, warn, cyan, bold } from "../lib/output.js";
 import { enforceDiscoveryGate } from "../lib/discovery-gate-cli.js";
 
@@ -45,9 +49,7 @@ function updateAndMove(
   const boardDir = join(lytosDir, "issue-board");
   const targetPath = join(boardDir, targetDir, fileName);
   const fmStr = serializeFrontmatter(fm);
-  const bodyMatch = content.match(/^---[\s\S]*?---\s*\n([\s\S]*)$/);
-  const body = bodyMatch ? bodyMatch[1] : "";
-  writeFileSync(filePath, fmStr + "\n" + body);
+  writeFileSync(filePath, fmStr + "\n" + bodyOf(content));
   renameSync(filePath, targetPath);
 }
 

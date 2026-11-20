@@ -66,12 +66,14 @@ function frontmatterOf(cwd: string, dir: string, name: string) {
 describe("the intent fields survive a rewrite of the card", () => {
   it("keeps parent and milestone through `lyt move`", () => {
     const cwd = project();
-    const r = run("move ISS-0011 4-review", cwd);
+    // Out of the backlog the discovery gate would refuse a leaf of this epic: the
+    // icebox is a move that rewrites the card all the same.
+    const r = run("move ISS-0011 0-icebox", cwd);
     expect(r.exitCode).toBe(0);
-    const fm = frontmatterOf(cwd, "4-review", "ISS-0011-card.md");
+    const fm = frontmatterOf(cwd, "0-icebox", "ISS-0011-card.md");
     expect(fm.parent).toBe("ISS-0010");
     expect(fm.milestone).toBe("v1.7");
-    expect(fm.status).toBe("4-review");
+    expect(fm.status).toBe("0-icebox");
   });
 
   it("keeps phase and milestone on an epic through `lyt start`", () => {
