@@ -163,7 +163,7 @@ describe("shipped commands appear in the public reference (ISS-0124)", () => {
       "init", "board", "archive", "lint", "doctor", "show", "start", "move",
       "park", "unpark", "next", "budget", "gates", "report", "journal",
       "pull-notes", "close", "claim", "unclaim", "migrate-frontmatter",
-      "absorb", "upgrade", "update",
+      "absorb", "upgrade", "update", "milestone", "exchanges",
     ];
     const missing = verbs.filter((v) => !readme.includes(`\`lyt ${v}`));
     expect(missing).toEqual([]);
@@ -249,7 +249,7 @@ describe("the READMEs describe the 1.6 surface (ISS-0158, ISS-0153, ISS-0154)", 
 
   it("the README documents the reasons `lyt next --json` gives", () => {
     const row = read("README.md").split("\n").find((l) => l.startsWith("| `lyt next`")) ?? "";
-    for (const reason of ["deps-pending", "no-dod", "all-human-dod", "no-machine-dod", "not-ready"]) {
+    for (const reason of ["deps-pending", "no-dod", "all-human-dod", "no-machine-dod", "not-ready", "epic-in-discovery"]) {
       expect(row, reason).toContain(reason);
     }
   });
