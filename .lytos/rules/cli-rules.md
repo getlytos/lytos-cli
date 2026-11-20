@@ -33,6 +33,22 @@ method is built for.
 
 ---
 
+## Keeping private names out of a public repository
+
+This repository is public: a client or project name in a file, a test or a commit message is
+published for good once pushed. So **no list of such names is kept here — a blacklist of names is
+itself the leak.** What is shipped is checked by shape (`tests/helpers/shipped-content.ts`): machine
+paths, email addresses, credentials, private URLs. A maintainer who wants names checked too lists
+them locally, outside the repository:
+
+- `LYTOS_PRIVATE_TERMS`, a comma-separated environment variable; or
+- `.lytos/private-terms.local`, one term per line (`#` for comments), which is in `.gitignore`.
+
+With neither there is nothing to search for and that part of the test passes. A finding names the
+category, never the term. Write "a private project" in a card, never its name.
+
+---
+
 ## Commands
 
 | Rule | Detail |
