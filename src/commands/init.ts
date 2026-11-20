@@ -226,7 +226,7 @@ function showBriefing(profile: Profile, lang: Lang): void {
       console.error(cyan(bold("  STRUCTURE")));
       console.error("  .lytos/manifest.md      <- constitution du projet");
       console.error(
-        "  .lytos/skills/           <- 9 procédures opérationnelles"
+        "  .lytos/skills/           <- 10 procédures opérationnelles"
       );
       console.error(
         "  .lytos/rules/            <- critères de qualité (appliqués)"
@@ -254,7 +254,7 @@ function showBriefing(profile: Profile, lang: Lang): void {
       console.error("");
       console.error(cyan(bold("  STRUCTURE")));
       console.error("  .lytos/manifest.md      <- project constitution");
-      console.error("  .lytos/skills/           <- 9 operational procedures");
+      console.error("  .lytos/skills/           <- 10 operational procedures");
       console.error(
         "  .lytos/rules/            <- quality criteria (enforced)"
       );
