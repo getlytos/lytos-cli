@@ -57,6 +57,26 @@ tiering (conservative — a project may tighten it, never loosen below `low`):
 `risk` absent → treated as `medium` (safe default). The matrix lives in the quality
 kit (ISS-0107); this ADR fixes its *shape* and defaults, not the per-stack tools.
 
+#### Field revision — 2026-11-20 — the review lines the shipped kit adds, and the one exception at `low`
+
+The kit the method ships grew six review lines (ISS-0155), and one of them does not fit the table
+above, so it is named here rather than left as a silent divergence:
+
+- **`cost-review` is mandatory at `low`, `medium` and `high`: the one deliberate exception to
+  "Nothing is always-on".** The method asks that, on EVERY card, someone looks for the cheapest
+  solution among the robust ones, before the code. It still meets the test this ADR sets for `low`
+  — cheap and universal — because the study is proportional: one line on a low-risk card, a table
+  of options only from `medium` (`quality/rubrics/cost-review.md`). It is the only `reviewer` line
+  at `low`; the six floor gates are untouched, and a project may still tighten, never loosen.
+- **`ux-review` and `design-fidelity` (`medium` and `high`) belong to the matrix's "DS conformance +
+  a11y (UI changes)" row.** They concern projects with an interface and a mock-up to be faithful to;
+  the kit tells any other project to drop them — above the floor the table is the project's to tune.
+- **`red-team` (`high`) joins "Full security review"; `legal-accounting` and `real-money` (`high`)
+  are `human` lines** for what no run can rule on. All three stay inside "reviewer/human on high".
+
+`lyt gates` therefore reports `cost-review` as uncarried on a low-risk card whose Definition of
+Done does not pin it: that is the exception working as written, not a defect.
+
 ### 2. Documentation levels
 
 Docs are not one item. A DoD doc item names the level it requires (`verify: doc <L>`):

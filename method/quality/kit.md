@@ -34,8 +34,30 @@ survivable. Choose deliberately, and write the reason next to the row.
 | over-engineering | reviewer | medium,high | rubric:over-engineering |
 | security-review | reviewer | high | rubric:security |
 | architecture-review | reviewer | high | rubric:architecture |
+| ux-review | reviewer | medium,high | rubric:ux |
+| design-fidelity | reviewer | medium,high | rubric:design-fidelity |
+| red-team | reviewer | high | rubric:red-team |
+| cost-review | reviewer | low,medium,high | rubric:cost-review |
 | screen-reader | human | high | checklist:a11y |
 | product-intent | human | high | checklist:intent |
+| legal-accounting | human | high | checklist:legal-accounting |
+| real-money | human | high | checklist:real-money |
+
+*The `reviewer` and `human` lines point into this folder: `rubric:<name>` is
+`rubrics/<name>.md`, `checklist:<name>` is `checklists/<name>.md`. Every review follows
+`rubrics/FORMAT.md`: read-only, a severity, a confidence of at least 0.7, evidence as file and line,
+a scenario, a one-sentence fix, and what the reviewer could not verify. `tests-negative` ships as a
+`gate`; a project with no tool that can tell a refusal is tested rebinds it to `reviewer` with
+`rubric:tests-negative`.*
+
+*`cost-review` is the one `reviewer` line at `low`, a deliberate exception recorded in ADR-0007
+(field revision of 2026-11-20): the method asks that someone look for the cheapest robust solution
+on EVERY card. It meets the test this kit sets for `low` (cheap and universal, see "How to add an
+executable rule") because the study is proportional: one line on a low-risk card, a table of options
+on a medium or high one (`rubrics/cost-review.md`). It is written under "Proposed solution" before
+the code and checked again at review. The six floor gates are untouched. `ux-review` and
+`design-fidelity` bite on UI work: a project with no UI, or no mock-up to be faithful to, drops
+them — above the floor the table is yours to tune.*
 
 *Two promises of ADR-0007 §1 are deliberately **not** rows here, and saying so beats shipping
 rows nobody can bind. **Doc levels L1 and L2** wait on ISS-0116, which makes documentation levels
@@ -51,6 +73,26 @@ tiers (a project may only tighten — never loosen below `low`). The six `low` g
 floor: `lyt doctor` warns if one is removed, narrowed out of `low`, or downgraded to
 `reviewer`/`human`. Everything above the floor is yours to tune — dropping `ds-conformance`
 on a project with no UI is the proportionality this matrix exists for.*
+
+---
+
+## `verify: human` is the last resort
+
+A Definition-of-Done item is `verify: human` only when an end-to-end tester could NOT check it
+itself, in a browser or with Playwright. Otherwise the item is `verify: auto:e2e`, with the proof
+attached (captures of the journey, the replayed run).
+
+- **Walking a screen is never "human".** Replaying a journey, comparing a render, reading a state
+  on a page: that is the end-to-end tester's work. What stays human is what no run can rule on:
+  intent, a real screen reader, a legal or accounting opinion, a real-money gesture.
+- **A human item always carries a pin**, naming a `human` line of this kit: `human:product-intent`,
+  `human:screen-reader`, `human:legal-accounting` or `human:real-money`. The pin is what makes the
+  person's call auditable and what puts the right checklist in front of them.
+- **`lyt lint` enforces it as a warning, never an error.** It flags a `verify: human` item with no
+  pin, and a `human:<pin>` whose pin names a line that is not of kind `human`. A pin on an id this
+  kit does not have is flagged by `lyt doctor`.
+- **Bind `e2e` honestly.** Until the project has an end-to-end command, a tester replaying the
+  journey and attaching captures is evidence, not a green gate: say so in the `tool` column.
 
 ---
 

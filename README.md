@@ -96,7 +96,7 @@ The CLI exposes decidable primitives; the wrapper or the App orchestrates them. 
 | `lyt next` | The next loop-eligible issue in the sprint — status workable, dependencies satisfied, Definition of Ready met, and a DoD carrying at least one machine-verifiable item. Refuses **and explains** when nothing qualifies |
 | `lyt park ISS-XXXX --reason <code>` | Halt instead of guessing: park an issue out of the flow with a reason from a closed taxonomy (`ambiguous-spec`, `missing-dependency`, `gate-failed`, `budget-exhausted`, `human-judgment-required`, `external-blocker`). `lyt unpark` resumes it |
 | `lyt budget` | Aggregate pipeline cost against a ceiling (`--max-usd`, `--max-issues`, or `budget:` in `sprint.md`). Exits non-zero when breached — a stop condition a `while` loop or CI can read |
-| `lyt gates [ISS-XXXX]` | The gates mandatory at an issue's `risk` level, resolved from the project's quality kit. Rigor follows blast radius: `low` gets the floor, `high` gets everything |
+| `lyt gates [ISS-XXXX]` | The gates mandatory at an issue's `risk` level, resolved from the project's quality kit. Rigor follows blast radius: `low` gets the floor plus `cost-review` (the one deliberate exception, see ADR-0007), `high` gets everything |
 | `lyt report ISS-XXXX` | The review packet for one issue — diff, gate evidence, parks, human checklist, auditor verdict, audit trail. Laid out **doubt-first**: what needs deciding sits above what is already green. `--sprint` aggregates the whole sprint |
 
 ![lyt show](docs/screenshots/lyt-show.png)

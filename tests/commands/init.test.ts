@@ -14,6 +14,7 @@ import {
   createNodeProjectFixture,
   type Fixture,
 } from "../helpers/fixtures.js";
+import { QUALITY_LIBRARY_FILES } from "../../src/lib/method-files.js";
 
 const CLI = resolve(__dirname, "../../dist/cli.js");
 
@@ -60,6 +61,28 @@ describe("lytos init", () => {
     expect(existsSync(join(fixture.cwd, ".lytos", "manifest.md"))).toBe(true);
     expect(existsSync(join(fixture.cwd, ".lytos", "memory", "MEMORY.md"))).toBe(true);
     expect(existsSync(join(fixture.cwd, ".lytos", "issue-board", "BOARD.md"))).toBe(true);
+  });
+
+  it("ships the quality library the kit points at — rubrics and checklists (ISS-0155)", () => {
+    fixture = createEmptyFixture();
+    expect(run('init --name "Test Project" --tool none --yes', fixture.cwd).exitCode).toBe(0);
+
+    for (const path of QUALITY_LIBRARY_FILES) {
+      const written = join(fixture.cwd, ".lytos", path);
+      expect(existsSync(written), path).toBe(true);
+      expect(readFileSync(written, "utf-8"), path).toBe(
+        readFileSync(resolve(__dirname, "../../method", path), "utf-8")
+      );
+    }
+
+    // The kit that points at them is the shipped one, and its pointers resolve in the project.
+    const kit = readFileSync(join(fixture.cwd, ".lytos", "quality", "kit.md"), "utf-8");
+    for (const m of kit.matchAll(/\|\s*(?:rubric|checklist):([a-z0-9-]+)\s*\|/g)) {
+      const found = [`quality/rubrics/${m[1]}.md`, `quality/checklists/${m[1]}.md`].some((p) =>
+        existsSync(join(fixture.cwd, ".lytos", p))
+      );
+      expect(found, m[1]).toBe(true);
+    }
   });
 
   it("installs the lytos-issue merge driver in a git repo (ISS-0093)", () => {

@@ -24,6 +24,7 @@ import {
 import type { DetectedStack } from "./detect-stack.js";
 import { installPreCommitHook } from "./hooks.js";
 import { installMergeDriver } from "./merge-driver.js";
+import { QUALITY_LIBRARY_FILES } from "./method-files.js";
 
 const METHOD_DIR = join(dirname(fileURLToPath(import.meta.url)), "method");
 
@@ -84,6 +85,8 @@ const REMOTE_FILES = [
   // Quality kit — executable Standards pillar (ADR-0005/0007, ISS-0107)
   { remote: "quality/kit.md", local: "quality/kit.md" },
   { remote: "quality/stack.md", local: "quality/stack.md" },
+  // The rubrics and checklists the kit's `rubric:` / `checklist:` pointers resolve to
+  ...QUALITY_LIBRARY_FILES.map((path) => ({ remote: path, local: path })),
 ];
 
 export type LytosTool =

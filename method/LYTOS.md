@@ -31,6 +31,9 @@ These 5 pillars are the method. Everything else (agent documentation, tool adapt
 | `memory/cortex/*.md` | Specialized zones (architecture, backend, frontend, patterns, bugs, business, sprints) | Load only what's relevant to the task |
 | `rules/default-rules.md` | Universal quality criteria | At each session |
 | `rules/*-rules.md` | Project-specific rules (if they exist) | At each session |
+| `quality/kit.md` | The gate catalog: which check is a command, which a model's review, which a person's call, and at which `risk` each is mandatory | When writing a Definition of Done, or reviewing |
+| `quality/rubrics/*.md` | The grids a review follows (`FORMAT.md` is the common format) — what a `reviewer` line of the kit points at | When you are the reviewer |
+| `quality/checklists/*.md` | The lists a person works through — what a `human` line of the kit points at | When you ask the accountable human for a call |
 | `skills/session-start.md` | Lytos bootstrap protocol — what to read at the start of any session | At each session |
 | `skills/<name>/SKILL.md` | Task skills in the [agentskills.io](https://agentskills.io) open standard format (code-review, testing, documentation, etc.) | Discovered natively by AI tools via progressive disclosure; the issue's optional `skill` field is a hint |
 | `issue-board/BOARD.md` | Kanban view — task progress status, including the review gate before done | When working on a task |

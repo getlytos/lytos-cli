@@ -34,3 +34,7 @@ coverage/
 # Lytos: local, transient AI-wrapper session journal (ADR-0003). Absorbed into
 # issue frontmatter via `lyt absorb`; never committed.
 .lytos/.runtime/
+
+# Local list of private terms (client and project names) that must never reach this
+# public repository: read by the leak checks in the tests, never committed. Optional.
+.lytos/private-terms.local
