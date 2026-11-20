@@ -12,6 +12,7 @@ import { parseFrontmatter } from "./frontmatter.js";
 import { analyzeDod, type DodItem } from "./dod.js";
 import { analyzeReady } from "./ready.js";
 import { humanItemProblems, loadKit, type QualityKit } from "./quality.js";
+import { lintIntent } from "./intent-lint.js";
 import {
   MANIFEST_SECTIONS as MANIFEST_SECTION_DEFS,
   MANIFEST_LANGS,
@@ -203,6 +204,9 @@ export function lint(lytosDir: string): LintResult {
   const issueFindings = lintIssues(lytosDir, loadKit(lytosDir));
   findings.push(...issueFindings.findings);
   filesChecked += issueFindings.filesChecked;
+
+  // Intent layer (ADR-0009): parent, phase and milestone, warnings only.
+  findings.push(...lintIntent(lytosDir));
 
   // Check skills directory has files
   const skillsDir = join(lytosDir, "skills");

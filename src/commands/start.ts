@@ -19,6 +19,7 @@ import {
 } from "../lib/issue-ops.js";
 import { parseIssueDetail } from "../lib/show.js";
 import { type Frontmatter } from "../lib/frontmatter.js";
+import { EPIC_TYPE } from "../lib/intent.js";
 import { ok, info, warn, error, bold, cyan, green } from "../lib/output.js";
 
 const getGitUser = currentGitUser;
@@ -175,7 +176,10 @@ export const startCommand = new Command("start")
   });
 
 function buildBranchName(fm: Frontmatter): string {
-  const type = typeof fm.type === "string" ? fm.type : "feat";
+  // `epic` is a card type, not a conventional-commit prefix: the pre-commit hook
+  // only accepts feat|fix|refactor|chore|docs|test|style|perf (ADR-0009).
+  const type =
+    typeof fm.type === "string" && fm.type !== EPIC_TYPE ? fm.type : "feat";
   const id = typeof fm.id === "string" ? fm.id : "ISS-0000";
   const title = typeof fm.title === "string" ? fm.title : "untitled";
   const slug = title
