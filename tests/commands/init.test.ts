@@ -85,6 +85,16 @@ describe("lytos init", () => {
     }
   });
 
+  it("ships the team-and-loop briefing next to the default rules (ISS-0157)", () => {
+    fixture = createEmptyFixture();
+    expect(run('init --name "Test Project" --tool none --yes', fixture.cwd).exitCode).toBe(0);
+    const written = join(fixture.cwd, ".lytos", "rules", "team-and-loop.md");
+    expect(existsSync(written)).toBe(true);
+    expect(readFileSync(written, "utf-8")).toBe(
+      readFileSync(resolve(__dirname, "../../method/rules/team-and-loop.md"), "utf-8")
+    );
+  });
+
   it("installs the lytos-issue merge driver in a git repo (ISS-0093)", () => {
     fixture = createEmptyFixture();
     const { execSync } = require("child_process");

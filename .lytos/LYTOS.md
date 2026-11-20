@@ -8,6 +8,8 @@
 
 Lytos is a human-AI working method. It replaces agent "personas" (LeadDev, UX Expert...) with operational procedures (skills), quality criteria (rules), and persistent memory (memory). The human is the architect, the AI executes within the defined framework.
 
+The team roles of `rules/team-and-loop.md` are operational roles for review and for agents, not personas: the three personas of the method (the profiles `lyt init` asks about: vibe coder, developer, lead) remain people.
+
 ## The 5 pillars
 
 Lytos is organized around five named pillars. Every project contains all five, each materialized as a file or directory.
@@ -30,6 +32,7 @@ These 5 pillars are the method. Everything else (agent documentation, tool adapt
 | `memory/MEMORY.md` | Memory summary — points to specialized files in `cortex/` | At each session |
 | `memory/cortex/*.md` | Specialized zones (architecture, backend, frontend, patterns, bugs, business, sprints) | Load only what's relevant to the task |
 | `rules/default-rules.md` | Universal quality criteria | At each session |
+| `rules/team-and-loop.md` | The roles of a team (mission, input, output, right, blocker), the loop between the owner's two gates, and the five cases where it stops | When you orchestrate several agents, or decide what a person must still look at |
 | `rules/*-rules.md` | Project-specific rules (if they exist) | At each session |
 | `quality/kit.md` | The gate catalog: which check is a command, which a model's review, which a person's call, and at which `risk` each is mandatory | When writing a Definition of Done, or reviewing |
 | `quality/rubrics/*.md` | The grids a review follows (`FORMAT.md` is the common format) — what a `reviewer` line of the kit points at | When you are the reviewer |
