@@ -22,6 +22,11 @@ import {
   type BudgetReport,
 } from "./budget.js";
 import { parseFrontmatter } from "./frontmatter.js";
+import {
+  describeIndependence,
+  type IndependenceView,
+} from "./independence-view.js";
+import { renderIndependence } from "./independence-render.js";
 import type { IssueLocation } from "./issue-ops.js";
 import type { FrontmatterValue } from "./frontmatter.js";
 
@@ -38,6 +43,8 @@ export interface ReviewPacket {
   reviewerPending: DodItem[]; // verify: reviewer — the auditor has not ruled yet
   reviewerDone: DodItem[];
   requiredGates: QualityGate[];
+  /** How independent the review was, recomputed from the card (ADR-0010). */
+  independence: IndependenceView;
   audit: {
     assignee: string;
     reviewer: string;
@@ -139,6 +146,7 @@ export function buildPacket(
     reviewerPending,
     reviewerDone,
     requiredGates,
+    independence: describeIndependence(lytosDir, fm),
     audit: {
       assignee: str(fm.assignee),
       reviewer: str(fm.reviewer),
@@ -179,6 +187,10 @@ export function renderPacket(p: ReviewPacket): string {
         : "";
     out.push(`- **Reviewer verdict**: ${p.verdict}${gloss}`);
   }
+  for (const line of p.independence.decide) {
+    hasDoubt = true;
+    out.push(`- ${line}`);
+  }
   if (p.autoPending.length > 0) {
     hasDoubt = true;
     out.push(`- **Gates not green** (${p.autoPending.length}):`);
@@ -218,6 +230,9 @@ export function renderPacket(p: ReviewPacket): string {
       `Files (${p.changes.files.length}): ${p.changes.files.map((f) => `\`${f}\``).join(", ")}`
     );
   }
+  out.push("");
+
+  out.push(...renderIndependence(p.independence));
   out.push("");
 
   // ── Green evidence (last, on purpose) ────────────────────────
