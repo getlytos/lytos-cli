@@ -64,4 +64,4 @@ Field case: a private project (rule stated by its owner, 2026-11-20).
 - [x] `lyt lint` warns when a `human:<pin>` names a kit line that is not of kind `human`, and stays silent when the pin names a `human` line or an id the kit lacks — verify: auto
 - [x] Both are warnings: exit code unchanged, no new error on any existing project; `5-done` and schema v1 issues are skipped — verify: auto:tests-negative
 - [x] The behaviour is covered by unit tests on the pure function and by end-to-end tests through the binary — verify: auto
-- [ ] No new runtime dependency and the check stays proportionate — verify: reviewer:over-engineering
+- [x] No new runtime dependency and the check stays proportionate — ruled by the independent review of 2026-11-20 (Claude Opus 5.5 reviewing Claude Sonnet 5.5 work, verdict GO with reserves, every finding addressed) — verify: reviewer:over-engineering

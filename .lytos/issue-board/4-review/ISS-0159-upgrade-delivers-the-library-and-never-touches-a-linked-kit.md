@@ -73,6 +73,6 @@ content too.
 - [x] With no terminal (`lyt upgrade < /dev/null`, or CI), the library is delivered BEFORE any replacement question, each question is answered "no" out loud with the way to force it, the recap is printed, and the exit code is 0 — verify: auto:tests-negative
 - [x] Nothing is written through a symbolic link (dangling, a linked directory, or a link standing in for a method file): it is skipped with a message and nothing is created outside `.lytos/` — verify: auto:tests-negative
 - [x] The hint names the bundled kit at the tag of the installed version, not at `main` — verify: auto
-- [ ] The write paths of `upgrade` are exactly: a missing method file, and a confirmed or forced upgradeable one — no new mechanism can reach a project-owned file — verify: reviewer:architecture-review
-- [ ] The change stays proportionate: a list, a guard and one informational line — verify: reviewer:over-engineering
-- [ ] Telling the project which kit rows it lacks, rather than merging them in, is the behaviour the owner wants — verify: human:product-intent
+- [x] The write paths of `upgrade` are exactly: a missing method file, and a confirmed or forced upgradeable one — no new mechanism can reach a project-owned file — ruled by the independent review of 2026-11-20 (Claude Opus 5.5 reviewing Claude Sonnet 5.5 work, verdict GO with reserves, every finding addressed) — verify: reviewer:architecture-review
+- [x] The change stays proportionate: a list, a guard and one informational line — ruled by the independent review of 2026-11-20 (Claude Opus 5.5 reviewing Claude Sonnet 5.5 work, verdict GO with reserves, every finding addressed) — verify: reviewer:over-engineering
+- [x] Telling the project which kit rows it lacks, rather than merging them in, is the behaviour the owner wants — decided by Frédéric Galliné, 2026-11-20 — verify: human:product-intent

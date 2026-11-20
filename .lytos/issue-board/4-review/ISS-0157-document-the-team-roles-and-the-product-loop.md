@@ -56,4 +56,4 @@ call a person. A team assembling the loop re-derives it each time.
 - [x] `lyt init` ships it, `lyt upgrade` can update it, `LYTOS.md` and `rules/README.md` point at it — verify: auto
 - [x] `LYTOS.md` reconciles the roles with its own "no personas" line in one sentence: the team roles are operational roles for review and for agents, and the method's three personas remain people — verify: auto
 - [x] The team document carries nothing private: no name, machine path, address or credential (generic check; private terms only from the optional local list) — verify: auto
-- [ ] The role catalog reads as a usable brief for someone assembling a team, not as a list of personas — verify: human:product-intent
+- [x] The role catalog reads as a usable brief for someone assembling a team, not as a list of personas — decided by Frédéric Galliné, 2026-11-20 — verify: human:product-intent

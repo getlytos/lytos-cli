@@ -67,4 +67,4 @@ file, no warning, no gate.
 - [x] The register is never written through a symbolic link, dangling or not (the shared helper `safe-write.ts`) — verify: auto:tests-negative
 - [x] The register is named in English, `design/registry.md`, in the template, the code, the docs and the tests — verify: auto
 - [x] The register template and its shipped copy carry no project, client or link — verify: auto
-- [ ] Nothing in the change makes `init` slower or noisier for a project that does not use Claude Design — verify: reviewer:over-engineering
+- [x] Nothing in the change makes `init` slower or noisier for a project that does not use Claude Design — ruled by the independent review of 2026-11-20 (Claude Opus 5.5 reviewing Claude Sonnet 5.5 work, verdict GO with reserves, every finding addressed) — verify: reviewer:over-engineering
