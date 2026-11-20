@@ -80,6 +80,8 @@ export const UPGRADEABLE_FILES: readonly string[] = [
   "LYTOS.md",
   ".gitignore",
   "templates/sprint.md",
+  "templates/milestone.md",
   "issue-board/templates/issue-feature.md",
   "issue-board/templates/issue-task.md",
+  "issue-board/templates/issue-epic.md",
 ];
