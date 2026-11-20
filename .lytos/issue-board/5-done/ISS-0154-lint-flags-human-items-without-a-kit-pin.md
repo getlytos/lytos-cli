@@ -8,8 +8,8 @@ complexity: standard
 domain: [cli, dod]
 skill: ""
 skills_aux: []
-status: 4-review
-branch: "feat/ISS-0154-lyt-lint-warns-on-a-verify-human-item-with-no-human-kit-pin"
+status: 5-done
+branch: feat/ISS-0154-lyt-lint-warns-on-a-verify-human-item-with-no-human-kit-pin
 depends: [ISS-0153]
 created: 2026-11-20
 updated: 2026-11-20
@@ -17,6 +17,8 @@ schema_version: 2
 risk: medium
 assignee: fredericgalline
 started_at: 2026-11-20
+completed_at: 2026-11-20
+commits: [1d975be]
 ---
 # ISS-0154 — lyt lint warns on a verify: human item with no human kit pin
 

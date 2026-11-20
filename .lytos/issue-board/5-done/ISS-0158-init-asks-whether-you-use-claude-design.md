@@ -8,8 +8,8 @@ complexity: standard
 domain: [cli, init]
 skill: ""
 skills_aux: []
-status: 4-review
-branch: "feat/ISS-0158-lyt-init-asks-once-and-optionally-whether-you-use-claude-design"
+status: 5-done
+branch: feat/ISS-0158-lyt-init-asks-once-and-optionally-whether-you-use-claude-design
 depends: []
 created: 2026-11-20
 updated: 2026-11-20
@@ -17,6 +17,8 @@ schema_version: 2
 risk: medium
 assignee: fredericgalline
 started_at: 2026-11-20
+completed_at: 2026-11-20
+commits: [6528f45]
 ---
 # ISS-0158 — lyt init asks, once and optionally, whether you use Claude Design
 
