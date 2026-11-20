@@ -175,3 +175,62 @@ describe("applyMigration", () => {
     expect(parseFrontmatter(content)!.schema_version).toBe("2");
   });
 });
+
+describe("applyMigration — the frontmatter is closed where the parser closes it (ISS-0180)", () => {
+  function plan(cwd: string) {
+    return planMigration(join(cwd, ".lytos"), {}, nullResolver);
+  }
+  const issuePath = (cwd: string, file: string) => join(lytosBoard(cwd), "1-backlog", file);
+
+  it("migrates a card whose opening line has spaces after the dashes, as the parser reads it", () => {
+    fixture = createEmptyFixture();
+    mkdirSync(join(lytosBoard(fixture.cwd), "1-backlog"), { recursive: true });
+    const text = "---  \nid: ISS-0001\nstatus: 1-backlog\n---\n\n# Body\n";
+    writeFileSync(issuePath(fixture.cwd, "ISS-0001-x.md"), text);
+    const p = plan(fixture.cwd);
+    expect(p.toMigrate).toBe(1);
+    expect(applyMigration(join(fixture.cwd, ".lytos"), p)).toBe(1);
+    const after = readFileSync(issuePath(fixture.cwd, "ISS-0001-x.md"), "utf-8");
+    expect(after).toContain("schema_version: 2");
+    expect(after.endsWith("---\n\n# Body\n")).toBe(true);
+    expect(parseFrontmatter(after)!.schema_version).toBe("2");
+  });
+
+  it("inserts before the real closing line when a title ends in ---, and leaves the body alone", () => {
+    fixture = createEmptyFixture();
+    mkdirSync(join(lytosBoard(fixture.cwd), "1-backlog"), { recursive: true });
+    const text = "---\nid: ISS-0001\ntitle: Ends with ---\nstatus: 1-backlog\n---\n\n# Body\n\n---\n\nrule above\n";
+    writeFileSync(issuePath(fixture.cwd, "ISS-0001-x.md"), text);
+    expect(applyMigration(join(fixture.cwd, ".lytos"), plan(fixture.cwd))).toBe(1);
+    const after = readFileSync(issuePath(fixture.cwd, "ISS-0001-x.md"), "utf-8");
+    expect(after.startsWith("---\nid: ISS-0001\ntitle: Ends with ---\nstatus: 1-backlog\n")).toBe(true);
+    expect(after.endsWith("---\n\n# Body\n\n---\n\nrule above\n")).toBe(true);
+    expect(parseFrontmatter(after)).toMatchObject({ title: "Ends with ---", schema_version: "2" });
+  });
+
+  it("keeps a closing line that has words after the dashes, byte for byte", () => {
+    fixture = createEmptyFixture();
+    mkdirSync(join(lytosBoard(fixture.cwd), "1-backlog"), { recursive: true });
+    writeFileSync(issuePath(fixture.cwd, "ISS-0001-x.md"), "---\nid: ISS-0001\nstatus: 1-backlog\n--- trailing words\n\nbody\n");
+    expect(applyMigration(join(fixture.cwd, ".lytos"), plan(fixture.cwd))).toBe(1);
+    const after = readFileSync(issuePath(fixture.cwd, "ISS-0001-x.md"), "utf-8");
+    expect(after.endsWith("--- trailing words\n\nbody\n")).toBe(true);
+  });
+
+  it("keeps Windows line endings around the inserted fields", () => {
+    fixture = createEmptyFixture();
+    mkdirSync(join(lytosBoard(fixture.cwd), "1-backlog"), { recursive: true });
+    writeFileSync(issuePath(fixture.cwd, "ISS-0001-x.md"), "---\r\nid: ISS-0001\r\nstatus: 1-backlog\r\n---\r\n\r\n# Body\r\n");
+    expect(applyMigration(join(fixture.cwd, ".lytos"), plan(fixture.cwd))).toBe(1);
+    const after = readFileSync(issuePath(fixture.cwd, "ISS-0001-x.md"), "utf-8");
+    expect(after.endsWith("---\r\n\r\n# Body\r\n")).toBe(true);
+    expect(after.startsWith("---\r\nid: ISS-0001\r\nstatus: 1-backlog\r\n")).toBe(true);
+  });
+
+  it("writes nothing for a file with no frontmatter block", () => {
+    fixture = createEmptyFixture();
+    mkdirSync(join(lytosBoard(fixture.cwd), "1-backlog"), { recursive: true });
+    writeFileSync(issuePath(fixture.cwd, "ISS-0001-x.md"), "no frontmatter at all\n");
+    expect(applyMigration(join(fixture.cwd, ".lytos"), plan(fixture.cwd))).toBe(0);
+  });
+});

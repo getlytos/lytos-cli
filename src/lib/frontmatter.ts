@@ -108,6 +108,23 @@ export function parseFrontmatter(content: string): Frontmatter | null {
 }
 
 /**
+ * The frontmatter block cut at its closing fence: `head` runs from the opening
+ * `---` through the line break that precedes the closing one, `rest` is
+ * everything after the three closing dashes (the end of that line, then the
+ * body). Null when there is no block. For a writer that must put a field in
+ * front of the closing fence and leave every other byte where it was; same
+ * closing line as `parseFrontmatter`.
+ */
+export function splitFrontmatter(
+  content: string
+): { head: string; rest: string } | null {
+  const match = content.match(FRONTMATTER_BLOCK);
+  if (!match) return null;
+  const end = (match.index ?? 0) + match[0].length;
+  return { head: content.slice(0, end - 3), rest: content.slice(end) };
+}
+
+/**
  * The body of a card: what follows the closing `---` line of its frontmatter,
  * without the blank lines right after it. Empty when there is no closing line.
  *

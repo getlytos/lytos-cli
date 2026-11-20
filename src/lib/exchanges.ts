@@ -22,7 +22,7 @@
  * Zero dependencies.
  */
 
-import { parseFrontmatter, type Frontmatter } from "./frontmatter.js";
+import { bodyOf, parseFrontmatter, type Frontmatter } from "./frontmatter.js";
 
 /** Where the entries live, relative to `.lytos/`. */
 export const EXCHANGES_DIR = "design/exchanges";
@@ -140,10 +140,6 @@ function optionalProblems(fm: Frontmatter): string[] {
     );
   }
   return problems;
-}
-
-function bodyOf(content: string): string {
-  return content.replace(/^---\s*\n[\s\S]*?\n---[ \t]*(?:\n|$)/, "");
 }
 
 function bodyProblems(words: number): string[] {
