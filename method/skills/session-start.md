@@ -121,7 +121,7 @@ If complexity is not specified, assume `standard`. If the table is not filled in
 
 #### Task skills (agentskills.io format)
 
-Lytos task skills (`testing`, `code-review`, `code-structure`, `documentation`, `git-workflow`, `deployment`, `security`, `api-design`) are stored as folders following the [agentskills.io](https://agentskills.io) open standard:
+Lytos task skills (`testing`, `code-review`, `code-structure`, `documentation`, `git-workflow`, `deployment`, `security`, `api-design`, `reference-loop`) are stored as folders following the [agentskills.io](https://agentskills.io) open standard:
 
 ```
 .lytos/skills/<name>/SKILL.md
