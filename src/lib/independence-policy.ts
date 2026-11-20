@@ -24,9 +24,11 @@
  * Zero dependencies.
  */
 
-import type {
-  ComputeSettings,
-  IndependenceComputation,
+import {
+  levelText,
+  type ComputeSettings,
+  type IndependenceComputation,
+  type Level,
 } from "./independence.js";
 import { SHIPPED_PROVIDERS } from "./independence-providers.js";
 import type { RiskTier } from "./quality.js";
@@ -93,20 +95,24 @@ export function defaultSettings(): IndependenceSettings {
   };
 }
 
-/** Does this computation satisfy the minimum? `unknown` counts as level 3. */
+/**
+ * Does this computation satisfy the minimum? `unknown` counts as level 3.
+ * `level` is the level to test (default: the computed one); see `judge`.
+ */
 export function meetsMinimum(
   c: IndependenceComputation,
-  minimum: Minimum
+  minimum: Minimum,
+  level: Level = c.effectiveLevel
 ): boolean {
   switch (minimum) {
     case "any":
       return true;
     case "fresh-session":
-      return c.effectiveLevel <= 2 || c.freshSession;
+      return level <= 2 || c.freshSession;
     case "level-2":
-      return c.effectiveLevel <= 2;
+      return level <= 2;
     case "level-1":
-      return c.effectiveLevel === 1;
+      return level === 1;
   }
 }
 
@@ -144,9 +150,21 @@ export interface Judgement {
   action: BelowAction;
   meets: boolean;
   standing: Standing;
+  /** The level the minimum was checked against: `1`, `2`, `3` or `unknown`. */
+  appliedLevel: string;
+  /** True when a provider override lifted the level and was not counted (risk high). */
+  overrideIgnored: boolean;
 }
 
-/** Judge a computation against the minimum configured for `risk`. */
+/**
+ * Judge a computation against the minimum configured for `risk`.
+ *
+ * At risk HIGH a provider override that LIFTS the level is not counted: the
+ * minimum is checked against the level the shipped provider table gives (ISS-0176).
+ * Configuration may add models and tighten the rules, but it may not, by
+ * itself, turn a same-provider review into a "different provider" one where the
+ * stakes are highest. An override that lowers the level stands: it is stricter.
+ */
 export function judge(
   c: IndependenceComputation,
   risk: RiskTier,
@@ -154,7 +172,12 @@ export function judge(
 ): Judgement {
   const minimum = settings.minimum[risk];
   const action = settings.belowMinimum[risk];
-  const meets = meetsMinimum(c, minimum);
+  const lifted =
+    risk === "high" &&
+    c.shipped !== null &&
+    c.shipped.effectiveLevel > c.effectiveLevel;
+  const level = lifted ? c.shipped!.effectiveLevel : c.effectiveLevel;
+  const meets = meetsMinimum(c, minimum, level);
   const standing: Standing = meets
     ? "meets"
     : action === "refuse"
@@ -162,5 +185,13 @@ export function judge(
       : action === "countersign"
         ? "needs-countersignature"
         : "below-warn";
-  return { risk, minimum, action, meets, standing };
+  return {
+    risk,
+    minimum,
+    action,
+    meets,
+    standing,
+    appliedLevel: lifted ? String(c.shipped!.level) : levelText(c),
+    overrideIgnored: lifted,
+  };
 }

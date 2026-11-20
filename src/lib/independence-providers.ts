@@ -83,3 +83,21 @@ export function resolveProvider(
   }
   return best;
 }
+
+/**
+ * The shipped rule a configured rule CONTRADICTS: the shipped table maps this
+ * prefix (so every model under it) to another provider. Null for a shipped
+ * rule, for a prefix the table does not know, and for a restatement of the
+ * shipped mapping.
+ *
+ * Exact, not a heuristic: a configured rule wins over a shipped one for a model
+ * only when it is at least as long, and then the shipped rule that mapped the
+ * model is also the one that maps the configured prefix itself. So "the shipped
+ * table maps this prefix elsewhere" is the same fact as "this rule moves a model
+ * the shipped table maps" (ISS-0176; a test checks it over the whole table).
+ */
+export function reassignmentOf(rule: ProviderRule): ProviderRule | null {
+  if (rule.origin !== "config") return null;
+  const shipped = resolveProvider(rule.prefix, SHIPPED_PROVIDERS);
+  return shipped && shipped.provider !== rule.provider ? shipped : null;
+}

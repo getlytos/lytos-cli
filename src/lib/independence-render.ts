@@ -17,6 +17,8 @@ export interface DecideInput {
     IndependenceView,
     | "risk"
     | "level"
+    | "appliedLevel"
+    | "overrideIgnored"
     | "minimumText"
     | "standing"
     | "approved"
@@ -30,7 +32,11 @@ export interface DecideInput {
 type Decide = DecideInput["v"];
 
 function levelWords(v: Decide): string {
-  return v.level === "unknown" ? "unknown (treated as 3)" : String(v.level);
+  const level =
+    v.appliedLevel === "unknown" ? "unknown (treated as 3)" : v.appliedLevel;
+  return v.overrideIgnored
+    ? `${level} (a provider override makes it look like level ${v.level}; it is not counted at risk ${v.risk})`
+    : level;
 }
 
 /** The one line about how the review stands against the minimum, if any. */
@@ -104,8 +110,11 @@ function standingText(v: IndependenceView): string {
 /** The packet's `## Independence` section. */
 export function renderIndependence(v: IndependenceView): string[] {
   const out: string[] = ["## Independence"];
+  const counted = v.overrideIgnored
+    ? `, counted as level ${v.appliedLevel} at risk ${v.risk} (a provider override is not counted there)`
+    : "";
   out.push(
-    `- Level: **${v.label}** · minimum at risk **${v.risk}**: ${v.minimumText} — ${standingText(v)}`
+    `- Level: **${v.label}**${counted} · minimum at risk **${v.risk}**: ${v.minimumText} — ${standingText(v)}`
   );
   out.push(`- Implementer: ${who(v.implementer)}`);
   out.push(`- Reviewer: ${who(v.reviewer)}`);

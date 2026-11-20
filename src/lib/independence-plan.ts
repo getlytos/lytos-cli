@@ -102,13 +102,19 @@ function hasIdentity(user: string): boolean {
   return user.trim() !== "" && user.trim().toLowerCase() !== "unknown";
 }
 
+/** How the level reads in a sentence, noting an override that was not counted. */
+function levelSentence(j: Judgement, c: IndependenceComputation): string {
+  const level = `level ${j.appliedLevel}`;
+  if (!j.overrideIgnored) return level;
+  return `${level} (a provider override in .lytos/config.yml makes it look like level ${levelText(c)}; it is not counted at risk ${j.risk}: ${c.overrides.join("; ")})`;
+}
+
 function blocked(
   j: Judgement,
   c: IndependenceComputation,
   verdict: string
 ): IndependenceError {
-  const level = `level ${levelText(c)}`;
-  const base = `A ${level} review cannot produce \`review: ${verdict}\` at risk ${j.risk} (${describeMinimum(j.minimum)} is required): ${c.reason}.`;
+  const base = `A ${levelSentence(j, c)} review cannot produce \`review: ${verdict}\` at risk ${j.risk} (${describeMinimum(j.minimum)} is required): ${c.reason}.`;
   if (j.standing === "refused") {
     return new IndependenceError(
       "refused",
@@ -119,7 +125,7 @@ function blocked(
   }
   return new IndependenceError(
     "needs-countersignature",
-    `${base} The card waits for the owner's countersignature, recorded as "${COUNTERSIGN_REASON}": run the same command with --countersign, or get a more independent review.`,
+    `${base} The card waits for the owner's countersignature, recorded as "${COUNTERSIGN_REASON}". A person must run the same command with --countersign (an automated wrapper or agent must never pass it), or get a more independent review.`,
     j,
     c
   );
@@ -155,7 +161,7 @@ function checkCountersign(
   }
   if (j.meets) {
     throw notApplicable(
-      `Nothing to countersign: a level ${levelText(c)} review meets the minimum for risk ${j.risk} (${describeMinimum(j.minimum)}).`,
+      `Nothing to countersign: a level ${j.appliedLevel} review meets the minimum for risk ${j.risk} (${describeMinimum(j.minimum)}).`,
       j,
       c
     );
@@ -163,13 +169,9 @@ function checkCountersign(
 }
 
 /** The block `lyt review` writes with an approval. */
-function recordOf(
-  input: PlanInput,
-  j: Judgement,
-  c: IndependenceComputation
-): { [k: string]: string } {
+function recordOf(input: PlanInput, j: Judgement): { [k: string]: string } {
   const record: { [k: string]: string } = {
-    level: levelText(c),
+    level: j.appliedLevel,
     risk: j.risk,
     minimum: j.minimum,
   };
@@ -221,7 +223,7 @@ export function planIndependence(input: PlanInput): IndependencePlan {
     throw blocked(judgement, computation, verdict);
   }
   return {
-    set: { [RECORD_FIELD]: recordOf(input, judgement, computation) },
+    set: { [RECORD_FIELD]: recordOf(input, judgement) },
     clear: [],
     computation,
     judgement,
@@ -280,7 +282,10 @@ export function verdictNotice(plan: IndependencePlan): Notice | null {
   const c = plan.computation;
   const record = plan.set[RECORD_FIELD] as { [k: string]: string } | undefined;
   const models = `implementer ${c.implementer.model || "—"}, reviewer ${c.reviewer.model || "—"}${plan.reviewerFrom === "card" ? " (read from the card: pass --ai-model to change it)" : ""}`;
-  const head = `Independence: level ${levelLabel(c)} [${models}]`;
+  const counted = j.overrideIgnored
+    ? `level ${j.appliedLevel} (a provider override makes it look like level ${levelText(c)}; it is not counted at risk ${j.risk})`
+    : `level ${levelLabel(c)}`;
+  const head = `Independence: ${counted} [${models}]`;
   const rule = `the minimum for risk ${j.risk} is ${describeMinimum(j.minimum)}`;
   const assumed = c.flags.length > 0 ? ` Assumed: ${c.flags.join("; ")}.` : "";
   if (j.meets) {

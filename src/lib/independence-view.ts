@@ -20,7 +20,6 @@ import {
   computeIndependence,
   identityOf,
   levelLabel,
-  levelText,
   type Basis,
   type IndependenceComputation,
   type Level,
@@ -84,6 +83,12 @@ export interface IndependenceView {
   recorded: { level: string; risk: string; minimum: string } | null;
   /** Ways the card no longer matches what the verdict recorded. */
   drift: string[];
+  /** The level the minimum was checked against (`unknown` possible); differs from `level` only when an override was not counted. */
+  appliedLevel: string;
+  /** True when a provider override lifted the level and was not counted (risk high). */
+  overrideIgnored: boolean;
+  /** The provider overrides the level relied on. */
+  overrides: string[];
   /** Lines for the packet's "Decide first" list. */
   decide: string[];
   /** What was assumed rather than established. */
@@ -106,14 +111,14 @@ function identityView(r: ResolvedIdentity): IdentityView {
 
 function driftOf(
   recorded: { level: string; risk: string } | null,
-  c: IndependenceComputation,
+  appliedLevel: string,
   risk: RiskTier
 ): string[] {
   if (!recorded || recorded.level === "") return [];
   const drift: string[] = [];
-  if (recorded.level !== levelText(c)) {
+  if (recorded.level !== appliedLevel) {
     drift.push(
-      `the verdict recorded level ${recorded.level}, the models on the card now give level ${levelText(c)}`
+      `the verdict recorded level ${recorded.level}, the models on the card now give level ${appliedLevel}`
     );
   }
   if (recorded.risk !== "" && recorded.risk !== risk) {
@@ -227,7 +232,7 @@ export function describeIndependence(
   const countersignature = countersignatureOf(record);
   const standing = standingOf(j, countersignature);
   const recorded = recordedOf(record);
-  const drift = approved ? driftOf(recorded, c, risk) : [];
+  const drift = approved ? driftOf(recorded, j.appliedLevel, risk) : [];
   const core = {
     risk,
     level: c.level,
@@ -239,6 +244,9 @@ export function describeIndependence(
     countersignature,
     drift,
     recorded,
+    appliedLevel: j.appliedLevel,
+    overrideIgnored: j.overrideIgnored,
+    overrides: c.overrides,
   };
   const refusedSignature =
     countersignature !== null && j.standing === "refused";

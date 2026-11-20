@@ -29,6 +29,7 @@
 import type { FrontmatterValue } from "./frontmatter.js";
 import {
   normalizeModel,
+  reassignmentOf,
   resolveProvider,
   type ProviderRule,
 } from "./independence-providers.js";
@@ -65,6 +66,12 @@ export interface ResolvedIdentity {
   providerOrigin: "shipped" | "config" | null;
   /** Index in the ranking (0 = weakest), or null when unranked. */
   rank: number | null;
+  /**
+   * Set when the configuration moved this model to another provider than the
+   * shipped table gives it (ISS-0176): `from` is the shipped one, `to` the
+   * configured one that was used.
+   */
+  override: { prefix: string; from: string; to: string } | null;
 }
 
 export interface IndependenceComputation {
@@ -81,6 +88,14 @@ export interface IndependenceComputation {
   reason: string;
   /** Everything that was assumed rather than established. */
   flags: string[];
+  /** The provider overrides this level relied on, one sentence each. */
+  overrides: string[];
+  /**
+   * The level the shipped provider table alone gives, when an override was used
+   * (null otherwise). At risk high the minimum is checked against the worse of
+   * the two, so a configuration cannot lift a review to level 1 by itself.
+   */
+  shipped: { level: Level | "unknown"; effectiveLevel: Level } | null;
 }
 
 /** Read `{model, session}` from an `ai_implementer` / `ai_reviewer` value. */
@@ -102,12 +117,17 @@ function resolve(
   const id = normalizeModel(identity.model);
   const rule = id ? resolveProvider(id, settings.providers) : null;
   const index = id ? settings.ranking.indexOf(id) : -1;
+  const shipped = rule ? reassignmentOf(rule) : null;
   return {
     model: identity.model,
     session: identity.session,
     provider: rule ? rule.provider : null,
     providerOrigin: rule ? rule.origin : null,
     rank: index >= 0 ? index : null,
+    override:
+      rule && shipped
+        ? { prefix: rule.prefix, from: shipped.provider, to: rule.provider }
+        : null,
   };
 }
 
@@ -196,13 +216,8 @@ function ladder(imp: ResolvedIdentity, rev: ResolvedIdentity): Verdict {
   return sameProvider(imp, rev);
 }
 
-/**
- * Compute the independence of a review from the two recorded identities.
- *
- * `freshSession` is independent of the level: it says only that both sessions
- * are recorded and differ. Two missing sessions are not "different".
- */
-export function computeIndependence(
+/** The level from the two identities and one provider table; no override logic. */
+function computeWith(
   implementer: AiIdentity,
   reviewer: AiIdentity,
   settings: ComputeSettings
@@ -215,20 +230,63 @@ export function computeIndependence(
     ...field("implementer", implementer),
     ...field("reviewer", reviewer),
   ];
+  const shape = { freshSession, implementer: imp, reviewer: rev };
+  const none = { overrides: [], shipped: null };
   if (missing.length > 0) {
     return {
       level: "unknown",
       effectiveLevel: 3,
       basis: "missing-fields",
-      freshSession,
-      implementer: imp,
-      reviewer: rev,
       reason:
         "the level cannot be established from the card: treated as level 3",
       flags: missing,
+      ...shape,
+      ...none,
     };
   }
-  return { ...ladder(imp, rev), freshSession, implementer: imp, reviewer: rev };
+  return { ...ladder(imp, rev), ...shape, ...none };
+}
+
+function overrideSentence(role: string, m: ResolvedIdentity): string {
+  const o = m.override!;
+  return `provider override: the ${role} model "${m.model}" is counted as provider "${o.to}" because .lytos/config.yml reassigns "${o.prefix}" (the shipped table says "${o.from}")`;
+}
+
+/**
+ * Compute the independence of a review from the two recorded identities.
+ *
+ * `freshSession` is independent of the level: it says only that both sessions
+ * are recorded and differ. Two missing sessions are not "different".
+ *
+ * When the configuration reassigned a model the shipped table already maps to
+ * another provider, the level is computed with that override (it is what the
+ * project said), reported in `overrides` and `flags`, and computed again with
+ * the shipped mapping into `shipped`, so that the policy can refuse to let an
+ * override lift a high-risk review (ISS-0176).
+ */
+export function computeIndependence(
+  implementer: AiIdentity,
+  reviewer: AiIdentity,
+  settings: ComputeSettings
+): IndependenceComputation {
+  const c = computeWith(implementer, reviewer, settings);
+  const used: Array<[string, ResolvedIdentity]> = [
+    ["implementer", c.implementer],
+    ["reviewer", c.reviewer],
+  ];
+  const overridden = used.filter(([, m]) => m.override !== null);
+  if (c.level === "unknown" || overridden.length === 0) return c;
+  const trusted = computeWith(implementer, reviewer, {
+    ...settings,
+    providers: settings.providers.filter((r) => reassignmentOf(r) === null),
+  });
+  const overrides = overridden.map(([role, m]) => overrideSentence(role, m));
+  return {
+    ...c,
+    overrides,
+    flags: [...c.flags, ...overrides],
+    shipped: { level: trusted.level, effectiveLevel: trusted.effectiveLevel },
+  };
 }
 
 /** `1`, `2`, `3` or `unknown` — the form written to and read from the card. */

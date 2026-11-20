@@ -18,6 +18,8 @@
  * Zero dependencies.
  */
 
+import { parseConfig, type ConfigNode } from "./config.js";
+
 export const DESIGN_CHOICES = ["claude-design", "other", "none"] as const;
 export type DesignChoice = (typeof DESIGN_CHOICES)[number];
 
@@ -84,17 +86,25 @@ export async function resolveDesign(
 }
 
 /**
+ * The design choice a `design:` value of `.lytos/config.yml` stands for: one of
+ * the known choices (any case), else `none`. Anything that is not a plain word
+ * — a list, a section, an empty value, an unknown name — is `none`, never an
+ * error.
+ */
+export function designOf(value: ConfigNode | undefined): DesignChoice {
+  const word = typeof value === "string" ? value.trim().toLowerCase() : "";
+  return (DESIGN_CHOICES as readonly string[]).includes(word)
+    ? (word as DesignChoice)
+    : DEFAULT_DESIGN;
+}
+
+/**
  * What the text of `.lytos/config.yml` says about design: the value of a
  * top-level `design:` key, or `none` when the key is absent, empty or not one of
  * the known choices. Never throws: a config this function cannot read is a
- * project that does not use design exchanges, not a broken one.
+ * project that does not use design exchanges, not a broken one. The text is
+ * read by `config.ts`, the one reader of the file (ISS-0176).
  */
 export function designFromConfig(text: string): DesignChoice {
-  const match = text.match(
-    /^design:[ \t]*["']?([A-Za-z-]+)["']?[ \t]*(?:#.*)?$/m
-  );
-  const value = match?.[1].toLowerCase() ?? "";
-  return (DESIGN_CHOICES as readonly string[]).includes(value)
-    ? (value as DesignChoice)
-    : DEFAULT_DESIGN;
+  return designOf(parseConfig(text).data.design);
 }

@@ -28,8 +28,9 @@
 
 import type { ConfigMap, ConfigNode, LoadedConfig } from "./config.js";
 import { readConfig } from "./config.js";
-import { normalizeModel } from "./independence-providers.js";
 import {
+  normalizeModel,
+  reassignmentOf,
   SHIPPED_PROVIDERS,
   type ProviderRule,
 } from "./independence-providers.js";
@@ -75,6 +76,15 @@ function readRanking(node: ConfigNode | undefined, s: IndependenceSettings) {
   s.fromConfig.ranking = true;
 }
 
+/** A configured rule that moves a model the shipped table maps (ISS-0176, F4). */
+function reassignmentProblem(
+  rawPrefix: string,
+  rule: ProviderRule,
+  shipped: ProviderRule
+): string {
+  return `independence.providers.${rawPrefix}: reassigns the models the shipped table maps to "${shipped.provider}" ("${shipped.prefix}") to "${rule.provider}" — a provider override: it counts below risk high and is flagged, but at risk high the shipped mapping is used`;
+}
+
 function readProviders(node: ConfigNode | undefined, s: IndependenceSettings) {
   if (node === undefined || node === "") return;
   if (!isSection(node)) {
@@ -92,7 +102,11 @@ function readProviders(node: ConfigNode | undefined, s: IndependenceSettings) {
       /^[a-z0-9][a-z0-9._:/-]*$/.test(prefix) &&
       /^[a-z0-9][\w.-]*$/.test(provider)
     ) {
-      rules.push({ prefix, provider, origin: "config" });
+      const rule: ProviderRule = { prefix, provider, origin: "config" };
+      const shipped = reassignmentOf(rule);
+      if (shipped)
+        s.problems.push(reassignmentProblem(rawPrefix, rule, shipped));
+      rules.push(rule);
     } else {
       s.problems.push(
         `independence.providers.${rawPrefix}: not a model-id prefix and a provider name — ignored`
@@ -157,6 +171,33 @@ const BELOW_SPEC: ByRiskSpec<BelowAction> = {
   defaults: DEFAULT_BELOW_MINIMUM,
 };
 
+const SECTION_KEYS = ["ranking", "providers", "minimum", "below_minimum"];
+
+/** The `independence:` section itself, key by key. */
+function applySection(section: ConfigMap, s: IndependenceSettings): void {
+  for (const key of Object.keys(section)) {
+    if (!SECTION_KEYS.includes(key)) {
+      s.problems.push(
+        `independence.${key}: unknown setting (${SECTION_KEYS.join(", ")}) — ignored`
+      );
+    }
+  }
+  readRanking(section.ranking, s);
+  readProviders(section.providers, s);
+  readByRisk(
+    section.minimum,
+    MINIMUM_SPEC,
+    { values: s.minimum, from: s.fromConfig.minimum },
+    s.problems
+  );
+  readByRisk(
+    section.below_minimum,
+    BELOW_SPEC,
+    { values: s.belowMinimum, from: s.fromConfig.belowMinimum },
+    s.problems
+  );
+}
+
 /**
  * The settings a loaded config produces. Pure: anything wrong is a line in
  * `problems` and the default, never an exception.
@@ -180,20 +221,7 @@ export function settingsFromConfig(config: LoadedConfig): IndependenceSettings {
     );
     return s;
   }
-  readRanking(section.ranking, s);
-  readProviders(section.providers, s);
-  readByRisk(
-    section.minimum,
-    MINIMUM_SPEC,
-    { values: s.minimum, from: s.fromConfig.minimum },
-    s.problems
-  );
-  readByRisk(
-    section.below_minimum,
-    BELOW_SPEC,
-    { values: s.belowMinimum, from: s.fromConfig.belowMinimum },
-    s.problems
-  );
+  applySection(section, s);
   return s;
 }
 
