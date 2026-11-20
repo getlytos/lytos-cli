@@ -161,6 +161,13 @@ is what `issue-feature.md` asks for. An issue with no `effort` gets the full for
 gate, an unstated field is not a licence to ask for less. `lyt next` and `lyt lint` report the
 missing pieces by name (`no-scope`, `no-constraints`, `no-out-of-scope`).
 
+Every card carries a **solution study** in its "Proposed solution", written before any code. At low
+risk, one line ("kept X: the simplest option that passes the robustness floor"). From medium risk up,
+two or three options, their cost to build and to run at 10, 100 and 500 units (sites, customers), and
+how each fares against the robustness floor (fails visibly, idempotent, resumable, reversible, isolated).
+The Ready section's **Solution** line says the cheapest robust option is chosen. `npx lyt next` does not
+read that line; the `cost-review` review checks it (`quality/rubrics/cost-review.md`).
+
 A label with no value does not count — `Out of scope:` with nothing after it is the words without
 the boundary — and the declaration only counts inside the `## Ready` section, where it binds. The point is to catch
 ambiguity before it becomes a wasted session — not to add ceremony. An agent that hits ambiguity

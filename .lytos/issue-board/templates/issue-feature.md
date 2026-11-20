@@ -76,6 +76,15 @@ schema_version: 2
 
 *What we'll concretely do to solve the problem.*
 
+*Solution study (rubric `cost-review`) — written BEFORE any code. Risk low: one line ("kept X: the simplest option that passes the robustness floor"). Risk medium or high: a table of two or three options, then the decision.*
+
+| Option | Build cost | Run and maintenance cost at 10 / 100 / 500 units | Robustness floor (fails visibly, idempotent, resumable, reversible, isolated) |
+|---|---|---|---|
+| A | | | |
+| B | | | |
+
+**Decision:** the cheapest option that passes the robustness floor, and why.
+
 ## Ready
 
 *Definition of Ready (ADR-0007 §3) — the entry gate; an issue is loop-eligible only when ready.*
@@ -83,6 +92,7 @@ schema_version: 2
 - **Scope** — what this issue does, in one line.
 - **Constraints** — what it must respect.
 - **Out of scope** — what it explicitly does NOT do.
+- **Solution** — the study above is written and the cheapest robust option is chosen.
 - `risk:` set in the frontmatter (low | medium | high), and the DoD below has ≥1 machine-verifiable item.
 
 ## Definition of done
