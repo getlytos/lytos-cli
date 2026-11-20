@@ -11,12 +11,10 @@ import { join } from "path";
 import { readFileSync } from "fs";
 import { type Fixture } from "../helpers/fixtures.js";
 import { createIntentFixture, writeCard } from "../helpers/cards.js";
-import { parseFrontmatter, serializeFrontmatter } from "../../src/lib/frontmatter.js";
+import { parseFrontmatter } from "../../src/lib/frontmatter.js";
 import {
-  cleanReason,
   decideDiscoveryGate,
-  entersSprint,
-  hasDiscoveryOverride,
+  leavesTheBacklog,
   type GateDecision,
 } from "../../src/lib/discovery-gate.js";
 
@@ -50,20 +48,30 @@ function decide(
   return decideDiscoveryGate(join(cwd, ".lytos"), fm, { override, by: "Tester" });
 }
 
-describe("entersSprint", () => {
-  it("is true for a move into the sprint from an earlier stage, or from parked", () => {
-    expect(entersSprint("1-backlog", "2-sprint")).toBe(true);
-    expect(entersSprint("0-icebox", "2-sprint")).toBe(true);
-    expect(entersSprint("parked", "2-sprint")).toBe(true);
+describe("leavesTheBacklog — where the gate runs, and what a send-back is", () => {
+  const BEYOND = ["2-sprint", "3-in-progress", "4-review", "5-done"];
+
+  it("is true for any move out of the icebox, the backlog or parked into a stage beyond the backlog", () => {
+    for (const from of ["0-icebox", "1-backlog", "parked"]) {
+      for (const to of BEYOND) expect(leavesTheBacklog(from, to), `${from} -> ${to}`).toBe(true);
+    }
   });
 
-  it("is false for anything else: a send-back, or a move that is not into the sprint", () => {
-    expect(entersSprint("3-in-progress", "2-sprint")).toBe(false);
-    expect(entersSprint("4-review", "2-sprint")).toBe(false);
-    expect(entersSprint("5-done", "2-sprint")).toBe(false);
-    expect(entersSprint("1-backlog", "4-review")).toBe(false);
-    expect(entersSprint("2-sprint", "1-backlog")).toBe(false);
-    expect(entersSprint("2-sprint", "2-sprint")).toBe(false);
+  it("is false between the stages before the sprint: nothing has been committed yet", () => {
+    expect(leavesTheBacklog("1-backlog", "0-icebox")).toBe(false);
+    expect(leavesTheBacklog("0-icebox", "1-backlog")).toBe(false);
+    expect(leavesTheBacklog("parked", "1-backlog")).toBe(false);
+    expect(leavesTheBacklog("parked", "0-icebox")).toBe(false);
+  });
+
+  it("is false for a send-back: a card that is already in the sprint or beyond, going anywhere", () => {
+    // Every way into those stages is gated (move, start, claim, unpark, and close),
+    // so a card found there is not asked again.
+    for (const from of BEYOND) {
+      for (const to of ["0-icebox", "1-backlog", "2-sprint", "4-review", "parked"]) {
+        expect(leavesTheBacklog(from, to), `${from} -> ${to}`).toBe(false);
+      }
+    }
   });
 });
 
@@ -145,18 +153,81 @@ describe("decideDiscoveryGate — the two exemptions", () => {
     writeCard(cwd, "ISS-0011", {
       fields: {
         parent: "ISS-0010",
-        discovery_override: "\n  reason: \"the owner asked for it\"\n  date: 2026-11-20",
+        discovery_override:
+          '\n  reason: "the owner asked for it"\n  date: 2026-11-20\n  epic: ISS-0010\n  by: Someone',
       },
     });
     expect(decide(cwd, "ISS-0011")).toEqual({ action: "pass" });
   });
 
-  it("does not take an empty override record for an override", () => {
-    expect(hasDiscoveryOverride({ discovery_override: { date: "2026-11-20" } })).toBe(false);
-    expect(hasDiscoveryOverride({ discovery_override: { reason: "  " } })).toBe(false);
-    expect(hasDiscoveryOverride({ discovery_override: "yes" })).toBe(false);
-    expect(hasDiscoveryOverride({})).toBe(false);
-    expect(hasDiscoveryOverride({ discovery_override: { reason: "why" } })).toBe(true);
+  it("does not let a leaf through on a bare record, and says the record does not count", () => {
+    const cwd = setup();
+    writeCard(cwd, "ISS-0011", {
+      fields: { parent: "ISS-0010", discovery_override: "\n  reason: x" },
+    });
+    const d = decide(cwd, "ISS-0011");
+    expect(d.action).toBe("refuse");
+    if (d.action !== "refuse") return;
+    expect(d.hints.join("\n")).toMatch(/discovery_override.*(incomplete|missing).*does not count/s);
+    expect(d.hints.join("\n")).toContain("date, by, epic");
+  });
+
+  it("does not let a leaf through on a record made for another epic", () => {
+    const cwd = setup();
+    writeCard(cwd, "ISS-0011", {
+      fields: {
+        parent: "ISS-0010",
+        discovery_override:
+          '\n  reason: "fine"\n  date: 2026-11-20\n  epic: ISS-0099\n  by: Someone',
+      },
+    });
+    const d = decide(cwd, "ISS-0011");
+    expect(d.action).toBe("refuse");
+    if (d.action === "refuse") expect(d.hints.join("\n")).toContain("ISS-0099");
+  });
+
+  it("replaces an invalid record with a new, complete one when a person overrides", () => {
+    const cwd = setup();
+    writeCard(cwd, "ISS-0011", {
+      fields: { parent: "ISS-0010", discovery_override: "\n  reason: x" },
+    });
+    expect(decide(cwd, "ISS-0011", "a real reason").action).toBe("override");
+  });
+
+  it("says the override is a person's decision, so an agent never takes it on itself", () => {
+    const cwd = setup();
+    writeCard(cwd, "ISS-0011", { fields: { parent: "ISS-0010" } });
+    const d = decide(cwd, "ISS-0011");
+    expect(d.action).toBe("refuse");
+    if (d.action !== "refuse") return;
+    const text = `${d.message}\n${d.hints.join("\n")}`;
+    expect(text).toMatch(/a person must decide/i);
+    expect(text).toMatch(/never (passed|passes|taken) by an agent|an agent or a wrapper never/i);
+  });
+
+  it("refuses a reason that is nothing but dashes, as no reason at all", () => {
+    const cwd = setup();
+    writeCard(cwd, "ISS-0011", { fields: { parent: "ISS-0010" } });
+    for (const raw of ["---", "-----"]) {
+      const d = decide(cwd, "ISS-0011", raw);
+      expect(d.action, raw).toBe("refuse");
+      if (d.action === "refuse") expect(d.reason).toBe("override-needs-reason");
+    }
+  });
+
+  it("writes a reason that cannot be read as a delimiter, and a clean author", () => {
+    const cwd = setup();
+    writeCard(cwd, "ISS-0011", { fields: { parent: "ISS-0010" } });
+    const fm = parseFrontmatter(
+      readFileSync(join(cwd, ".lytos/issue-board/1-backlog/ISS-0011-card.md"), "utf-8")
+    )!;
+    const d = decideDiscoveryGate(join(cwd, ".lytos"), fm, { override: "agreed ---", by: "---\nstatus: x" });
+    expect(d.action).toBe("override");
+    if (d.action !== "override") return;
+    expect(d.record.reason).toBe("agreed -");
+    expect(d.record.by).toBe("status: x");
+    const blank = decideDiscoveryGate(join(cwd, ".lytos"), fm, { override: "ok", by: "---" });
+    if (blank.action === "override") expect(blank.record.by).toBe("unknown");
   });
 
   it("lets a leaf through with an explicit override, and returns the record to write", () => {
@@ -189,44 +260,5 @@ describe("decideDiscoveryGate — the two exemptions", () => {
     writeCard(cwd, "ISS-0012", { type: "spike", fields: { parent: "ISS-0010" } });
     expect(decide(cwd, "ISS-0011", "not needed")).toEqual({ action: "pass" });
     expect(decide(cwd, "ISS-0012", "not needed")).toEqual({ action: "pass" });
-  });
-});
-
-describe("cleanReason — what is written into the card must read back unchanged", () => {
-  it("collapses newlines and runs of spaces into single spaces", () => {
-    expect(cleanReason("  line one\n\nline   two\t end ")).toBe("line one line two end");
-  });
-
-  it("returns an empty string for nothing but whitespace", () => {
-    expect(cleanReason(" \n\t ")).toBe("");
-  });
-
-  it("drops the quote marks the frontmatter reader would strip at the ends", () => {
-    expect(cleanReason('"quoted"')).toBe("quoted");
-    expect(cleanReason("'single'")).toBe("single");
-    expect(cleanReason('He said "go" now')).toBe("He said 'go' now");
-  });
-
-  it("round-trips through the frontmatter, whatever the reason holds", () => {
-    const reasons = [
-      "plain reason",
-      "has: a colon",
-      "has a # hash",
-      'says "quoted" things',
-      "ends with a quote'",
-      "multi\nline\nreason",
-      "[looks like a list]",
-      "tab\tseparated",
-    ];
-    for (const raw of reasons) {
-      const reason = cleanReason(raw);
-      const text = serializeFrontmatter({
-        id: "ISS-0001",
-        discovery_override: { reason, date: "2026-11-20", epic: "ISS-0010", by: "Tester" },
-      });
-      const back = parseFrontmatter(text + "\n")!;
-      expect((back.discovery_override as { reason: string }).reason).toBe(reason);
-      expect((back.discovery_override as { date: string }).date).toBe("2026-11-20");
-    }
   });
 });

@@ -223,6 +223,9 @@ describe("lyt board — an epic with its leaves and a progress count", () => {
   it("changes when a leaf moves, through the CLI", () => {
     const cwd = epicProject();
     expect(run("board --json", cwd).stdout).toContain('"done": 1');
+    // The epic is frozen: a leaf of an epic in discovery could not leave the backlog
+    // nor be closed (the discovery gate, ISS-0175).
+    writeCard(cwd, "ISS-0010", { type: "epic", title: "Big outcome", fields: { phase: "frozen", milestone: "v1.7" } });
     expect(run("move ISS-0013 4-review", cwd).exitCode).toBe(0);
     expect(run("close ISS-0013", cwd).exitCode).toBe(0);
     const epic = JSON.parse(run("board --json", cwd).stdout).epics[0];

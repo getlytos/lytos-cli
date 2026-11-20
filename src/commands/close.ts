@@ -25,6 +25,12 @@ import {
   type IssueLocation,
 } from "../lib/issue-ops.js";
 import { parseFrontmatter, type Frontmatter } from "../lib/frontmatter.js";
+import { decideDiscoveryGate } from "../lib/discovery-gate.js";
+import {
+  enforceDiscoveryGate,
+  OVERRIDE_HELP,
+  OVERRIDE_OPTION,
+} from "../lib/discovery-gate-cli.js";
 import {
   ok,
   info,
@@ -38,6 +44,7 @@ import {
 } from "../lib/output.js";
 
 interface CloseOptions {
+  discoveryOverride?: string;
   force?: boolean;
   yes?: boolean;
   dryRun?: boolean;
@@ -91,6 +98,7 @@ export const closeCommand = new Command("close")
   .option("--force", "Close even with unchecked checklist items", false)
   .option("--yes", "Skip the batch confirmation prompt", false)
   .option("--dry-run", "Preview what would close, change nothing", false)
+  .option(OVERRIDE_OPTION, OVERRIDE_HELP)
   .option("--json", "Output result as JSON", false)
   .on("--help", () => {
     console.log("");
@@ -101,6 +109,14 @@ export const closeCommand = new Command("close")
     console.log("  lyt close --yes");
     console.log("  lyt close --dry-run");
     console.log("  lyt close --yes --force");
+    console.log("");
+    console.log(
+      "A leaf of an epic still in phase: discovery is not delivered: a person must"
+    );
+    console.log(
+      'decide, with lyt close ISS-0053 --discovery-override "<reason>". A batch close'
+    );
+    console.log("skips such a leaf and says why.");
   })
   .action(async (issueId: string | undefined, opts: CloseOptions) => {
     const cwd = process.cwd();
@@ -160,6 +176,14 @@ async function closeSingle(
     process.exit(1);
   }
 
+  // The discovery gate (ADR-0009 §3): a leaf of an epic still in discovery is
+  // not delivered, whatever way it reached review. Nothing is changed when it
+  // refuses.
+  const gate = enforceDiscoveryGate(lytosDir, issue.frontmatter, {
+    override: opts.discoveryOverride,
+    json: opts.json,
+  });
+
   const checklist = countChecklist(issue.content);
   const unchecked = checklist.total - checklist.done;
 
@@ -202,7 +226,10 @@ async function closeSingle(
     return;
   }
 
-  moveIssue(lytosDir, issue, "5-done", buildCloseExtras(issue));
+  moveIssue(lytosDir, issue, "5-done", {
+    ...buildCloseExtras(issue),
+    ...gate,
+  });
   regenerateBoard(lytosDir);
 
   if (opts.json) {
@@ -240,6 +267,8 @@ interface ReviewCandidate {
   done: number;
   total: number;
   unchecked: number;
+  /** Set when the discovery gate holds the leaf back: why, in a sentence. */
+  held: string | null;
 }
 
 async function closeBatch(lytosDir: string, opts: CloseOptions): Promise<void> {
@@ -256,6 +285,7 @@ async function closeBatch(lytosDir: string, opts: CloseOptions): Promise<void> {
       const fm = parseFrontmatter(content);
       if (!fm) continue;
       const checklist = countChecklist(content);
+      const gate = decideDiscoveryGate(lytosDir, fm);
       candidates.push({
         issue: {
           filePath,
@@ -267,6 +297,10 @@ async function closeBatch(lytosDir: string, opts: CloseOptions): Promise<void> {
         done: checklist.done,
         total: checklist.total,
         unchecked: checklist.total - checklist.done,
+        held:
+          gate.action === "refuse"
+            ? `epic-in-discovery: ${gate.epic} is still in discovery`
+            : null,
       });
     }
   }
@@ -317,7 +351,7 @@ async function closeBatch(lytosDir: string, opts: CloseOptions): Promise<void> {
             candidates: candidates.map((c) => ({
               id: c.issue.frontmatter.id,
               unchecked: c.unchecked,
-              wouldSkip: c.unchecked > 0 && !opts.force,
+              wouldSkip: (c.unchecked > 0 && !opts.force) || c.held !== null,
             })),
           },
           null,
@@ -349,6 +383,16 @@ async function closeBatch(lytosDir: string, opts: CloseOptions): Promise<void> {
     const id = String(
       c.issue.frontmatter.id ?? c.issue.fileName.replace(/\.md$/, "")
     );
+
+    if (c.held !== null) {
+      skipped.push({ id, reason: c.held });
+      if (!opts.json) {
+        warn(
+          `${cyan(bold(id))} skipped — ${c.held}; a person must decide: lyt close ${id} --discovery-override "<reason>"`
+        );
+      }
+      continue;
+    }
 
     if (c.unchecked > 0 && !opts.force) {
       skipped.push({

@@ -1,5 +1,6 @@
 /**
- * Lint rules of the intent layer (ADR-0009 §2, ISS-0163).
+ * Lint rules of the intent layer (ADR-0009 §2, ISS-0163). The two rules of the
+ * discovery gate (ISS-0175) live in `discovery-lint.ts` and run from here.
  *
  * Four rules over the `parent`, `phase` and `milestone` fields: `parent` is one
  * card id that points at an existing epic; the depth is at most two (an epic has
@@ -25,6 +26,7 @@ import {
   scalar,
   type IntentCard,
 } from "./intent.js";
+import { discoveryFindings } from "./discovery-lint.js";
 import type { LintFinding } from "./linter.js";
 
 function warning(card: IntentCard, message: string, fix: string): LintFinding {
@@ -188,7 +190,8 @@ export function lintIntent(lytosDir: string): LintFinding[] {
     findings.push(
       ...parentFindings(card, byId),
       ...phaseFindings(card),
-      ...milestoneFindings(card, lytosDir)
+      ...milestoneFindings(card, lytosDir),
+      ...discoveryFindings(card, byId)
     );
   }
   return findings;

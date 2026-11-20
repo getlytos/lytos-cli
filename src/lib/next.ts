@@ -152,7 +152,7 @@ export function selectNext(lytosDir: string): NextResult {
         id,
         title,
         reason: "epic-in-discovery",
-        detail: `${gate.epic} is still in phase: discovery — its leaves wait for the freeze (a spike or a recorded override is exempt)`,
+        detail: `${gate.epic} is still in phase: discovery — its leaves wait for the freeze (a spike, or an override a person recorded, is exempt)`,
       });
       continue;
     }

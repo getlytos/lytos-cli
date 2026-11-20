@@ -9,6 +9,7 @@
 import { existsSync, readFileSync, readdirSync } from "fs";
 import { join } from "path";
 import {
+  bodyOf,
   parseFrontmatter,
   type Frontmatter,
   type FrontmatterValue,
@@ -125,10 +126,9 @@ export function parseIssueDetail(
   const daysOpen = computeDaysOpen(fm);
 
   // Extract body (content after frontmatter, skip the H1 title)
-  const bodyMatch = content.match(
-    /^---[\s\S]*?---\s*\n(?:#[^\n]*\n)?([\s\S]*)/
-  );
-  const body = bodyMatch ? bodyMatch[1].trim() : "";
+  const body = bodyOf(content)
+    .replace(/^#[^\n]*\n/, "")
+    .trim();
   const intent = describeIntent(lytosDir, str(fm.id), fm);
 
   return {

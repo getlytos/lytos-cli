@@ -74,9 +74,10 @@ point settled becomes one line here, written `Decision: …`.*
 ## Freeze checklist
 
 *A human freezes the epic by setting `phase: frozen`, once every line below holds. Until then the
-leaves cannot enter the sprint: `lyt move … 2-sprint`, `lyt start`, `lyt claim`, `lyt unpark` and
-`lyt next` refuse or skip them. A `spike` leaf (`type: spike`), which produces the evidence this
-checklist needs, is exempt. After the freeze a change is a change request, not an edit.*
+leaves cannot leave the backlog: `lyt move` out of the backlog, `lyt start`, `lyt claim`,
+`lyt unpark` and `lyt close` refuse them, and `lyt next` skips them. A `spike` leaf (`type: spike`),
+which produces the evidence this checklist needs, is exempt. After the freeze a change is a change
+request, not an edit.*
 
 - [ ] The intent is written in product words, with no solution in it
 - [ ] The thin slice is chosen

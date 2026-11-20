@@ -24,7 +24,7 @@ import {
   today,
 } from "../lib/issue-ops.js";
 import { ok, info, warn, error, bold, cyan, green } from "../lib/output.js";
-import { entersSprint } from "../lib/discovery-gate.js";
+import { leavesTheBacklog } from "../lib/discovery-gate.js";
 import {
   enforceDiscoveryGate,
   OVERRIDE_HELP,
@@ -68,14 +68,15 @@ export const moveCommand = new Command("move")
     console.log("  lyt move ISS-0053 4-review --json");
     console.log("");
     console.log(
-      "A leaf of an epic in phase: discovery cannot enter the sprint"
+      "A leaf of an epic in phase: discovery cannot leave the backlog: not for the"
     );
     console.log(
-      "(1-backlog, 0-icebox or parked to 2-sprint) unless it is a spike or you"
+      "sprint, not for review (a move out of 0-icebox, 1-backlog or parked), unless"
     );
     console.log(
-      'override with --discovery-override "<reason>" (recorded in the card).'
+      'it is a spike or a person overrides with --discovery-override "<reason>".'
     );
+    console.log("A send-back from the sprint or beyond is not asked again.");
     console.log("");
     console.log("Stages with a dedicated verb are refused on purpose:");
     console.log(
@@ -166,9 +167,10 @@ export const moveCommand = new Command("move")
       }
 
       // The discovery gate (ADR-0009 §3): a leaf of an epic still in discovery
-      // does not enter the sprint. Local and cheap, so it runs before the
+      // does not leave the backlog, for the sprint or for any later stage. A
+      // send-back is not asked again. Local and cheap, so it runs before the
       // network check; nothing has been changed when it refuses.
-      const gate: Frontmatter = entersSprint(issue.dir, stage)
+      const gate: Frontmatter = leavesTheBacklog(issue.dir, stage)
         ? enforceDiscoveryGate(lytosDir, issue.frontmatter, {
             override: opts.discoveryOverride,
             json: opts.json,
