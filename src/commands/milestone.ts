@@ -12,14 +12,17 @@ import { existsSync } from "fs";
 import { resolve } from "path";
 import {
   listMilestoneIds,
+  milestoneRefusal,
   milestoneSummaries,
   milestoneView,
+  skippedMilestones,
   type MilestoneView,
 } from "../lib/milestone.js";
 import { MILESTONES_DIR, MILESTONE_ID } from "../lib/intent.js";
 import { leafLine, progressLabel } from "../lib/epic-render.js";
 import {
   ok,
+  warn,
   error,
   bold,
   cyan,
@@ -138,6 +141,8 @@ export const milestoneCommand = new Command("milestone")
     }
 
     if (id === undefined) {
+      // An entry that is a link or a directory is left out, and said so.
+      for (const line of skippedMilestones(lytosDir)) warn(line);
       const views = milestoneSummaries(lytosDir);
       if (opts.json) console.log(JSON.stringify(views, null, 2));
       else displayList(views);
@@ -150,6 +155,8 @@ export const milestoneCommand = new Command("milestone")
         opts.json
       );
     }
+    const refusal = milestoneRefusal(lytosDir, id);
+    if (refusal) fail(refusal, opts.json);
     const view = milestoneView(lytosDir, id);
     if (!view) {
       const known = listMilestoneIds(lytosDir);

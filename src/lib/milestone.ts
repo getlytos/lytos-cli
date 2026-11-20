@@ -22,9 +22,10 @@
  * Zero dependencies.
  */
 
-import { existsSync, readFileSync, readdirSync } from "fs";
+import { existsSync, lstatSync, readFileSync, readdirSync } from "fs";
 import { join } from "path";
 import { parseFrontmatter } from "./frontmatter.js";
+import { symlinkOnPath } from "./safe-write.js";
 import {
   MILESTONES_DIR,
   MILESTONE_ID,
@@ -100,10 +101,44 @@ function parseCriteria(content: string): Criterion[] {
   return items;
 }
 
-/** The milestone ids, from the file names under `.lytos/milestones/`, sorted. */
-export function listMilestoneIds(lytosDir: string): string[] {
+/** A path as the messages show it: relative to the project root. */
+function shownPath(...parts: string[]): string {
+  return [".lytos", MILESTONES_DIR, ...parts].join("/");
+}
+
+/**
+ * Why a milestone path is not read: a symbolic link anywhere on it (the milestones
+ * folder included), or something that is not a regular file. Null for a regular
+ * file, and for a file that is not there. Like `exchanges`, a milestone is never
+ * followed through a link, and never read from a directory (ISS-0178).
+ */
+export function milestoneRefusal(lytosDir: string, id: string): string | null {
+  const folder = join(lytosDir, MILESTONES_DIR);
+  if (symlinkOnPath(folder, lytosDir)) {
+    return `${shownPath()} is a symbolic link: it is not read`;
+  }
+  const path = join(folder, `${id}.md`);
+  const shown = shownPath(`${id}.md`);
+  let stat;
+  try {
+    stat = lstatSync(path);
+  } catch {
+    return null; // not there: the caller says so
+  }
+  if (stat.isSymbolicLink())
+    return `${shown} is a symbolic link: it is not read`;
+  if (stat.isDirectory()) {
+    return `${shown} is a directory, not a regular file: it is not read`;
+  }
+  return stat.isFile()
+    ? null
+    : `${shown} is not a regular file: it is not read`;
+}
+
+/** The names of the `.md` entries under the milestones folder, sorted. */
+function milestoneEntries(lytosDir: string): string[] {
   const dir = join(lytosDir, MILESTONES_DIR);
-  if (!existsSync(dir)) return [];
+  if (symlinkOnPath(dir, lytosDir) || !existsSync(dir)) return [];
   return readdirSync(dir)
     .filter((f) => f.endsWith(".md"))
     .map((f) => f.slice(0, -".md".length))
@@ -111,15 +146,34 @@ export function listMilestoneIds(lytosDir: string): string[] {
     .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
 }
 
+/** The milestone ids, from the regular files under `.lytos/milestones/`, sorted. */
+export function listMilestoneIds(lytosDir: string): string[] {
+  return milestoneEntries(lytosDir).filter(
+    (id) => milestoneRefusal(lytosDir, id) === null
+  );
+}
+
+/** The entries `listMilestoneIds` left out, each with why, so a command can say so. */
+export function skippedMilestones(lytosDir: string): string[] {
+  const skipped: string[] = [];
+  for (const id of milestoneEntries(lytosDir)) {
+    const refusal = milestoneRefusal(lytosDir, id);
+    if (refusal) skipped.push(refusal);
+  }
+  return skipped;
+}
+
 /**
  * Read one milestone file. Null when the id is not a plain file name (so nothing
- * outside the milestones folder is ever read) or when no such file exists.
+ * outside the milestones folder is ever read), when the path is a link or not a
+ * regular file (`milestoneRefusal` says which), or when no such file exists.
  */
 export function readMilestone(
   lytosDir: string,
   id: string
 ): MilestoneFile | null {
   if (!MILESTONE_ID.test(id)) return null;
+  if (milestoneRefusal(lytosDir, id) !== null) return null;
   const path = join(lytosDir, MILESTONES_DIR, `${id}.md`);
   if (!existsSync(path)) return null;
 

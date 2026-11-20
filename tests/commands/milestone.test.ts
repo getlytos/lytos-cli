@@ -5,7 +5,7 @@
 
 import { describe, it, expect, afterEach } from "vitest";
 import { resolve, join } from "path";
-import { readFileSync, readdirSync } from "fs";
+import { mkdirSync, readFileSync, readdirSync, symlinkSync, writeFileSync } from "fs";
 import { spawnSync } from "child_process";
 import { createEmptyFixture, type Fixture } from "../helpers/fixtures.js";
 import {
@@ -175,5 +175,116 @@ describe("lyt milestone", () => {
     const r = run("milestone broken", cwd);
     expect(r.exitCode).toBe(0);
     expect(r.stderr).toContain("frontmatter");
+  });
+});
+
+describe("lyt milestone — a path that is not a plain file (ISS-0178)", () => {
+  /** A project with one good milestone, `v1`, and the hostile entries added by each test. */
+  function hostile(): { cwd: string; dir: string; outside: string } {
+    fixture = createIntentFixture();
+    const cwd = fixture.cwd;
+    writeMilestone(cwd, "v1", { title: "Good one" });
+    const outside = join(cwd, "outside.txt");
+    writeFileSync(outside, "---\nid: hosts\ntitle: Leaked\nstatus: open\n---\n## Exit criteria\n- [ ] leaked line\n");
+    return { cwd, dir: join(cwd, ".lytos", "milestones"), outside };
+  }
+
+  const lines = (text: string) => text.split("\n").filter((l) => l.trim() !== "");
+  const noTrace = (text: string) => {
+    expect(text).not.toMatch(/EISDIR|ELOOP|ENOENT|node:internal|node:fs|\n\s+at /);
+  };
+
+  it("refuses a milestone that is a directory, with one line and exit 1, not a stack trace", () => {
+    const { cwd, dir } = hostile();
+    mkdirSync(join(dir, "broken.md"));
+    const r = run("milestone broken", cwd);
+    expect(r.exitCode).toBe(1);
+    expect(r.stdout).toBe("");
+    expect(lines(r.stderr)).toHaveLength(1);
+    expect(r.stderr).toContain(".lytos/milestones/broken.md");
+    expect(r.stderr).toMatch(/directory/);
+    expect(r.stderr).toMatch(/not read/);
+    noTrace(r.stderr);
+  });
+
+  it("refuses a milestone that is a symbolic link, and never reads what it points at", () => {
+    const { cwd, dir, outside } = hostile();
+    symlinkSync(outside, join(dir, "hosts.md"));
+    const r = run("milestone hosts", cwd);
+    expect(r.exitCode).toBe(1);
+    expect(r.stdout).toBe("");
+    expect(lines(r.stderr)).toHaveLength(1);
+    expect(r.stderr).toMatch(/symbolic link/);
+    expect(r.stderr).not.toContain("leaked line");
+    expect(r.stderr).not.toContain("Leaked");
+    noTrace(r.stderr);
+  });
+
+  it("refuses a link to a directory, a dangling link, and a link inside the folder to another milestone", () => {
+    const { cwd, dir } = hostile();
+    mkdirSync(join(cwd, "elsewhere"));
+    symlinkSync(join(cwd, "elsewhere"), join(dir, "dirlink.md"));
+    symlinkSync(join(cwd, "nowhere"), join(dir, "dangling.md"));
+    symlinkSync(join(dir, "v1.md"), join(dir, "alias.md"));
+    for (const id of ["dirlink", "dangling", "alias"]) {
+      const r = run(`milestone ${id}`, cwd);
+      expect(r.exitCode, id).toBe(1);
+      expect(lines(r.stderr), id).toHaveLength(1);
+      expect(r.stderr, id).toMatch(/symbolic link/);
+      noTrace(r.stderr);
+    }
+  });
+
+  it("refuses when the milestones folder itself is a link", () => {
+    fixture = createIntentFixture();
+    const cwd = fixture.cwd;
+    mkdirSync(join(cwd, "real-milestones"));
+    writeFileSync(join(cwd, "real-milestones", "v1.md"), "---\nid: v1\ntitle: T\nstatus: open\n---\n");
+    symlinkSync(join(cwd, "real-milestones"), join(cwd, ".lytos", "milestones"));
+    const r = run("milestone v1", cwd);
+    expect(r.exitCode).toBe(1);
+    expect(r.stderr).toMatch(/symbolic link/);
+    noTrace(r.stderr);
+  });
+
+  it("says the same in JSON, with exit 1 and nothing but the error on stdout", () => {
+    const { cwd, dir } = hostile();
+    mkdirSync(join(dir, "broken.md"));
+    const r = run("milestone broken --json", cwd);
+    expect(r.exitCode).toBe(1);
+    const data = JSON.parse(r.stdout);
+    expect(data.status).toBe("error");
+    expect(data.message).toMatch(/directory/);
+  });
+
+  it("still shows a regular file, in the same folder", () => {
+    const { cwd, dir } = hostile();
+    mkdirSync(join(dir, "broken.md"));
+    const r = run("milestone v1", cwd);
+    expect(r.exitCode).toBe(0);
+    expect(r.stderr).toContain("Good one");
+  });
+
+  it("lists the good milestones, skips the others with a line each, and does not crash", () => {
+    const { cwd, dir, outside } = hostile();
+    mkdirSync(join(dir, "broken.md"));
+    symlinkSync(outside, join(dir, "hosts.md"));
+    const r = run("milestone", cwd);
+    expect(r.exitCode).toBe(0);
+    expect(r.stderr).toContain("Good one");
+    expect(r.stderr).toMatch(/broken\.md.*directory/);
+    expect(r.stderr).toMatch(/hosts\.md.*symbolic link/);
+    expect(r.stderr).not.toContain("Leaked");
+    noTrace(r.stderr);
+  });
+
+  it("lists as JSON only the good milestones, and keeps stdout a clean array", () => {
+    const { cwd, dir, outside } = hostile();
+    mkdirSync(join(dir, "broken.md"));
+    symlinkSync(outside, join(dir, "hosts.md"));
+    const r = run("milestone --json", cwd);
+    expect(r.exitCode).toBe(0);
+    expect(JSON.parse(r.stdout).map((m: { id: string }) => m.id)).toEqual(["v1"]);
+    noTrace(r.stderr);
   });
 });
