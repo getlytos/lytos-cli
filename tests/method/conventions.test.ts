@@ -79,6 +79,14 @@ describe("the three verify: modes are documented where they are written (ISS-015
     expect(rules).toMatch(/reviewer:over-engineering/);
   });
 
+  it("the generated rules state the human rule: last resort, always pinned, e2e otherwise (ISS-0154)", () => {
+    const rules = read(RULES);
+    expect(rules).toMatch(/`verify: human` is the last resort, and it always carries a pin/);
+    expect(rules).toMatch(/could not check it themselves/);
+    expect(rules).toContain("verify: auto:e2e");
+    expect(rules).toMatch(/lyt lint` warns/);
+  });
+
   it("ADR-0004 records the marker grammar and the eligibility decision", () => {
     const adr = read(".lytos/adr/ADR-0004-autonomous-loop-under-governance.md");
     expect(adr).toContain("verify: (auto|reviewer|human)[:pin]");

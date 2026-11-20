@@ -9,8 +9,9 @@
 import { existsSync, readFileSync, readdirSync } from "fs";
 import { join } from "path";
 import { parseFrontmatter } from "./frontmatter.js";
-import { analyzeDod } from "./dod.js";
+import { analyzeDod, type DodItem } from "./dod.js";
 import { analyzeReady } from "./ready.js";
+import { humanItemProblems, loadKit, type QualityKit } from "./quality.js";
 import {
   MANIFEST_SECTIONS as MANIFEST_SECTION_DEFS,
   MANIFEST_LANGS,
@@ -199,7 +200,7 @@ export function lint(lytosDir: string): LintResult {
   }
 
   // Validate issue frontmatter
-  const issueFindings = lintIssues(lytosDir);
+  const issueFindings = lintIssues(lytosDir, loadKit(lytosDir));
   findings.push(...issueFindings.findings);
   filesChecked += issueFindings.filesChecked;
 
@@ -226,7 +227,10 @@ export function lint(lytosDir: string): LintResult {
 /**
  * Validate all issue files in the issue-board.
  */
-function lintIssues(lytosDir: string): {
+function lintIssues(
+  lytosDir: string,
+  kit: QualityKit | null
+): {
   findings: LintFinding[];
   filesChecked: number;
 } {
@@ -311,6 +315,12 @@ function lintIssues(lytosDir: string): {
           });
         }
 
+        // The owner's rule on `verify: human` (ISS-0154). A closed issue's DoD is
+        // history: flagging it would bury the warnings on live work.
+        if (dir !== "5-done") {
+          findings.push(...humanRuleFindings(dod.items, kit, relPath));
+        }
+
         // Definition of Ready (ADR-0007 §3, ISS-0115): sprint issues must be ready.
         if (dir === "2-sprint") {
           const ready = analyzeReady(content, fm);
@@ -328,6 +338,47 @@ function lintIssues(lytosDir: string): {
   }
 
   return { findings, filesChecked };
+}
+
+/**
+ * Warnings for the `verify: human` items of one issue (ISS-0154): no pin, or a
+ * pin that names a kit line that is not a human one. Never an error — the rule
+ * must not break a project that predates it.
+ */
+function humanRuleFindings(
+  items: DodItem[],
+  kit: QualityKit | null,
+  relPath: string
+): LintFinding[] {
+  const problems = humanItemProblems(items, kit);
+  const findings: LintFinding[] = [];
+
+  if (problems.unpinned.length > 0) {
+    const pins =
+      problems.humanGates.length > 0
+        ? `a human line of quality/kit.md (${problems.humanGates.join(", ")})`
+        : "a human line of quality/kit.md";
+    findings.push({
+      severity: "warning",
+      file: relPath,
+      message: `${problems.unpinned.length} verify: human item(s) without a kit pin`,
+      fix: `A human item is legitimate only when an end-to-end tester could not check it itself in a browser or with Playwright. Pin ${pins} ('verify: human:<id>'), or, if a browser can check it, write 'verify: auto:e2e' and attach the proof`,
+    });
+  }
+
+  if (problems.notHuman.length > 0) {
+    const named = problems.notHuman
+      .map((n) => `${n.pin} (${n.kind})`)
+      .join(", ");
+    findings.push({
+      severity: "warning",
+      file: relPath,
+      message: `${problems.notHuman.length} verify: human item(s) pin a kit line that is not a human one: ${named}`,
+      fix: "Pin a `human` line of quality/kit.md, or change the marker to the kind of the line it names ('verify: auto:<id>', 'verify: reviewer:<id>')",
+    });
+  }
+
+  return findings;
 }
 
 /**

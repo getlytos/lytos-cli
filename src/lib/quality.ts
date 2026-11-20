@@ -20,7 +20,7 @@
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
 import { parseFrontmatter, type FrontmatterValue } from "./frontmatter.js";
-import { extractDodItems } from "./dod.js";
+import { extractDodItems, type DodItem } from "./dod.js";
 
 export type GateKind = "gate" | "reviewer" | "human";
 export type RiskTier = "low" | "medium" | "high";
@@ -422,4 +422,53 @@ export function gateCoverage(
     else coverage.uncarried.push(gate);
   }
   return coverage;
+}
+
+/** What is wrong with the `verify: human` items of one Definition of Done. */
+export interface HumanItemProblems {
+  /** `verify: human` items that pin nothing: no kit line carries the person's call. */
+  unpinned: DodItem[];
+  /** `human:<pin>` items whose pin names a kit line that is not of kind `human`. */
+  notHuman: Array<{ item: DodItem; pin: string; kind: GateKind }>;
+  /** The ids of the kit's `human` lines — the pins an unpinned item can take. */
+  humanGates: string[];
+}
+
+/**
+ * The owner's rule on `verify: human`, as lint reads it (ISS-0154).
+ *
+ * A human item is legitimate only when an end-to-end tester could not check
+ * it itself, in a browser or with Playwright; otherwise it is `verify:
+ * auto:e2e`. A human item therefore always names a `human` line of the kit —
+ * the pin is what makes the person's call auditable, and an unpinned `human`
+ * is how a screen walkthrough ends up queued on the accountable human.
+ *
+ * A pin on an id the kit does not know is left alone: `lyt doctor` flags it
+ * (`unresolvedGateRefs`), and saying it twice is noise. With no kit at all the
+ * unpinned check still runs — it does not need one — and a pin cannot be judged.
+ */
+export function humanItemProblems(
+  items: DodItem[],
+  kit: QualityKit | null
+): HumanItemProblems {
+  const byId = new Map((kit?.gates ?? []).map((g) => [g.id.toLowerCase(), g]));
+  const problems: HumanItemProblems = {
+    unpinned: [],
+    notHuman: [],
+    humanGates: (kit?.gates ?? [])
+      .filter((g) => g.kind === "human")
+      .map((g) => g.id),
+  };
+  for (const item of items) {
+    if (item.verify !== "human") continue;
+    if (!item.pin) {
+      problems.unpinned.push(item);
+      continue;
+    }
+    const gate = byId.get(item.pin);
+    if (gate && gate.kind !== "human") {
+      problems.notHuman.push({ item, pin: item.pin, kind: gate.kind });
+    }
+  }
+  return problems;
 }
