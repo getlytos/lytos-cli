@@ -413,3 +413,100 @@ ${dod}
     expect(run("lint", fixture.cwd).exitCode).toBe(0); // a warning never fails the run
   });
 });
+
+describe("lyt lint — the human rule (ISS-0154)", () => {
+  const KIT = `# Quality kit
+
+| id | kind | tiers | tool |
+|----|------|-------|------|
+| tests-unit | gate | low,medium,high | npm test |
+| e2e | gate | high | npx playwright test |
+| over-engineering | reviewer | medium,high | rubric:over-engineering |
+| product-intent | human | high | checklist:intent |
+| screen-reader | human | high | checklist:a11y |
+`;
+
+  function setup(cwd: string): void {
+    createValidLytos(cwd);
+    mkdirSync(resolve(cwd, ".lytos", "quality"), { recursive: true });
+    writeFileSync(resolve(cwd, ".lytos", "quality", "kit.md"), KIT);
+  }
+
+  function writeIssue(cwd: string, dir: string, dod: string, schema = "schema_version: 2\n"): void {
+    mkdirSync(resolve(cwd, ".lytos", "issue-board", dir), { recursive: true });
+    writeFileSync(
+      resolve(cwd, ".lytos", "issue-board", dir, "ISS-0001-human.md"),
+      `---\nid: ISS-0001\ntitle: "Human"\nstatus: ${dir}\npriority: P2-normal\n${schema}---\n\n# ISS-0001\n\n## Definition of done\n\n${dod}\n`
+    );
+  }
+
+  function humanFindings(cwd: string): Array<{ severity: string; message: string; fix: string }> {
+    const data = JSON.parse(run("lint --json", cwd).stdout);
+    return data.findings.filter((f: { message: string }) => /verify: human/.test(f.message));
+  }
+
+  it("warns on an unpinned human item and offers both remedies", () => {
+    fixture = createEmptyFixture();
+    setup(fixture.cwd);
+    writeIssue(fixture.cwd, "2-sprint", "- [ ] Walk the checkout — verify: human\n- [ ] Intent — verify: human:product-intent");
+    const findings = humanFindings(fixture.cwd);
+    expect(findings).toHaveLength(1);
+    expect(findings[0].severity).toBe("warning");
+    expect(findings[0].message).toContain("1 verify: human item(s) without a kit pin");
+    // Remedy 1: pin a human line of the kit (the kit's own ids are listed).
+    expect(findings[0].fix).toContain("verify: human:<id>");
+    expect(findings[0].fix).toContain("product-intent");
+    expect(findings[0].fix).toContain("screen-reader");
+    // Remedy 2: a browser can check it → auto:e2e.
+    expect(findings[0].fix).toContain("verify: auto:e2e");
+    // A warning never fails the run.
+    expect(run("lint", fixture.cwd).exitCode).toBe(0);
+  });
+
+  it("warns when a human pin names a line of another kind", () => {
+    fixture = createEmptyFixture();
+    setup(fixture.cwd);
+    writeIssue(fixture.cwd, "2-sprint", "- [ ] A — verify: human:tests-unit\n- [ ] B — verify: human:over-engineering");
+    const findings = humanFindings(fixture.cwd);
+    expect(findings).toHaveLength(1);
+    expect(findings[0].severity).toBe("warning");
+    expect(findings[0].message).toContain("tests-unit (gate)");
+    expect(findings[0].message).toContain("over-engineering (reviewer)");
+    expect(run("lint", fixture.cwd).exitCode).toBe(0);
+  });
+
+  it("stays silent on a pin to a human line, and on a pin the kit does not know (doctor's job)", () => {
+    fixture = createEmptyFixture();
+    setup(fixture.cwd);
+    writeIssue(fixture.cwd, "2-sprint", "- [ ] A — verify: human:product-intent\n- [ ] B — verify: human:screen-reader\n- [ ] C — verify: human:ghost-list");
+    expect(humanFindings(fixture.cwd)).toEqual([]);
+  });
+
+  it("skips closed issues and schema v1 issues — no existing project starts complaining about its history", () => {
+    fixture = createEmptyFixture();
+    setup(fixture.cwd);
+    writeIssue(fixture.cwd, "5-done", "- [x] Old call — verify: human");
+    expect(humanFindings(fixture.cwd)).toEqual([]);
+    writeIssue(fixture.cwd, "2-sprint", "- [ ] Legacy — verify: human", "");
+    expect(humanFindings(fixture.cwd)).toEqual([]);
+  });
+
+  it("still flags an unpinned human item when the project has no kit at all", () => {
+    fixture = createEmptyFixture();
+    createValidLytos(fixture.cwd);
+    writeIssue(fixture.cwd, "2-sprint", "- [ ] Walk the checkout — verify: human");
+    const findings = humanFindings(fixture.cwd);
+    expect(findings).toHaveLength(1);
+    expect(findings[0].fix).toContain("verify: auto:e2e");
+    expect(findings[0].fix).not.toContain("undefined");
+  });
+
+  it("does not touch the existing marker check", () => {
+    fixture = createEmptyFixture();
+    setup(fixture.cwd);
+    writeIssue(fixture.cwd, "2-sprint", "- [ ] no marker at all");
+    const data = JSON.parse(run("lint --json", fixture.cwd).stdout);
+    expect(data.findings.some((f: { message: string }) => f.message.includes("without a verify: marker"))).toBe(true);
+    expect(humanFindings(fixture.cwd)).toEqual([]);
+  });
+});

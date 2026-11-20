@@ -186,6 +186,13 @@ flags a pin the kit cannot resolve.
 An item with no marker defaults to `auto` and is flagged by `npx lyt lint` as unqualified —
 write the marker rather than letting the default decide for you.
 
+**`verify: human` is the last resort, and it always carries a pin.** An item is `human` only when an
+end-to-end tester could not check it themselves, in a browser or with Playwright; otherwise it is
+`verify: auto:e2e`, with the proof attached. Walking a screen is the tester's work, never the human's.
+A human item names a `human` line of the quality kit (`human:product-intent`). `npx lyt lint` warns on
+one that does not, and on a pin that names a line of another kind — a warning, so nothing breaks, but
+the human queue stays honest.
+
 Three consequences that matter in practice:
 
 1. **Tick as you go.** A cross-model audit reads the unchecked list as the truth. Batching ticks

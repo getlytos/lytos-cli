@@ -17,6 +17,7 @@ import {
   unlistedDependencies,
   gateCoverage,
   pinnedGateRefs,
+  humanItemProblems,
   type QualityKit,
 } from "../../src/lib/quality.js";
 import { analyzeDod } from "../../src/lib/dod.js";
@@ -454,5 +455,70 @@ discharges it.
 - [ ] real item — verify: auto
 `;
     expect(pinnedGateRefs(fiche)).toEqual([]);
+  });
+});
+
+describe("humanItemProblems — the human rule (ISS-0154)", () => {
+  const kit: QualityKit = {
+    gates: parseGates(`| id | kind | tiers | tool |
+|----|------|-------|------|
+| tests-unit | gate | low,medium,high | npm test |
+| over-engineering | reviewer | medium,high | rubric:oe |
+| product-intent | human | high | checklist:intent |
+| screen-reader | human | high | checklist:a11y |
+`),
+    stack: null,
+  };
+  const items = (dod: string) => analyzeDod(`## Definition of done\n\n${dod}\n`).items;
+
+  it("flags a human item with no pin, and lists the human lines the kit has", () => {
+    const r = humanItemProblems(items("- [ ] Walk the screen — verify: human"), kit);
+    expect(r.unpinned.map((i) => i.text)).toEqual(["Walk the screen"]);
+    expect(r.notHuman).toEqual([]);
+    expect(r.humanGates).toEqual(["product-intent", "screen-reader"]);
+  });
+
+  it("accepts a pin on a human line, case-insensitively", () => {
+    const r = humanItemProblems(
+      items("- [ ] Intent — verify: human:product-intent\n- [ ] Reader — verify: human:SCREEN-READER"),
+      kit
+    );
+    expect(r.unpinned).toEqual([]);
+    expect(r.notHuman).toEqual([]);
+  });
+
+  it("flags a human pin that names a gate or a reviewer line", () => {
+    const r = humanItemProblems(
+      items("- [ ] A — verify: human:tests-unit\n- [ ] B — verify: human:over-engineering"),
+      kit
+    );
+    expect(r.notHuman.map((n) => [n.item.text, n.pin, n.kind])).toEqual([
+      ["A", "tests-unit", "gate"],
+      ["B", "over-engineering", "reviewer"],
+    ]);
+  });
+
+  it("leaves an unknown pin to `lyt doctor`", () => {
+    const r = humanItemProblems(items("- [ ] A — verify: human:ghost-list"), kit);
+    expect(r.unpinned).toEqual([]);
+    expect(r.notHuman).toEqual([]);
+  });
+
+  it("never looks at auto, reviewer or unmarked items", () => {
+    const r = humanItemProblems(
+      items("- [ ] A — verify: auto\n- [ ] B — verify: reviewer\n- [ ] C — verify: reviewer:over-engineering\n- [ ] D"),
+      kit
+    );
+    expect(r).toEqual({ unpinned: [], notHuman: [], humanGates: ["product-intent", "screen-reader"] });
+  });
+
+  it("still flags an unpinned item when the project has no kit, and cannot judge a pin", () => {
+    const r = humanItemProblems(
+      items("- [ ] A — verify: human\n- [ ] B — verify: human:product-intent"),
+      null
+    );
+    expect(r.unpinned.map((i) => i.text)).toEqual(["A"]);
+    expect(r.notHuman).toEqual([]);
+    expect(r.humanGates).toEqual([]);
   });
 });
