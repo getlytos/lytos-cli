@@ -29,6 +29,16 @@ skip what is quoted. Both helpers already exist — reuse them rather than scann
 to end the line. An annotation goes *before* the marker. `lyt lint` catches it; it cost ISS-0141 a
 full audit round.
 
+### Two readers of one syntax drift — test them on the same item (ISS-0153)
+
+`quality.ts` resolved `verify: reviewer:<pin>` and `verify: human:<pin>` against the kit while
+`dod.ts` classified the very same items as unmarked: `lyt lint` reported the forms the kit asks
+for, and the unrecognised `reviewer` item defaulted to `auto`, so it counted as a machine gate no
+command could turn green. The existing guard ("agrees with the DoD parser on the same item") only
+covered `auto`. One grammar now (`verify: (auto|reviewer|human)[:pin]`), and the cross-check test
+runs all three modes. **Before adding a marker form, write it into both readers and test them on
+the same string.**
+
 ### `branch:` is stale the moment a second branch exists
 
 An issue's work legitimately spans branches — delivery, then audit response, then the fix to the

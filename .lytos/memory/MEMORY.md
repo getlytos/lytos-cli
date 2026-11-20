@@ -3,7 +3,7 @@
 *This file is the project memory's table of contents. Load only what is relevant to the current
 task.*
 
-> **Last updated**: 2026-09-02
+> **Last updated**: 2026-11-20
 > **Number of entries**: 4
 
 ---
@@ -22,7 +22,11 @@ task.*
 ## Living summary
 
 CLI for the Lytos method, published on npm as `lytos-cli` — **1.5.1** is `latest`, and the first
-release this project ever published from CI with a provenance attestation.
+release this project ever published from CI with a provenance attestation. **1.6.0** is prepared
+(ISS-0153 to ISS-0160): the `verify:` marker knows `reviewer` and `<mode>:<pin>`, `lyt lint` warns
+on an unpinned `verify: human`, the method ships the review rubrics, human checklists, the
+solution study and the team-and-loop briefing, `lyt init` asks one optional design question, and
+`lyt upgrade` delivers the library without touching a linked kit.
 
 The CLI now carries the governed loop (ADR-0004): `next`, `park`/`unpark`, `budget`, `gates`,
 `report`, `journal`, alongside the original `init`, `board`, `lint`, `doctor`, `show`, `start`,
