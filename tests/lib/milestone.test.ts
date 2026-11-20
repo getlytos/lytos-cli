@@ -8,6 +8,7 @@
 
 import { describe, it, expect, afterEach } from "vitest";
 import { join } from "path";
+import { mkdirSync, symlinkSync, writeFileSync } from "fs";
 import { type Fixture } from "../helpers/fixtures.js";
 import {
   createIntentFixture,
@@ -17,9 +18,11 @@ import {
 } from "../helpers/cards.js";
 import {
   listMilestoneIds,
+  milestoneRefusal,
   milestoneSummaries,
   milestoneView,
   readMilestone,
+  skippedMilestones,
 } from "../../src/lib/milestone.js";
 
 let fixture: Fixture;
@@ -258,6 +261,58 @@ describe("milestoneView — progress derived from epics and leaves", () => {
     expect(all.map((m) => [m.id, m.status, m.leaves.total])).toEqual([
       ["v1.7", "open", 3],
       ["v2.0", "closed", 1],
+    ]);
+  });
+});
+
+describe("milestone files that are not plain files (ISS-0178)", () => {
+  it("does not read a directory, a link, a dangling link, or anything behind a linked folder", () => {
+    const cwd = setup();
+    writeMilestone(cwd, "good");
+    const dir = join(cwd, ".lytos", "milestones");
+    mkdirSync(join(dir, "dir.md"));
+    const target = join(cwd, "target.md");
+    writeFileSync(target, "---\nid: link\ntitle: T\nstatus: open\n---\n");
+    symlinkSync(target, join(dir, "link.md"));
+    symlinkSync(join(cwd, "nowhere"), join(dir, "dangling.md"));
+
+    expect(readMilestone(lytos(cwd), "good")).not.toBeNull();
+    for (const id of ["dir", "link", "dangling"]) expect(readMilestone(lytos(cwd), id), id).toBeNull();
+    expect(listMilestoneIds(lytos(cwd))).toEqual(["good"]);
+    expect(milestoneSummaries(lytos(cwd)).map((m) => m.id)).toEqual(["good"]);
+  });
+
+  it("names why a path is refused, and nothing for a plain or a missing file", () => {
+    const cwd = setup();
+    writeMilestone(cwd, "good");
+    const dir = join(cwd, ".lytos", "milestones");
+    mkdirSync(join(dir, "dir.md"));
+    symlinkSync(join(cwd, "x"), join(dir, "link.md"));
+    expect(milestoneRefusal(lytos(cwd), "good")).toBeNull();
+    expect(milestoneRefusal(lytos(cwd), "missing")).toBeNull();
+    expect(milestoneRefusal(lytos(cwd), "dir")).toBe(".lytos/milestones/dir.md is a directory, not a regular file: it is not read");
+    expect(milestoneRefusal(lytos(cwd), "link")).toBe(".lytos/milestones/link.md is a symbolic link: it is not read");
+  });
+
+  it("refuses everything in a milestones folder that is itself a link", () => {
+    const cwd = setup();
+    mkdirSync(join(cwd, "real"));
+    writeFileSync(join(cwd, "real", "v1.md"), "---\nid: v1\ntitle: T\nstatus: open\n---\n");
+    symlinkSync(join(cwd, "real"), join(cwd, ".lytos", "milestones"));
+    expect(readMilestone(lytos(cwd), "v1")).toBeNull();
+    expect(listMilestoneIds(lytos(cwd))).toEqual([]);
+    expect(milestoneRefusal(lytos(cwd), "v1")).toBe(".lytos/milestones is a symbolic link: it is not read");
+  });
+
+  it("lists the entries it skipped, so the command can say so", () => {
+    const cwd = setup();
+    writeMilestone(cwd, "good");
+    const dir = join(cwd, ".lytos", "milestones");
+    mkdirSync(join(dir, "dir.md"));
+    symlinkSync(join(cwd, "x"), join(dir, "link.md"));
+    expect(skippedMilestones(lytos(cwd))).toEqual([
+      ".lytos/milestones/dir.md is a directory, not a regular file: it is not read",
+      ".lytos/milestones/link.md is a symbolic link: it is not read",
     ]);
   });
 });
