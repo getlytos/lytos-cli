@@ -11,6 +11,7 @@ import {
   createEmptyFixture,
   type Fixture,
 } from "../helpers/fixtures.js";
+import { writeCard, writeMilestone } from "../helpers/cards.js";
 
 const CLI = resolve(__dirname, "../../dist/cli.js");
 
@@ -508,5 +509,92 @@ describe("lyt lint — the human rule (ISS-0154)", () => {
     const data = JSON.parse(run("lint --json", fixture.cwd).stdout);
     expect(data.findings.some((f: { message: string }) => f.message.includes("without a verify: marker"))).toBe(true);
     expect(humanFindings(fixture.cwd)).toEqual([]);
+  });
+});
+
+describe("lyt lint — the intent layer: parent, phase, milestone (ISS-0163)", () => {
+  type Finding = { severity: string; file: string; message: string; fix: string };
+
+  function intentFindings(cwd: string): { findings: Finding[]; errors: number; exitCode: number } {
+    const r = run("lint --json", cwd);
+    const data = JSON.parse(r.stdout);
+    return {
+      findings: data.findings.filter((f: Finding) => /parent|phase|milestone|epic/i.test(f.message)),
+      errors: data.errors,
+      exitCode: r.exitCode,
+    };
+  }
+
+  function project(): string {
+    fixture = createEmptyFixture();
+    createValidLytos(fixture.cwd);
+    return fixture.cwd;
+  }
+
+  it("lints exactly as before a project whose cards use none of the new fields", () => {
+    const cwd = project();
+    writeCard(cwd, "ISS-0001");
+    writeCard(cwd, "ISS-0002", { type: "fix", dir: "2-sprint" });
+    const r = intentFindings(cwd);
+    expect(r.findings).toEqual([]);
+    expect(r.exitCode).toBe(0);
+  });
+
+  it("passes an epic, its leaves and a milestone", () => {
+    const cwd = project();
+    writeMilestone(cwd, "v1.7");
+    writeCard(cwd, "ISS-0010", { type: "epic", fields: { phase: "discovery", milestone: "v1.7" } });
+    writeCard(cwd, "ISS-0011", { fields: { parent: "ISS-0010" } });
+    expect(intentFindings(cwd).findings).toEqual([]);
+  });
+
+  it("warns on a parent that matches no card, and keeps the exit code at 0", () => {
+    const cwd = project();
+    writeCard(cwd, "ISS-0011", { fields: { parent: "ISS-0999" } });
+    const r = intentFindings(cwd);
+    expect(r.findings).toHaveLength(1);
+    expect(r.findings[0].severity).toBe("warning");
+    expect(r.findings[0].fix).toContain("Create the epic");
+    expect(r.errors).toBe(0);
+    expect(r.exitCode).toBe(0);
+    expect(run("lint", cwd).stderr).toContain("matches no card");
+  });
+
+  it("warns on a depth of three, and keeps the exit code at 0", () => {
+    const cwd = project();
+    writeCard(cwd, "ISS-0010", { type: "epic" });
+    writeCard(cwd, "ISS-0011", { fields: { parent: "ISS-0010" } });
+    writeCard(cwd, "ISS-0012", { fields: { parent: "ISS-0011" } });
+    const r = intentFindings(cwd);
+    expect(r.findings).toHaveLength(1);
+    expect(r.findings[0].message).toContain("depth would be three");
+    expect(r.exitCode).toBe(0);
+  });
+
+  it("warns on a phase set on a leaf, and keeps the exit code at 0", () => {
+    const cwd = project();
+    writeCard(cwd, "ISS-0011", { fields: { phase: "discovery" } });
+    const r = intentFindings(cwd);
+    expect(r.findings).toHaveLength(1);
+    expect(r.findings[0].message).toContain("not an epic");
+    expect(r.exitCode).toBe(0);
+  });
+
+  it("warns on an unknown milestone, and keeps the exit code at 0", () => {
+    const cwd = project();
+    writeCard(cwd, "ISS-0011", { fields: { milestone: "v9.9" } });
+    const r = intentFindings(cwd);
+    expect(r.findings).toHaveLength(1);
+    expect(r.findings[0].fix).toContain("Create .lytos/milestones/v9.9.md");
+    expect(r.exitCode).toBe(0);
+  });
+
+  it("does not hide a real error: the exit code still follows the errors alone", () => {
+    const cwd = project();
+    writeCard(cwd, "ISS-0011", { fields: { parent: "ISS-0999", review: "bogus" } });
+    const r = intentFindings(cwd);
+    expect(r.findings).toHaveLength(1);
+    expect(r.errors).toBe(1); // the invalid review value, an error before this card existed
+    expect(r.exitCode).toBe(1);
   });
 });

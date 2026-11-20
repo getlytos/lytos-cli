@@ -1,0 +1,108 @@
+/**
+ * Test helpers — write cards and milestones into a temporary project.
+ *
+ * Used by the intent-layer tests (ISS-0163, ISS-0164, ISS-0165): they need
+ * epics, leaves and milestones with exactly the frontmatter under test, and
+ * nothing else.
+ */
+
+import { mkdirSync, writeFileSync } from "fs";
+import { join } from "path";
+import { createEmptyFixture, type Fixture } from "./fixtures.js";
+
+const STAGES = [
+  "0-icebox",
+  "1-backlog",
+  "2-sprint",
+  "3-in-progress",
+  "4-review",
+  "5-done",
+  "parked",
+];
+
+export interface CardOptions {
+  /** Folder under `issue-board/` (default `1-backlog`). */
+  dir?: string;
+  title?: string;
+  /** Card type (default `feat`). */
+  type?: string;
+  /** Frontmatter `status` (default: the folder name). */
+  status?: string;
+  /** Extra frontmatter lines, written verbatim as `key: value`. */
+  fields?: Record<string, string>;
+  /** Everything after the frontmatter (default: a one-line heading). */
+  body?: string;
+}
+
+/** An empty project: the board folders, nothing else. */
+export function createIntentFixture(): Fixture {
+  const fixture = createEmptyFixture();
+  for (const stage of STAGES) {
+    mkdirSync(join(fixture.cwd, ".lytos", "issue-board", stage), {
+      recursive: true,
+    });
+  }
+  return fixture;
+}
+
+/** Write one card; returns its path. The frontmatter `status` mirrors the folder. */
+export function writeCard(
+  cwd: string,
+  id: string,
+  options: CardOptions = {}
+): string {
+  const dir = options.dir ?? "1-backlog";
+  const lines = [
+    "---",
+    `id: ${id}`,
+    `title: "${options.title ?? `${id} title`}"`,
+    `type: ${options.type ?? "feat"}`,
+    "priority: P2-normal",
+    "effort: S",
+    `status: ${options.status ?? dir}`,
+    "depends: []",
+    "created: 2026-11-20",
+    "schema_version: 2",
+    "risk: low",
+  ];
+  for (const [key, value] of Object.entries(options.fields ?? {})) {
+    lines.push(`${key}: ${value}`);
+  }
+  lines.push("---", "", options.body ?? `# ${id}`, "");
+
+  const folder = join(cwd, ".lytos", "issue-board", dir);
+  mkdirSync(folder, { recursive: true });
+  const path = join(folder, `${id}-card.md`);
+  writeFileSync(path, lines.join("\n"));
+  return path;
+}
+
+export interface MilestoneOptions {
+  title?: string;
+  /** `open` (default) or `closed`. */
+  status?: string;
+}
+
+/** Write `.lytos/milestones/<id>.md`; returns its path. */
+export function writeMilestone(
+  cwd: string,
+  id: string,
+  options: MilestoneOptions = {}
+): string {
+  const lines = [
+    "---",
+    `id: ${id}`,
+    `title: "${options.title ?? `${id} milestone`}"`,
+    `status: ${options.status ?? "open"}`,
+    "---",
+    "",
+    `# ${id}`,
+    "",
+  ];
+
+  const folder = join(cwd, ".lytos", "milestones");
+  mkdirSync(folder, { recursive: true });
+  const path = join(folder, `${id}.md`);
+  writeFileSync(path, lines.join("\n"));
+  return path;
+}

@@ -1,19 +1,22 @@
 ---
 id: ISS-0163
-title: "The parent, milestone and phase fields, the epic type and their lint rules"
+title: The parent, milestone and phase fields, the epic type and their lint rules
 type: feat
 priority: P1-high
 effort: M
 complexity: standard
 skill: ""
 skills_aux: []
-status: 1-backlog
-branch: "feat/ISS-0163-parent-milestone-phase-fields"
+status: 4-review
+branch: feat/ISS-0163-parent-milestone-phase-fields
 depends: []
 related: [ISS-0162]
 created: 2026-11-20
 schema_version: 2
 risk: medium
+assignee: fredericgalline
+updated: 2026-11-20
+started_at: 2026-11-20
 ---
 # ISS-0163 — The parent, milestone and phase fields, the epic type and their lint rules
 
@@ -41,7 +44,7 @@ Decision: **A**.
 
 ## Definition of done
 
-- [ ] A card with none of the new fields lints exactly as before — verify: auto
-- [ ] Each of the four rules reports a warning with its remedy, and never changes the exit code — verify: auto
-- [ ] A negative case exists for each rule (a missing parent, a depth of three, `phase` on a leaf, an unknown milestone) — verify: auto
+- [x] A card with none of the new fields lints exactly as before — verify: auto
+- [x] Each of the four rules reports a warning with its remedy, and never changes the exit code — verify: auto
+- [x] A negative case exists for each rule (a missing parent, a depth of three, `phase` on a leaf, an unknown milestone) — verify: auto
 - [ ] The change stays proportionate to a field-and-lint change — verify: reviewer:over-engineering
