@@ -7,7 +7,7 @@ effort: M
 complexity: standard
 skill: ""
 skills_aux: []
-status: 4-review
+status: 5-done
 branch: feat/ISS-0169-design-exchange-entries
 depends: []
 related: [ISS-0162]
@@ -17,6 +17,8 @@ risk: low
 assignee: fredericgalline
 updated: 2026-11-20
 started_at: 2026-11-20
+completed_at: 2026-11-20
+commits: [3d1a7a6, 0aaa03d, ba6e11a, 27d1fd2, b5e8493, 3fd4185, a54e2a5, 957f8b6]
 ---
 # ISS-0169 — Design exchange entries and the derived index
 

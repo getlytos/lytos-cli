@@ -7,15 +7,17 @@ effort: S
 complexity: standard
 skill: ""
 skills_aux: []
-status: 4-review
-branch: "fix/ISS-0175-discovery-gate-hardening"
+status: 5-done
+branch: fix/ISS-0175-discovery-gate-hardening
 depends: []
 related: [ISS-0163, ISS-0165]
 created: 2026-11-20
 schema_version: 2
 risk: medium
+updated: 2026-11-20
+completed_at: 2026-11-20
+commits: [a324ff1, 8b4bd2d, d38175e, 073a849, 323050d, 5ff5be1, ab448e7, e27e974, f3cae8f, 4629f73, 1c6e272, 889b647, 0aaa03d, ba6e11a, 27d1fd2, b5e8493, 3fd4185, a54e2a5, 957f8b6]
 ---
-
 # ISS-0175 — The discovery gate is hardened: card corruption, a bypass through review, bare overrides and unflagged leaves
 
 ## Context

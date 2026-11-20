@@ -7,7 +7,7 @@ effort: M
 complexity: standard
 skill: ""
 skills_aux: []
-status: 4-review
+status: 5-done
 branch: docs/ISS-0167-the-epic-and-milestone-templates
 depends: [ISS-0163]
 related: [ISS-0162]
@@ -17,6 +17,8 @@ risk: low
 assignee: fredericgalline
 updated: 2026-11-20
 started_at: 2026-11-20
+completed_at: 2026-11-20
+commits: [442f366, ab448e7, e27e974, f3cae8f, 4629f73, 1c6e272, 889b647, 0aaa03d, ba6e11a, 27d1fd2, b5e8493, 3fd4185, a54e2a5, 957f8b6]
 ---
 # ISS-0167 — Method content: the epic and milestone templates and the discovery track
 
@@ -39,4 +41,8 @@ Add `issue-epic.md` (intent in product words, acceptance scenarios, constraints,
 
 - [x] `init` scaffolds the two templates and `upgrade` adds them without touching a modified file — verify: auto
 - [x] A test fills the epic template and proves the Ready analysis does not misread it — verify: auto
-- [ ] The text states the three levels, the freeze checklist and the gate — verify: reviewer:over-engineering
+- [x] The text states the three levels, the freeze checklist and the gate — verify: reviewer:over-engineering
+
+## Evidence (review)
+
+Covered by the two independent reviews of 1.7 (a stronger model of the same provider, read-only, level 2, 2026-11-20), both GO with reserves: No finding against the epic and milestone templates or the discovery text; the over-engineering rubric ran on both reviews.
