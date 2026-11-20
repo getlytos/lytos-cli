@@ -26,6 +26,13 @@ export function cliOutput(args: string[]): string {
 
 /** The commands `lyt --help` lists. A hidden command is not listed, so it cannot be cited. */
 export function cliCommands(): string[] {
+  commandsCache ??= readCommands();
+  return commandsCache;
+}
+
+let commandsCache: string[] | undefined;
+
+function readCommands(): string[] {
   const lines = cliOutput(["--help"]).split("\n");
   const start = lines.indexOf("Commands:");
   const commands: string[] = [];
@@ -35,6 +42,26 @@ export function cliCommands(): string[] {
     if (m) commands.push(m[1]);
   }
   return commands;
+}
+
+const helps = new Map<string, string>();
+
+/** What `lyt <verb> --help` prints, read once. */
+function helpOf(verb: string): string {
+  if (!helps.has(verb)) helps.set(verb, cliOutput([verb, "--help"]));
+  return helps.get(verb)!;
+}
+
+/** The `--flags` written in `text`, in order, without repeats. */
+export function flagsIn(text: string): string[] {
+  return [...new Set(text.match(/--[a-z][a-z-]*/g) ?? [])];
+}
+
+/** Does the help of any command of the CLI list `flag`? */
+export function cliHasFlag(flag: string): boolean {
+  return cliCommands().some((verb) =>
+    new RegExp(`${flag}(?![a-z-])`).test(helpOf(verb))
+  );
 }
 
 /** The code spans of a document: fenced lines as they are, inline spans without their backticks. */
@@ -83,16 +110,14 @@ export function uncheckedCitations(doc: string): string[] {
 /** What is wrong with the commands and flags a document cites; empty when it is clean. */
 export function citationProblems(doc: string): string[] {
   const commands = new Set(cliCommands());
-  const helps = new Map<string, string>();
   const problems: string[] = [];
   for (const { verb, flags } of citations(doc)) {
     if (!commands.has(verb)) {
       problems.push(`\`lyt ${verb}\` is not a command of the CLI`);
       continue;
     }
-    if (!helps.has(verb)) helps.set(verb, cliOutput([verb, "--help"]));
     for (const flag of flags) {
-      if (!new RegExp(`${flag}(?![a-z-])`).test(helps.get(verb)!)) {
+      if (!new RegExp(`${flag}(?![a-z-])`).test(helpOf(verb))) {
         problems.push(`\`lyt ${verb}\` has no ${flag}`);
       }
     }

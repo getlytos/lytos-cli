@@ -59,7 +59,7 @@ accounting opinion (`human:legal-accounting`), a gesture with real money or real
 
 The loop halts, and says why, in exactly five cases:
 
-1. **An irreversible gesture to authorize** — real money, real customers, production data.
+1. **An irreversible gesture to authorize** — real money, real customers, production data; or an action only a person may take, such as a flag that overrides a refusal of the CLI (`--countersign`, `--discovery-override`).
 2. **A contradiction the contract does not settle** — two rules or two cards say opposite things
    and the Ready, the rules and the ADRs do not decide. The card is parked as `ambiguous-spec`.
 3. **A serious finding not lifted** — a high finding still open, with no deviation the owner has
