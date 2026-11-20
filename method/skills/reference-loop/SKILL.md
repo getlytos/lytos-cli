@@ -45,7 +45,7 @@ For each card, in this order:
 
 The loop halts, and says why, in exactly five cases:
 
-1. **An irreversible gesture to authorize** — real money, real customers, production data; pushing, tagging, publishing, deploying or deleting anything outside the working copy. Stop before the gesture, say what it is and why, and wait for an explicit go. If the card cannot go on without it, park it as `human-judgment-required`.
+1. **An irreversible gesture to authorize** — real money, real customers, production data; pushing, tagging, publishing, deploying or deleting anything outside the working copy; or an action only a person may take, such as a flag that overrides a refusal of the CLI (`--countersign`, `--discovery-override`). Stop before the gesture, say what it is and why, and wait for an explicit go. If the card cannot go on without it, park it as `human-judgment-required`.
 2. **A contradiction the contract does not settle** — two rules or two cards say opposite things and the Ready, the rules and the decision records do not decide. Park the card as `ambiguous-spec`. Never pick a reading.
 3. **A serious finding not lifted** — a high finding from a review, a security pass or a red-team pass is still open, with no deviation the owner has accepted in writing. Hand the finding to the owner; do not take another card meanwhile.
 4. **The budget is exceeded** — `npx lyt budget` exits non-zero, or the project's own ceiling on cost, minutes or iterations is reached. Park the card in flight as `budget-exhausted`; between two cards, just stop.
@@ -56,9 +56,12 @@ Outside these five, the loop does not interrupt the owner.
 ### The lines that do not bend
 
 - **The loop never closes a card.** `npx lyt close` is a human act: the last transition the loop makes is `4-review`. It never edits a `status:` by hand, never moves a card by hand, and never adds a card to the sprint.
-- **It never ticks a `verify: human` item**, and never reviews its own work.
+- **It never ticks a `verify: human` item**, never writes a verdict on its own work and never reviews it.
 - **It never guesses**: ambiguity parks, it is never resolved by a reading of the wrapper's own.
 - **It never forces**: `npx lyt start --force` and `npx lyt claim --force` are a person's decision.
+- **It never passes `--countersign`**: `npx lyt review --countersign` records the owner's countersignature of a review whose independence is below the minimum for the card's risk. It is a person's decision: a wrapper that passed it would record its own as the owner's.
+- **It never passes `--discovery-override`**: `npx lyt move --discovery-override` and `npx lyt start --discovery-override` let a leaf of an epic still in discovery enter the sprint, on a reason recorded as the accountable human's. It is a person's decision.
+- **A refusal that suggests a bypass is a stop.** When the CLI refuses and suggests one of these flags, the wrapper does not run it: it stops and calls the human (case 1, an action only a person may take), naming the refused command, the card and the flag it suggests. If the card cannot go on without it, park it as `human-judgment-required`.
 
 ---
 

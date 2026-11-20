@@ -17,6 +17,7 @@ import { join, resolve } from "path";
 import { PARK_REASONS } from "../../src/commands/park.js";
 import { UPGRADEABLE_FILES } from "../../src/lib/method-files.js";
 import { createEmptyFixture, type Fixture } from "../helpers/fixtures.js";
+import { section } from "../helpers/markdown.js";
 import { leaksIn } from "../helpers/shipped-content.js";
 import {
   citationProblems,
@@ -32,18 +33,6 @@ const read = (p: string): string => readFileSync(join(root, p), "utf-8");
 const SKILL = "method/skills/reference-loop/SKILL.md";
 const skill = read(SKILL);
 const CLI = resolve(root, "dist/cli.js");
-
-/** A heading and everything under it, up to the next heading of the same or a higher level. */
-function section(doc: string, heading: RegExp): string {
-  const lines = doc.split("\n");
-  const start = lines.findIndex((l) => heading.test(l));
-  if (start < 0) return "";
-  const level = lines[start].match(/^#+/)![0].length;
-  const end = lines.findIndex(
-    (l, i) => i > start && /^#+ /.test(l) && l.match(/^#+/)![0].length <= level
-  );
-  return lines.slice(start, end < 0 ? undefined : end).join("\n");
-}
 
 const contract = section(skill, /^## Part 1/);
 const claudeCode = section(skill, /^## Part 2/);
