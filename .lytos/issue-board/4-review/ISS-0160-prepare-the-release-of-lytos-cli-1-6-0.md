@@ -52,5 +52,5 @@ minor version, 1.5.2 to 1.6.0.
 - [x] `package.json` and `package-lock.json` declare version 1.6.0, and `lyt --version` reports it — verify: auto
 - [x] `npm pack --dry-run` lists only `dist/` and the package metadata, with the shipped method files and the new library inside `dist/method/` — verify: auto
 - [x] Format, lint, typecheck, secrets scan, build and the whole test suite pass — verify: auto
-- [ ] The release commit carries nothing beyond the version bump, the memory refresh and this card — verify: reviewer:over-engineering
-- [ ] The one deliberate behaviour change is acceptable in a minor release: a DoD whose only non-human items are `verify: reviewer` was loop-eligible by accident of the old parser and is no longer — verify: human:product-intent
+- [x] The release commit carries nothing beyond the version bump, the memory refresh and this card — ruled by the independent review of 2026-11-20 (Claude Opus 5.5 reviewing Claude Sonnet 5.5 work, verdict GO with reserves, every finding addressed) — verify: reviewer:over-engineering
+- [x] The one deliberate behaviour change is acceptable in a minor release: a DoD whose only non-human items are `verify: reviewer` was loop-eligible by accident of the old parser and is no longer — decided by Frédéric Galliné, 2026-11-20 — verify: human:product-intent

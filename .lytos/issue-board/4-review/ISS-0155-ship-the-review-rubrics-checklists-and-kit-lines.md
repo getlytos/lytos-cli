@@ -67,5 +67,5 @@ with reviews that have a format, a grid and an owner.
 - [x] `cost-review` makes robustness a floor and cost the goal, with the two moments and the 10 / 100 / 500 estimate — verify: auto
 - [x] The leak check keeps no name: machine paths, addresses, credentials and private URLs are tested by shape, and private terms come only from `LYTOS_PRIVATE_TERMS` or the git-ignored `.lytos/private-terms.local` (nothing to search for when neither exists) — verify: auto
 - [x] ADR-0007 records `cost-review` at `low` as the one deliberate exception to "nothing is always-on" and scopes `ux-review` and `design-fidelity` to projects with an interface; the kit and the README say the same — verify: auto
-- [ ] The grids carry their rule without padding or overlap between one another — verify: reviewer:over-engineering
-- [ ] Adding `cost-review` at `low` sits right with ADR-0007 ("nothing is always-on") — verify: human:product-intent
+- [x] The grids carry their rule without padding or overlap between one another — ruled by the independent review of 2026-11-20 (Claude Opus 5.5 reviewing Claude Sonnet 5.5 work, verdict GO with reserves, every finding addressed) — verify: reviewer:over-engineering
+- [x] Adding `cost-review` at `low` sits right with ADR-0007 ("nothing is always-on") — decided by Frédéric Galliné, 2026-11-20 — verify: human:product-intent

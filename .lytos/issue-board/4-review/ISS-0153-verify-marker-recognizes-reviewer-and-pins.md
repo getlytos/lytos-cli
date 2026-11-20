@@ -73,5 +73,5 @@ Field case: a private project (kit linked to its own stack, 2026-11-20).
 - [x] One grammar reads the marker: `doctor` resolves pins from the parsed items, so a space before the colon, a second marker on one item and a marker that is not at the end are read the same by both — verify: auto
 - [x] `lyt report --sprint` counts and lists the pending reviewer rulings like the per-card packet does — verify: auto
 - [x] The rules, the templates and the repo's own rules say a DoD with no `auto` (or unmarked) item is not loop work and that a pin is a kit id, and `lyt next` documents `no-machine-dod` with the other reasons — verify: auto
-- [ ] The change stays proportionate to a marker fix: one regex, no new dependency, no new abstraction — verify: reviewer:over-engineering
-- [ ] The decision that a `reviewer` item does not make an issue loop-eligible is the one the owner wants — verify: human:product-intent
+- [x] The change stays proportionate to a marker fix: one regex, no new dependency, no new abstraction — ruled by the independent review of 2026-11-20 (Claude Opus 5.5 reviewing Claude Sonnet 5.5 work, verdict GO with reserves, every finding addressed) — verify: reviewer:over-engineering
+- [x] The decision that a `reviewer` item does not make an issue loop-eligible is the one the owner wants — decided by Frédéric Galliné, 2026-11-20 — verify: human:product-intent
