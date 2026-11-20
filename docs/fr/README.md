@@ -69,17 +69,21 @@ Chaque bridge pointe vers le même dossier `.lytos/`, donc changer d'outil ne de
 | Commande | Ce qu'elle fait |
 |----------|-----------------|
 | `lyt init` | Génère `.lytos/` dans un projet (interactif, détecte la stack). Sur un terminal interactif, pose une question facultative — utilisez-vous Claude Design — à laquelle `--design <claude-design\|other\|none>` répond d'avance ; voir [Facultatif : un registre Claude Design](#facultatif--un-registre-claude-design) |
-| `lyt board` | Régénère BOARD.md depuis le frontmatter YAML des issues |
+| `lyt board` | Régénère BOARD.md depuis le frontmatter YAML des issues. Quand le board contient des epics, une section Epics (chaque epic, ses feuilles et leur progression, dérivées de `parent`) s'ajoute à la vue terminal et à BOARD.md, et `--json` porte une clé `epics` — voir [La couche d'intention](#la-couche-dintention) |
 | `lyt archive` | Déplace les issues terminées de `5-done/` vers `archive/<quarter>/` (défaut : plus de 7 jours). `--all`, `--older-than <Nd>`, `--dry-run` |
-| `lyt lint` | Valide la structure et le contenu de `.lytos/` |
-| `lyt doctor` | Diagnostic complet — liens cassés, mémoire obsolète, skills manquants, score de santé |
-| `lyt show [ISS-XXXX]` | Affiche le détail d'une issue avec sa progression, ou toutes les issues en cours |
-| `lyt start ISS-XXXX` | Démarre une issue — déplace en in-progress, crée la branche, met à jour le board |
+| `lyt lint` | Valide la structure et le contenu de `.lytos/`. Quatre règles de la couche d'intention n'émettent que des avertissements (voir [La couche d'intention](#la-couche-dintention)) |
+| `lyt doctor` | Diagnostic complet — liens cassés, mémoire obsolète, skills manquants, score de santé. Signale aussi ce qu'il n'a pas pu utiliser de la section `independence:` de `.lytos/config.yml` (voir [Indépendance du relecteur](#indépendance-du-relecteur)) |
+| `lyt show [ISS-XXXX]` | Affiche le détail d'une issue avec sa progression, ou toutes les issues en cours. Une feuille montre son epic, un epic ses feuilles et leur progression ; `--json` ajoute une clé `intent` à une issue qui participe à la couche d'intention |
+| `lyt milestone [id]` | Lecture seule. Un jalon, ou tous, depuis `.lytos/milestones/<id>.md` : ses critères de sortie, ses epics et ses feuilles, avec une progression comptée à chaque appel depuis les issues qui le nomment. `--json` pour les scripts. Voir [La couche d'intention](#la-couche-dintention) |
+| `lyt start ISS-XXXX` | Démarre une issue — déplace en in-progress, crée la branche, met à jour le board. Une feuille d'un epic encore en découverte est refusée, sauf si c'est un `spike` ou avec `--discovery-override "<raison>"` (voir [La couche d'intention](#la-couche-dintention)) |
 | `lyt close ISS-XXXX` | Ferme une issue — déplace en done, alerte sur les items non cochés |
 | `lyt close` | Ferme en lot toutes les issues de 4-review/ → 5-done/ (demande confirmation ; `--yes` saute le prompt ; `--dry-run` previewe) |
-| `lyt review [ISS-XXXX]` | Audit cross-model pour les issues en `4-review/` — imprime un prompt autonome ou ingère un bloc audit retourné (`--accept`). À lancer depuis une **session IA fraîche**, idéalement un vendor différent de l'implémenteur. |
-| `lyt upgrade` | Récupère les derniers fichiers méthode dans `.lytos/`. Ce qui est à vous n'est jamais écrit : `quality/kit.md` et `stack.md` (liés à votre stack — il se contente de nommer les gates fournies que votre kit n'a pas), le registre de design, la config, le manifest. Les nouvelles grilles et listes sont ajoutées, mais une version modifiée n'est jamais écrasée, même avec `--force`. `--migrate-cursor` convertit un legacy `.cursorrules` vers `.cursor/rules/lytos.mdc`. |
+| `lyt review [ISS-XXXX]` | Audit cross-model pour les issues en `4-review/` — imprime un prompt autonome ou ingère un bloc audit retourné (`--accept`). À lancer depuis une **session IA fraîche**, idéalement un vendor différent de l'implémenteur. `--verdict` est refusé quand la relecture est moins indépendante que ne l'exige le `risk` de l'issue, et `--countersign` consigne la contre-signature du propriétaire (voir [Indépendance du relecteur](#indépendance-du-relecteur)) |
+| `lyt exchanges` | Lecture seule. Les échanges de design ouverts entre le design et le code, une ligne par entrée, dérivés de `.lytos/design/exchanges/` à chaque appel (`--json` pour les scripts). Pour les projets `design: claude-design` ; voir [Facultatif : un registre Claude Design](#facultatif--un-registre-claude-design) |
+| `lyt upgrade` | Récupère les derniers fichiers méthode dans `.lytos/`. Ce qui est à vous n'est jamais écrit : `quality/kit.md` et `stack.md` (liés à votre stack — il se contente de nommer les gates fournies que votre kit n'a pas), le registre de design, la config, le manifest. Les nouvelles grilles et listes sont ajoutées, mais une version modifiée n'est jamais écrasée, même avec `--force`. Le guide des échanges de design est ajouté à un projet `design: claude-design` et, une fois écrit, il est à vous aussi. `--migrate-cursor` convertit un legacy `.cursorrules` vers `.cursor/rules/lytos.mdc`. |
 | `lyt update` | Met à jour lytos-cli vers la dernière version |
+
+Le skill `reference-loop` (`.lytos/skills/reference-loop/SKILL.md`, installé comme les autres task skills) enchaîne les primitives de la boucle pour un agent : choisir avec `lyt next`, démarrer l'issue, construire, prouver avec `lyt gates`, remettre avec `lyt report`, mettre l'issue de côté (`lyt park`) plutôt que deviner, et s'arrêter pour appeler l'humain dans cinq cas. Il ne ferme jamais une issue, et le CLI lui-même ne lance aucune boucle et n'appelle aucune IA.
 
 ![lyt show](../screenshots/lyt-show.png)
 
@@ -102,7 +106,8 @@ project/
     │   ├── git-workflow/SKILL.md
     │   ├── deployment/SKILL.md
     │   ├── security/SKILL.md
-    │   └── api-design/SKILL.md  # 8 task skills (format agentskills.io)
+    │   ├── api-design/SKILL.md
+    │   └── reference-loop/SKILL.md  # 9 task skills (format agentskills.io)
     ├── rules/                   # Standards — critères de qualité
     │   ├── default-rules.md
     │   └── team-and-loop.md     # Les rôles d'une équipe et la boucle entre les deux portes du propriétaire
@@ -118,11 +123,12 @@ project/
     │   ├── 2-sprint/
     │   ├── 3-in-progress/
     │   ├── 4-review/
-    │   └── 5-done/
+    │   ├── 5-done/
+    │   └── templates/           # Templates d'issue : tâche, feature, epic
     ├── memory/                  # Memory — connaissance accumulée
     │   ├── MEMORY.md
     │   └── cortex/
-    └── templates/               # Templates d'issue et de sprint
+    └── templates/               # Templates de sprint et de jalon
 ```
 
 `lyt init` détecte aussi la stack du projet (langage, framework, runner de tests, package manager) et pré-remplit le manifest. Il génère le fichier d'adaptateur approprié pour l'outil IA choisi — `CLAUDE.md`, `.cursor/rules/lytos.mdc`, `AGENTS.md`, `.github/copilot-instructions.md`, `GEMINI.md`, ou `.windsurfrules`.
@@ -153,9 +159,11 @@ lyt init --force --overwrite-bridges      # régénère, remplace aussi les brid
 
 `lyt init` pose **une** question facultative, uniquement sur un terminal interactif hors CI : *Utilisez-vous Claude Design pour le design ?* — `yes`, `no` ou `other tool` ; Entrée vaut non. `--design <claude-design|other|none>` y répond d'avance. Sans terminal (un pipe, la CI, `--yes`), aucune question n'est posée et la réponse est `none`.
 
-La réponse est consignée dans `.lytos/config.yml` sous la clé `design:`. Seul `claude-design` crée quelque chose : `.lytos/design/registry.md`, un registre de vos artefacts Claude Design — liens, version courante, quelles cartes couvrent quelle version, écarts rendus à l'outil de design. Un registre existant n'est jamais écrasé, même par `init --force`.
+La réponse est consignée dans `.lytos/config.yml` sous la clé `design:`. Seul `claude-design` crée quelque chose : `.lytos/design/registry.md`, un registre de vos artefacts Claude Design — liens, version courante, quelles cartes couvrent quelle version, écarts rendus à l'outil de design — et `.lytos/design/exchanges/README.md`, le guide des échanges de design. Un registre ou un guide existant n'est jamais écrasé, même par `init --force`.
 
-Ce n'est jamais un frein : `none` et `other` ne génèrent rien, `lyt doctor` et `lyt lint` ne disent rien du design, aucune gate n'en dépend.
+Un échange de design est un petit fichier par tour entre le design et le code, `.lytos/design/exchanges/<epic>/NNN-<slug>.md` : un `from` (`design` ou `code`), un `type` (`gap`, `prompt`, `response` ou `decision`) et un `status` (`open` ou `resolved`), en 150 mots au plus. `lyt exchanges` liste ceux qui sont ouverts, dérivés à chaque appel : aucun fichier d'index n'existe, et une entrée quitte la liste quand vous passez `status: resolved`. Une entrée mal formée est signalée, jamais ignorée, et la commande sort en code 1. `lyt upgrade` ajoute le guide à un projet `claude-design` qui ne l'a pas.
+
+Ce n'est jamais un frein : `none` et `other` ne génèrent rien, `lyt doctor` et `lyt lint` ne disent rien du design, aucune gate n'en dépend, et `lyt exchanges` se contente de dire que les échanges ne sont pas utilisés.
 
 ### Marqueurs de la Definition of Done
 
@@ -170,6 +178,48 @@ Chaque item de Definition of Done dit **qui le vérifie** par un marqueur final,
 Chaque marqueur peut épingler la ligne du kit qualité qui le porte : `verify: auto:tests-unit`, `verify: reviewer:over-engineering`, `verify: human:product-intent`. Une épingle est l'id d'une ligne du kit (première colonne de `quality/kit.md`), pas le nom d'une grille ou d'une liste ; `lyt doctor` signale une épingle que le kit n'a pas. Un item non marqué compte comme `auto` et `lyt lint` le signale. Une DoD sans item `auto` (ou non marqué) n'est pas du travail de boucle.
 
 `verify: human` est le dernier recours : légitime seulement si un testeur de bout en bout n'a pas pu contrôler l'item lui-même, dans un navigateur ou avec Playwright — sinon c'est `verify: auto:e2e`. Un item humain porte toujours une épingle nommant une ligne `human` du kit, et `lyt lint` **avertit** (jamais d'erreur) quand ce n'est pas le cas.
+
+### La couche d'intention
+
+Une issue dit quoi construire ; le niveau au-dessus dit pourquoi. Trois niveaux, jamais plus : un **jalon** (milestone : une version, avec ses critères de sortie), un **epic** (l'issue d'intention, `type: epic`) et une **feuille** (une issue de la taille d'une itération de boucle). Tous les champs sont facultatifs et `schema_version` reste à 2 : un projet qui n'en adopte aucun ne change rien.
+
+| Champ | Se place sur | Sens |
+|-------|--------------|------|
+| `parent: ISS-XXXX` | une feuille | L'epic auquel elle appartient |
+| `milestone: <id>` | un epic ou une feuille | Un fichier `.lytos/milestones/<id>.md` : `id`, `title`, `status: open\|closed` et une checklist sous `## Exit criteria` |
+| `phase: discovery\|frozen` | un epic | `discovery` : l'intention est encore en train de se fixer |
+
+Les enfants et la progression sont **dérivés** des champs `parent` à chaque appel, jamais écrits à la main : `lyt board` (une section Epics), `lyt show` et `lyt milestone`. `lyt lint` avertit (jamais d'erreur) quand un `parent` n'est pas un identifiant d'issue unique qui désigne un epic existant, quand la profondeur dépasserait deux (un epic n'a pas de parent), quand une `phase` se trouve sur une issue qui n'est pas un epic ou n'est ni `discovery` ni `frozen`, et quand un `milestone` n'a pas de fichier sous `.lytos/milestones/`.
+
+**La porte de découverte.** Tant qu'un epic est en `phase: discovery`, ses feuilles ne peuvent pas entrer dans le sprint : `lyt move … 2-sprint`, `lyt start`, `lyt claim` et `lyt unpark` les refusent en nommant l'epic, et `lyt next` les écarte (raison `epic-in-discovery` dans `--json`). Deux exemptions : une feuille de `type: spike` (étude de faisabilité ou mesure), et `--discovery-override "<raison>"` sur `lyt move` ou `lyt start`, qui laisse passer une feuille sur la parole de l'humain responsable et consigne la raison dans l'issue sous `discovery_override`. Une issue sans epic parent n'est pas concernée. Un humain fige l'epic en passant `phase: frozen` ; la checklist de gel est dans `rules/default-rules.md`, et les templates sont `issue-board/templates/issue-epic.md` et `templates/milestone.md`.
+
+### Indépendance du relecteur
+
+Une relecture faite par le modèle qui a écrit le travail en partage les angles morts : Lytos mesure donc l'indépendance de chaque relecture et en exige davantage quand le risque monte. Le niveau est **calculé** à partir de `ai_implementer` et `ai_reviewer` (un modèle et une session chacun ; `lyt review --ai-model` et `--ai-session` consignent le relecteur), jamais déclaré :
+
+| Niveau | Le relecteur est |
+|--------|------------------|
+| 1 | Un autre fournisseur |
+| 2 | Le même fournisseur, avec un modèle que le classement configuré place au-dessus de celui de l'implémenteur |
+| 3 | Le même modèle : « weak independence », indépendance faible |
+
+Ce qui ne peut pas être établi compte pour le niveau 3, et c'est dit : un modèle absent, un modèle dont le fournisseur est inconnu, un modèle absent du classement (jamais traité comme plus fort). Le minimum dépend du `risk` de l'issue : `low` n'importe quel relecteur, `medium` un autre modèle ou une session neuve, `high` le niveau 1 ou 2. `lyt report` et `lyt gates` montrent le niveau et le minimum, et `lyt review` annonce le niveau quand il consigne un verdict. En dessous du minimum, `lyt review --verdict go` (ou `go-pending-human`) est consigné et signalé à `medium`, et **refusé à `high` tant que le propriétaire n'ajoute pas `--countersign`**, qui consigne qui, quand et « weak independence » dans le bloc `review_independence` de l'issue. Un `no-go` reste toujours consignable.
+
+Les valeurs par défaut sont un plancher : on peut les durcir, jamais les assouplir, sous `independence:` dans `.lytos/config.yml` (une valeur plus souple est ignorée et signalée par `lyt doctor`) :
+
+```yaml
+independence:
+  ranking: [model-a, model-b]   # ids exacts de modèles, du plus faible au plus fort
+  providers:                    # préfixe d'id de modèle: fournisseur, ajouté à la table intégrée
+    acme: acme-ai
+  minimum:                      # par risque : any | fresh-session | level-2 | level-1
+    high: level-1
+  below_minimum:                # par risque : warn | countersign | refuse
+    medium: countersign
+    high: refuse
+```
+
+Par défaut, `minimum` vaut `any`, `fresh-session` et `level-2`, et `below_minimum` vaut `warn`, `warn` et `countersign`, pour `low`, `medium` et `high`. Lytos ne livre **aucun classement de modèles** : classer des modèles est un jugement de qualité que seul le projet peut porter ; sans classement, deux modèles d'un même fournisseur sont au niveau 3.
 
 ---
 

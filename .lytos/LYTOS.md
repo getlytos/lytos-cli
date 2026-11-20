@@ -39,6 +39,8 @@ These 5 pillars are the method. Everything else (agent documentation, tool adapt
 | `quality/checklists/*.md` | The lists a person works through — what a `human` line of the kit points at | When you ask the accountable human for a call |
 | `skills/session-start.md` | Lytos bootstrap protocol — what to read at the start of any session | At each session |
 | `skills/<name>/SKILL.md` | Task skills in the [agentskills.io](https://agentskills.io) open standard format (code-review, testing, documentation, etc.) | Discovered natively by AI tools via progressive disclosure; the issue's optional `skill` field is a hint |
+| `skills/reference-loop/SKILL.md` | The reference wrapper of the loop: the contract any wrapper must honor (select with `npx lyt next`, prove with the gates, hand over a review packet, park instead of guessing, stop and call the human in five cases) and how to run it in Claude Code | When the owner asks you to work through the sprint without a turn between cards |
+| `design/exchanges/README.md` | The guide to the design exchanges: one small file per turn between the design tool and the code, under `design/exchanges/<epic>/`. Only in a project whose `config.yml` says `design: claude-design`; `npx lyt exchanges` lists the open entries | When you write or resolve a design exchange |
 | `issue-board/BOARD.md` | Kanban view — task progress status, including the review gate before done | When working on a task |
 | `issue-board/[status]/ISS-*.md` | Issues with YAML frontmatter (source of truth) | Read the assigned issue |
 | `scripts/generate-board.py` | Regenerates BOARD.md from the frontmatter | Use at the end of a task if needed |

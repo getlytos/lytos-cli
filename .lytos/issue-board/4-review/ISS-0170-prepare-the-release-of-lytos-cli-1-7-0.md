@@ -1,19 +1,20 @@
 ---
 id: ISS-0170
-title: "Prepare the release of lytos-cli 1.7.0"
+title: Prepare the release of lytos-cli 1.7.0
 type: chore
 priority: P1-high
 effort: S
 complexity: light
 skill: ""
 skills_aux: []
-status: 1-backlog
-branch: "chore/ISS-0170-release-lytos-cli-1-7-0"
+status: 4-review
+branch: chore/ISS-0170-release-lytos-cli-1-7-0
 depends: [ISS-0163, ISS-0164, ISS-0165, ISS-0166, ISS-0167, ISS-0168, ISS-0169]
 related: [ISS-0162]
 created: 2026-11-20
 schema_version: 2
 risk: medium
+updated: 2026-11-20
 ---
 # ISS-0170 — Prepare the release of lytos-cli 1.7.0
 
@@ -34,6 +35,6 @@ Bump to 1.7.0 in `package.json` and the lockfile; consolidate the README (EN and
 
 ## Definition of done
 
-- [ ] The version is 1.7.0 and `npm pack --dry-run` lists only `dist/` and the files npm imposes — verify: auto
+- [x] The version is 1.7.0 and `npm pack --dry-run` lists only `dist/` and the files npm imposes — verify: auto
 - [ ] The independent review of the release branch has been run and its findings addressed — verify: reviewer:security-review
 - [ ] The release commit carries nothing beyond the bump, the docs and this card — verify: reviewer:over-engineering
