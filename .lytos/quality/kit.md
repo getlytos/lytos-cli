@@ -18,6 +18,7 @@ risk matrix (ADR-0007) selects from here.*
 | doc-L3 | gate | medium,high | frontmatter schema doc ↔ parser (ADR-0001) |
 | over-engineering | reviewer | medium,high | rubric:over-engineering (diff vs effort, new deps) |
 | architecture-review | reviewer | high | rubric:architecture (boundaries, coupling, reversibility) |
+| security-review | reviewer | high | rubric:security (writes outside the project, symlinks, private data in a public repo) |
 | runbook-smoke | gate | high | doc L4 runbook replayed in CI (ISS-0120) |
 | product-intent | human | high | checklist:intent |
 
