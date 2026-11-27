@@ -8,7 +8,7 @@ complexity: standard
 domain: [method, cli, ci]
 skill: ""
 skills_aux: []
-status: 3-in-progress
+status: 4-review
 branch: fix/ISS-0191-lytos-skills-must-be-read
 depends: []
 related: [ISS-0046, ISS-0135, ISS-0148, ISS-0186]
@@ -18,6 +18,9 @@ schema_version: 2
 risk: medium
 assignee: fredericgalline
 started_at: 2026-11-27
+ai_implementer:
+  model: claude-sonnet-5-5
+skills_used: [testing]
 ---
 # ISS-0191 — The skills in `.lytos/skills/` must be read
 
@@ -175,6 +178,15 @@ discovery, keeps the bundled commands and does not depend on symlinks.
   repository (ISS-0092) and the website.
 - **Solution** — the study above is written; option 2 is chosen.
 
+## Delivery scope (2026-11-27)
+
+This delivery is **part A**, plus the bridge warning in `lyt upgrade`. Parts B, C
+and D are deferred to ISS-0192: their items stay below, unchecked, with a pointer,
+as `skills/session-start.md` asks for work that leaves the scope of a card. The
+card planned for it ("If the card proves too large for one pull request, ship part
+A alone first"), and the owner agreed to a pull request for part A alone. The
+Context, Proposed solution and Ready sections still describe the four parts.
+
 ## Definition of done
 
 Order: part A first. B, C and D do not delay it.
@@ -190,19 +202,19 @@ Order: part A first. B, C and D do not delay it.
 
 ### B. CI guidance
 
-- [ ] The standard cycle commits the move to `4-review` before the single push, and agrees with the ordering table of the same file — verify: reviewer
-- [ ] The checklist no longer asks for an up-to-date branch without a conflict or a protection rule, and a rule forbids re-running a failed check with no fix — verify: reviewer
+- [ ] The standard cycle commits the move to `4-review` before the single push, and agrees with the ordering table of the same file *(deferred to ISS-0192)* — verify: reviewer
+- [ ] The checklist no longer asks for an up-to-date branch without a conflict or a protection rule, and a rule forbids re-running a failed check with no fix *(deferred to ISS-0192)* — verify: reviewer
 
 ### C. `/ship` and `/steward`
 
-- [ ] `lyt init --tool claude` and `lyt upgrade` add the steward file when absent and leave an existing one untouched (tests) — verify: auto
-- [ ] The steward file, the `reference-loop` paragraph and the `git-workflow` limits say what the proposed solution lists, and each claim about Claude Code is checked against its documentation on the day of writing — verify: reviewer
-- [ ] One real pull request of this repository goes through `/ship`, typed by the owner, with the steward file in place; this card records CI runs against code iterations, and the owner decides whether the file ships as is — verify: human:product-intent
+- [ ] `lyt init --tool claude` and `lyt upgrade` add the steward file when absent and leave an existing one untouched (tests) *(deferred to ISS-0192)* — verify: auto
+- [ ] The steward file, the `reference-loop` paragraph and the `git-workflow` limits say what the proposed solution lists, and each claim about Claude Code is checked against its documentation on the day of writing *(deferred to ISS-0192)* — verify: reviewer
+- [ ] One real pull request of this repository goes through `/ship`, typed by the owner, with the steward file in place; this card records CI runs against code iterations, and the owner decides whether the file ships as is *(deferred to ISS-0192)* — verify: human:product-intent
 
 ### D. Checks
 
-- [ ] `lyt lint` warns on a project with `session-start.md` and no task skill (test) — verify: auto
-- [ ] `lyt doctor` reports a missing pointer, an orphan pointer and a drifted description (tests) — verify: auto
+- [ ] `lyt lint` warns on a project with `session-start.md` and no task skill (test) *(deferred to ISS-0192)* — verify: auto
+- [ ] `lyt doctor` reports a missing pointer, an orphan pointer and a drifted description (tests) *(deferred to ISS-0192)* — verify: auto
 
 ## Relevant files
 
