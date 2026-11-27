@@ -21,6 +21,11 @@
  *   - The design exchanges guide (`design/exchanges/README.md`) is added, add-only
  *     like the library, to a project whose `config.yml` says `design:
  *     claude-design` and to no other (ISS-0169).
+ *
+ * One thing is written outside `.lytos/`: for a project with the Claude Code
+ * bridge, the pointer skills in `.claude/skills/lytos-*` (ISS-0191), added when
+ * missing and rewritten when they drifted. A file `lyt` did not generate is
+ * never rewritten, and the bridge files themselves are never touched.
  */
 
 import { Command } from "commander";
@@ -47,6 +52,11 @@ import {
 } from "../lib/upgrade-library.js";
 import { UPGRADEABLE_FILES } from "../lib/method-files.js";
 import { symlinkOnPath } from "../lib/safe-write.js";
+import {
+  hasClaudeBridge,
+  pointerWarnings,
+  syncSkillPointers,
+} from "../lib/skill-pointers.js";
 import { askConfirm, canPrompt } from "../lib/terminal.js";
 import {
   migrateCursorRules,
@@ -57,6 +67,25 @@ const METHOD_DIR = join(dirname(fileURLToPath(import.meta.url)), "method");
 
 const _require = createRequire(import.meta.url);
 const { version: VERSION } = _require("../package.json");
+
+/**
+ * The bundled task skills the project lacks and `upgrade` would add: name to
+ * content. One behind a symbolic link will not be written, so is not counted.
+ */
+function missingTaskSkills(lytosDir: string): Map<string, string> {
+  const missing = new Map<string, string>();
+  for (const relPath of UPGRADEABLE_FILES) {
+    const name = relPath.match(/^skills\/([^/]+)\/SKILL\.md$/)?.[1];
+    if (!name) continue;
+    const localPath = join(lytosDir, relPath);
+    const bundledPath = join(METHOD_DIR, relPath);
+    if (symlinkOnPath(localPath, lytosDir) || existsSync(localPath)) continue;
+    if (existsSync(bundledPath)) {
+      missing.set(name, readFileSync(bundledPath, "utf-8"));
+    }
+  }
+  return missing;
+}
 
 export const upgradeCommand = new Command("upgrade")
   .description("Update method files in .lytos/ from the bundled version")
@@ -230,6 +259,31 @@ export const upgradeCommand = new Command("upgrade")
           `  ${green("+")} ${dim(`issue-board/${dir}/.gitkeep`)} ${dim("(new)")}`
         );
         added++;
+      }
+
+      // Last among the method files, so a pointer describes the skill as the
+      // loop above left it. A dry run added nothing: it is told what would be.
+      if (hasClaudeBridge(cwd)) {
+        const pointers = syncSkillPointers(cwd, {
+          dryRun: opts.dryRun,
+          pending: opts.dryRun ? missingTaskSkills(lytosDir) : undefined,
+        });
+        for (const path of pointers.added) {
+          console.error(`  ${green("+")} ${dim(path)} ${dim("(new)")}`);
+        }
+        for (const path of pointers.refreshed) {
+          console.error(
+            opts.dryRun
+              ? `  ${cyan("~")} ${dim(path)} ${dim("(differs)")}`
+              : `  ${green("✓")} ${dim(path)} ${dim("(updated)")}`
+          );
+        }
+        for (const message of pointerWarnings(cwd, pointers)) warn(message);
+        added += pointers.added.length;
+        if (opts.dryRun) skipped += pointers.refreshed.length;
+        else updated += pointers.refreshed.length;
+        skipped += pointers.keptForeign.length + pointers.behindLink.length;
+        upToDate += pointers.upToDate.length;
       }
 
       // Surface the legacy .cursorrules even when --migrate-cursor wasn't

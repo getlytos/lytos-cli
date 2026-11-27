@@ -13,8 +13,12 @@ dist/
 .idea/
 *.code-workspace
 
-# Claude Code
-.claude/
+# Claude Code: personal files stay local. The Lytos skill pointers are
+# committed, so that a fresh clone, a worktree or a cloud session has them.
+.claude/*
+!.claude/skills/
+.claude/skills/*
+!.claude/skills/lytos-*/
 
 # OS
 .DS_Store

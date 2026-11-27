@@ -78,7 +78,7 @@ Still load the mandatory safety baseline:
 Then keep the rest proportional:
 
 - recommend the right model from the manifest, as usual
-- load task skills only through native progressive disclosure, or manually only if the issue explicitly points to a skill or the tool lacks discovery
+- **read the task skills that apply** (see "Task skills" below): a small task does not skip this step
 - defer cortex files until the issue clearly needs past architectural or domain knowledge
 - defer project-specific rule files until the touched area actually matches them
 - defer broad codebase exploration; start with the files directly named by the issue or the smallest obvious surface
@@ -127,19 +127,25 @@ Lytos task skills (`testing`, `code-review`, `code-structure`, `documentation`, 
 .lytos/skills/<name>/SKILL.md
 ```
 
-Each `SKILL.md` declares its own `name` and `description` in YAML frontmatter. **Modern AI tools (Claude Code, Cursor, Codex, Gemini CLI, Copilot, Goose, etc.) discover these skills natively** via progressive disclosure — they read only the metadata at startup and load the full body when a task matches.
+Each `SKILL.md` declares its own `name` and `description` in YAML frontmatter. A project adds its own skills the same way.
+
+**Read them yourself. Do not assume your tool loads `.lytos/skills/` on its own**: it is Lytos's folder, not a standard place where AI tools look for skills. At every startup, lightweight included:
+
+1. Read the `SKILL.md` of every skill the issue names, in `skill` or in `skills_aux`.
+2. List `.lytos/skills/`, read the frontmatter of each `SKILL.md`, then read in full every other skill whose `description` matches the task.
+3. Name the skills you read in the context summary (step 6).
 
 The `skill` field in the issue frontmatter is **optional**:
 
-- If present, it is a hint: "for this issue, prefer the `<name>` skill". Useful for borderline tasks.
-- If absent, the tool decides via progressive disclosure based on the issue's title, description, and the skill descriptions.
+- If present, that skill must be read for this issue. Useful for borderline tasks.
+- If absent, the descriptions decide.
 
 ```
-Issue says "skill: testing" -> the tool loads .lytos/skills/testing/SKILL.md
-Issue has no skill field   -> the tool picks based on the task at hand
+Issue says "skill: testing" -> read .lytos/skills/testing/SKILL.md, then any other skill that matches
+Issue has no skill field   -> read the frontmatters, then each skill that matches the task
 ```
 
-If the tool you use does not yet support agentskills.io discovery, fall back to reading the relevant `.lytos/skills/<name>/SKILL.md` manually based on the task or the optional `skill` field.
+**Claude Code** also lists these skills as `lytos-<name>`: `lyt init --tool claude` and `lyt upgrade` write one pointer per skill in `.claude/skills/lytos-<name>/`. A pointer holds no instructions: read the file it names.
 
 #### The relevant memory sections
 
@@ -189,7 +195,7 @@ Before starting work, formulate (mentally or explicitly):
 ```
 Project : [manifest name]
 Issue   : ISS-XXXX — [title]
-Skill   : [loaded skill]
+Skills  : [the SKILL.md files read]
 Memory  : [loaded sections]
 Branch  : [git branch]
 Status  : [what's already done / what remains]
@@ -244,7 +250,7 @@ During a session, the human will have new ideas, spot problems, think of improve
 ## What NOT to do at startup
 
 - **Do not read all memory files** — only the relevant sections
-- **Do not re-read all skills** — only the one assigned to the task
+- **Do not read every skill in full** — their frontmatter tells which ones apply
 - **Do not browse the entire source code** — limit yourself to the files related to the issue
 - **Do not start coding before having context** — an agent without context produces generic code
 - **Do not use the lightweight path by intuition** — it is allowed only for `effort: XS` + `complexity: light`
@@ -262,7 +268,7 @@ Load:
 .lytos/memory/cortex/sprints.md
 .lytos/sprint.md
 .lytos/issue-board/BOARD.md
-.lytos/skills/documentation.md
+.lytos/skills/documentation/SKILL.md
 ```
 
 No need for technical memory (backend, frontend, bugs).
@@ -277,7 +283,7 @@ Load:
 .lytos/memory/MEMORY.md
 .lytos/memory/cortex/architecture.md
 .lytos/memory/cortex/patterns.md
-.lytos/skills/code-review.md
+.lytos/skills/code-review/SKILL.md
 .lytos/rules/*.md (all rules)
 ```
 
