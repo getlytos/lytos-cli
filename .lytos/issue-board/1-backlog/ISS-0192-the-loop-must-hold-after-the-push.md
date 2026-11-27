@@ -23,8 +23,9 @@ risk: medium
 ## Context
 
 Parts B, C and D of ISS-0191, moved here when part A (the skills must be read)
-was submitted for review on its own. The text below and the Definition of done
-items are copied from that card. Line numbers refer to `origin/main` at 1.7.0.
+was submitted for review on its own, plus part E, found by that review. The text
+of B, C and D and their Definition of done items are copied from that card. Line
+numbers refer to `origin/main` at 1.7.0.
 
 ### B. Three holes in the CI cost guidance (`method/skills/git-workflow/SKILL.md`)
 
@@ -66,6 +67,15 @@ Source: [Get a pull request ready with /ship and /steward](https://code.claude.c
 skills are folders, so `session-start.md` alone satisfies the check: a project
 with no task skill passes.
 
+### E. A deferred item fails the audit
+
+`method/skills/session-start.md` says that a Definition of done item leaving the
+scope of a card stays unchecked, with a pointer such as
+`*(deferred to ISS-XXXX)*`, and is never dropped. The prompt `lyt review` builds
+treats any unchecked `auto` item as a defect. It includes neither
+`session-start.md` nor a word on deferral. On ISS-0191 the audit returned NO_GO
+on this point, and the owner had the items removed from that card.
+
 ## Proposed solution
 
 ### B. Fix the three holes
@@ -106,6 +116,12 @@ with no task skill passes.
 Also from the review of part A: the "Task skills" section `lyt upgrade` prints
 has no line about the `lytos-<name>` pointers, unlike the `CLAUDE.md` template.
 
+### E. One rule for a deferred item
+
+Write the rule in `default-rules.md`, which the audit prompt includes, make
+`session-start.md` and the prompt's own text say the same, and require a deferral
+to name its card and who decided it.
+
 ### Solution study (the watch frame)
 
 | Option | Build cost | Run and maintenance cost at 10 / 100 / 500 projects | Robustness floor |
@@ -118,7 +134,7 @@ has no line about the `lytos-<name>` pointers, unlike the `CLAUDE.md` template.
 
 ## Ready
 
-- **Scope** — close the three CI holes, frame `/ship` and `/steward`, and make `lint` and `doctor` see the task skills.
+- **Scope** — close the three CI holes, frame `/ship` and `/steward`, make `lint` and `doctor` see the task skills, and give the method and the audit one rule for a deferred item.
 - **Constraints** — never overwrite a file the project owns, never write through a link; the CLI calls no AI and no forge; zero new dependency; the method stays usable with other agents.
 - **Out of scope** — scaffolding a CI workflow; running `/ship` or `/steward` from the CLI or the loop; the `lytos-method` repository and the website.
 - **Solution** — the study above is written; option 2 is chosen. Parts B and D are small fixes with one obvious form.
@@ -140,6 +156,11 @@ has no line about the `lytos-<name>` pointers, unlike the `CLAUDE.md` template.
 
 - [ ] `lyt lint` warns on a project with `session-start.md` and no task skill (test) — verify: auto
 - [ ] `lyt doctor` reports a missing pointer, an orphan pointer and a drifted description (tests) — verify: auto
+
+### E. Deferred items
+
+- [ ] The rule for a deferred item is in `default-rules.md`, agrees with `session-start.md` and with the text of the audit prompt, and a test checks that the exported prompt carries it — verify: auto
+- [ ] The rule leaves no way to defer an item silently: a deferral names its card and who decided it — verify: reviewer
 
 ## Notes
 

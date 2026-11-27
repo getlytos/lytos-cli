@@ -1,6 +1,6 @@
 ---
 id: ISS-0191
-title: The skills in .lytos/skills/ must be read, and the loop must hold after the push
+title: The skills in .lytos/skills/ must be read
 type: fix
 priority: P1-high
 effort: L
@@ -8,7 +8,7 @@ complexity: standard
 domain: [method, cli, ci]
 skill: ""
 skills_aux: []
-status: 3-in-progress
+status: 4-review
 branch: fix/ISS-0191-lytos-skills-must-be-read
 depends: []
 related: [ISS-0046, ISS-0135, ISS-0148, ISS-0186]
@@ -132,50 +132,17 @@ writes method files under `.lytos/` and leaves the bridge files alone.
 **Decision:** option 2. It is the cheapest one that gives Claude Code native
 discovery, keeps the bundled commands and does not depend on symlinks.
 
-### B. Fix the three holes
-
-- Commit the move to `4-review` **before** the single push.
-- Merge the base branch for a conflict, or when branch protection requires an
-  up-to-date branch. Not otherwise.
-- A failed check is not re-run without a fix.
-
-### C. Frame the watch
-
-- Ship `.claude/skills/steward/SKILL.md` with `--tool claude`. **Add-only:** an
-  existing file belongs to the project and is never overwritten. It says:
-  - the three rules of part B;
-  - `Refs: ISS-XXXX` on every commit;
-  - a skip marker only on intermediate card-only commits: the head that gets
-    merged has run CI;
-  - never `lyt close`, never `lyt review --verdict`, `--accept` or
-    `--countersign`, never `--force` or `--discovery-override`;
-  - never tick a `verify: human` or `verify: reviewer` item;
-  - a finding that needs code sends the card back to `3-in-progress` with a fix
-    list;
-  - the five stop cases of the reference loop apply, two failures in a row
-    included.
-- In `reference-loop` Part 2: the loop stops at `4-review`; the human types
-  `/ship`, which is their go for the push; the loop never starts it; its review is
-  a first filter and never a Lytos verdict.
-- In `git-workflow`: the limits listed in part C of the context, with what to do
-  about each (clean the tree before `/ship`, turn auto-merge off, require an
-  approval on the base branch).
-
-### D. Make the checks see the skills
-
-- `lyt lint` counts `skills/*/SKILL.md` and warns when there is none.
-- With a Claude bridge in place, `lyt doctor` reports a task skill with no
-  pointer, a pointer with no source and a description that drifted.
+Parts B, C and D moved to ISS-0192, with their proposed solution.
 
 ## Ready
 
-- **Scope** — make `.lytos/skills/` actually read, close the three CI holes, frame
-  `/ship` and `/steward`, and make `lint` and `doctor` see the task skills.
+- **Scope** — make `.lytos/skills/` actually read, and have `lyt upgrade` name the
+  bridge files that carry no order to read it.
 - **Constraints** — `.lytos/skills/` stays the only source of truth; no symlink;
   never overwrite a file the project owns, and never write through a link; no
   bundled Claude Code command is replaced; the CLI calls no AI and no forge; zero
   new dependency; the method stays usable with other agents.
-- **Out of scope** — native bridges for tools other than Claude Code (one card
+- **Out of scope** — parts B, C and D (ISS-0192); native bridges for tools other than Claude Code (one card
   each, once their discovery is verified); scaffolding a CI workflow; running
   `/ship` or `/steward` from the CLI or from the loop; the `lytos-method`
   repository (ISS-0092) and the website.
@@ -183,16 +150,36 @@ discovery, keeps the bundled commands and does not depend on symlinks.
 
 ## Delivery scope (2026-11-27)
 
-This delivery is **part A**, plus the bridge warning in `lyt upgrade`. Parts B, C
-and D are deferred to ISS-0192: their items stay below, unchecked, with a pointer,
-as `skills/session-start.md` asks for work that leaves the scope of a card. The
-card planned for it ("If the card proves too large for one pull request, ship part
-A alone first"), and the owner agreed to a pull request for part A alone. The
-Context, Proposed solution and Ready sections still describe the four parts.
+This card delivers **part A**, plus the bridge warning in `lyt upgrade`. Parts B,
+C and D moved to ISS-0192, with their proposed solution and their Definition of
+done items. The Context section still describes the four parts, as found.
+
+**Decided by the owner on 2026-11-27**, after the audit below returned NO_GO. The
+card had planned for a part A delivery, and the owner had agreed to a pull request
+for part A alone. The items were first kept here, unchecked, with a pointer, as
+`skills/session-start.md` asks. The audit prompt of `lyt review` treats any
+unchecked `auto` item as a defect and carries neither that rule nor a word on
+deferral. The two disagree, so the loop stopped and the owner chose: **remove the
+items from this card**. That departs from `session-start.md`, openly. Fixing the
+disagreement is part E of ISS-0192.
+
+Removed from the Definition of done, quoted as they stood:
+
+> The standard cycle commits the move to `4-review` before the single push, and agrees with the ordering table of the same file — verify: reviewer
+>
+> The checklist no longer asks for an up-to-date branch without a conflict or a protection rule, and a rule forbids re-running a failed check with no fix — verify: reviewer
+>
+> `lyt init --tool claude` and `lyt upgrade` add the steward file when absent and leave an existing one untouched (tests) — verify: auto
+>
+> The steward file, the `reference-loop` paragraph and the `git-workflow` limits say what the proposed solution lists, and each claim about Claude Code is checked against its documentation on the day of writing — verify: reviewer
+>
+> One real pull request of this repository goes through `/ship`, typed by the owner, with the steward file in place; this card records CI runs against code iterations, and the owner decides whether the file ships as is — verify: human:product-intent
+>
+> `lyt lint` warns on a project with `session-start.md` and no task skill (test) — verify: auto
+>
+> `lyt doctor` reports a missing pointer, an orphan pointer and a drifted description (tests) — verify: auto
 
 ## Definition of done
-
-Order: part A first. B, C and D do not delay it.
 
 ### A. Skills are read
 
@@ -202,22 +189,6 @@ Order: part A first. B, C and D do not delay it.
 - [x] In a fresh Claude Code session on a scaffolded project, the `lytos-*` skills are listed and invoking one leads the agent to read the matching `.lytos/skills/` file; the output is recorded in this card — verify: auto:e2e
 - [x] The six bridge templates and `session-start.md` order the explicit reading, lightweight startup included (tests) — verify: auto
 - [ ] Each tool still said to discover `.lytos/skills/` natively has a documentation link that shows it; otherwise the claim is removed, in `method/` and in this repository's `.lytos/` — verify: reviewer
-
-### B. CI guidance
-
-- [ ] The standard cycle commits the move to `4-review` before the single push, and agrees with the ordering table of the same file *(deferred to ISS-0192)* — verify: reviewer
-- [ ] The checklist no longer asks for an up-to-date branch without a conflict or a protection rule, and a rule forbids re-running a failed check with no fix *(deferred to ISS-0192)* — verify: reviewer
-
-### C. `/ship` and `/steward`
-
-- [ ] `lyt init --tool claude` and `lyt upgrade` add the steward file when absent and leave an existing one untouched (tests) *(deferred to ISS-0192)* — verify: auto
-- [ ] The steward file, the `reference-loop` paragraph and the `git-workflow` limits say what the proposed solution lists, and each claim about Claude Code is checked against its documentation on the day of writing *(deferred to ISS-0192)* — verify: reviewer
-- [ ] One real pull request of this repository goes through `/ship`, typed by the owner, with the steward file in place; this card records CI runs against code iterations, and the owner decides whether the file ships as is *(deferred to ISS-0192)* — verify: human:product-intent
-
-### D. Checks
-
-- [ ] `lyt lint` warns on a project with `session-start.md` and no task skill (test) *(deferred to ISS-0192)* — verify: auto
-- [ ] `lyt doctor` reports a missing pointer, an orphan pointer and a drifted description (tests) *(deferred to ISS-0192)* — verify: auto
 
 ## Relevant files
 
@@ -241,7 +212,8 @@ Order: part A first. B, C and D do not delay it.
 
 ## Evidence — part A (2026-11-27)
 
-Tests: `tests/commands/skill-pointers.test.ts`. Full suite: 68 files, 1447 tests
+Tests: now in `tests/commands/skill-pointers*.test.ts` and
+`skill-reading-floor.test.ts`. Full suite at the first commit: 68 files, 1447 tests
 green; `eslint src/` and `tsc --noEmit` clean. Each safeguard was removed in turn
 to check that the tests see it: no link guard, 2 failures; no ownership guard,
 1 failure; no `lytos-` prefix, 11 failures.
@@ -277,7 +249,8 @@ reaches them through `session-start.md` when they accept the new version (`y` or
 `--force`). `upgrade` rewrites no bridge file: it names each one that points at
 `.lytos/` and carries no order to read the task skills, and prints the section to
 add (`src/lib/bridge-check.ts`, `tests/commands/bridge-check.test.ts`). Adding it
-stays a manual step.
+stays a manual step. Since the audit, the order is recognized by a marker line,
+see below.
 
 ## Independent review — part A (2026-11-27)
 
@@ -306,8 +279,6 @@ reviewer item.
 The suite is at 69 files and 1476 tests, and the CI gates run locally are green:
 `format:check`, `lint`, `typecheck`, `secrets:scan`, build and tests.
 
-Remaining: accepting the reviewer item of part A, then parts B, C and D.
-
 ## Audit — 2026-11-27
 
 **Verdict:** NO_GO
@@ -331,3 +302,26 @@ The card explicitly defers parts B–D to ISS-0192, with owner agreement, but st
 - [ ] Make the bridge warning detect the actual order to read task skills, including a regression case for a path mention without that order.
 - [ ] Reconcile this card's DoD with the approved delivery scope and ISS-0192 so its remaining machine gates and deliverables are complete for the issue being closed.
 - [ ] Bring the new test file within the project's file-size rule.
+
+## Response to the audit — 2026-11-27
+
+| Audit point | Answer |
+|---|---|
+| Any mention of the skills' path silenced the bridge warning | Fixed. Reproduced with a sentence forbidding the reading and with a neutral mention. No wording is guessed at any more: the warning stops only for the `<!-- lytos:task-skills -->` line, alone on its line. The generated bridges and the printed section carry it; a bridge that words the order its own way adds the line. Five regression tests failed before the fix |
+| The card still held unchecked `auto` items | The owner's decision, recorded under "Delivery scope" |
+| The new test file was over 300 lines | Split in three, with shared helpers. The 47 earlier tests are all there, plus one marker test per bridge |
+
+Found while answering, not in the audit: this branch had also pushed
+`src/commands/upgrade.ts` from 296 to 363 lines. The skill steps moved to
+`src/lib/upgrade-skills.ts` and the summary to `upgrade-library.ts`; it is at 295.
+`scaffold.ts` and `templates.ts` were over 300 lines before this branch.
+
+Suite: 71 files, 1488 tests; `format:check`, `lint`, `typecheck`, `secrets:scan`
+and build green locally.
+
+Fresh sessions replayed on the final build (same settings as above): invoking
+`lytos-billing-rules` led to `Read .lytos/skills/billing-rules/SKILL.md`, all 10
+`lytos-*` skills listed. On the task naming no skill, Haiku first tried
+`.lytos/skills/lytos-billing-rules/SKILL.md`, which does not exist, then read the
+right file with a shell command; Sonnet called the pointer, then read the source.
+One run each.
