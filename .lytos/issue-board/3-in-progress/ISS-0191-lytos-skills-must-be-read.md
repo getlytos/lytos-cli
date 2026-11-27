@@ -8,7 +8,7 @@ complexity: standard
 domain: [method, cli, ci]
 skill: ""
 skills_aux: []
-status: 4-review
+status: 3-in-progress
 branch: fix/ISS-0191-lytos-skills-must-be-read
 depends: []
 related: [ISS-0046, ISS-0135, ISS-0148, ISS-0186]
@@ -21,6 +21,9 @@ started_at: 2026-11-27
 ai_implementer:
   model: claude-sonnet-5-5
 skills_used: [testing]
+ai_reviewer:
+  model: gpt-6.1-terra
+  session: 01a21d92-0774-7ee1-a40a-ffa90bf091f6
 ---
 # ISS-0191 — The skills in `.lytos/skills/` must be read
 
@@ -304,3 +307,27 @@ The suite is at 69 files and 1476 tests, and the CI gates run locally are green:
 `format:check`, `lint`, `typecheck`, `secrets:scan`, build and tests.
 
 Remaining: accepting the reviewer item of part A, then parts B, C and D.
+
+## Audit — 2026-11-27
+
+**Verdict:** NO_GO
+
+### Checks
+- [x] Tests pass: 69 files, 1,476 tests; build, lint, typecheck, format check, and secret scan passed.
+- [ ] Machine-verifiable DoD items (`verify: auto`) complete.
+- [ ] Rules respected (file/fn size, params, coverage as defined in default-rules.md).
+- [ ] Documentation aligned.
+
+### Notes
+[WARNING] src/lib/bridge-check.ts:29
+The bridge warning treats any occurrence of `.lytos/skills/<name>/SKILL.md` or `.lytos/skills/*/SKILL.md` as an instruction to read skills. For example, a bridge saying “Do not read `.lytos/skills/<name>/SKILL.md`” suppresses the warning. Existing projects can therefore be reported as having the floor while their bridge does not order it.
+
+[WARNING] tests/commands/skill-pointers.test.ts:1
+The new test file is 458 lines, exceeding the 300-line file limit.
+
+The card explicitly defers parts B–D to ISS-0192, with owner agreement, but still contains unfinished auto gates and missing deliverables at lines 210 and 216–217. The requested audit criteria treat these as blocking while they remain in this card's DoD. This finding does not arise from the deferred human checkbox. The part A Claude Code session is recorded in the card; I did not independently rerun that external session. The part A reviewer item passes: I found no remaining active claim that a tool natively discovers `.lytos/skills/`.
+
+### To fix before next review
+- [ ] Make the bridge warning detect the actual order to read task skills, including a regression case for a path mention without that order.
+- [ ] Reconcile this card's DoD with the approved delivery scope and ISS-0192 so its remaining machine gates and deliverables are complete for the issue being closed.
+- [ ] Bring the new test file within the project's file-size rule.
