@@ -268,6 +268,95 @@ describe("lyt upgrade keeps the pointer skills", () => {
   });
 });
 
+describe("a bad file stops one pointer, not the run (found in review)", () => {
+  it.each([
+    ["a SKILL.md that is a directory", (cwd: string) => mkdirSync(source(cwd, "weird"), { recursive: true }), /"weird": its SKILL\.md cannot be read/],
+    ["a directory where a pointer goes", (cwd: string) => {
+      rmSync(pointer(cwd, "testing"));
+      mkdirSync(pointer(cwd, "testing"));
+    }, /lytos-testing\/SKILL\.md not written/],
+    ["a file where .claude/skills goes", (cwd: string) => {
+      rmSync(claudeSkills(cwd), { recursive: true });
+      writeFileSync(claudeSkills(cwd), "mine\n");
+    }, /lytos-testing\/SKILL\.md not written/],
+  ])("survives %s and says so", (_label, breakIt, message) => {
+    const cwd = project();
+    breakIt(cwd);
+    writeFileSync(join(cwd, "AGENTS.md"), "Read .lytos/manifest.md.\n");
+
+    const result = run("upgrade", cwd);
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).toMatch(message);
+    // The run went on to its last steps.
+    expect(result.stderr).toContain("no order to read the task skills");
+    expect(result.stderr).not.toContain("    at ");
+  });
+
+  it("survives a directory named CLAUDE.md", () => {
+    const cwd = project();
+    rmSync(join(cwd, "CLAUDE.md"));
+    mkdirSync(join(cwd, "CLAUDE.md"));
+
+    const result = run("upgrade", cwd);
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).not.toContain("    at ");
+  });
+
+  it("reads a SKILL.md that starts with a byte order mark", () => {
+    const cwd = project();
+    addSkill(cwd, "billing-rules", "name: billing-rules\ndescription: Use when touching invoices.");
+    writeFileSync(source(cwd, "billing-rules"), `\uFEFF${read(source(cwd, "billing-rules"))}`);
+
+    expect(run("upgrade", cwd).exitCode).toBe(0);
+    expect(read(pointer(cwd, "billing-rules"))).toContain("description: Use when touching invoices.");
+  });
+});
+
+describe("a CLAUDE.md that imports the bridge is a Claude bridge (found in review)", () => {
+  it.each([
+    ["CLAUDE.md", "@AGENTS.md\n"],
+    [".claude/CLAUDE.md", "Project notes, see @../AGENTS.md\n"],
+  ])("follows an import from %s", (file, content) => {
+    const cwd = project("codex");
+    mkdirSync(join(cwd, ".claude"), { recursive: true });
+    writeFileSync(join(cwd, file), content);
+
+    expect(run("upgrade", cwd).exitCode).toBe(0);
+    expect(existsSync(pointer(cwd, "testing"))).toBe(true);
+  });
+
+  it("does not follow an import into a file that is no Lytos bridge", () => {
+    const cwd = project("none");
+    writeFileSync(join(cwd, "NOTES.md"), "Use tabs.\n");
+    writeFileSync(join(cwd, "CLAUDE.md"), "@NOTES.md\n@missing.md\nmail me@example.md\n");
+
+    expect(run("upgrade", cwd).exitCode).toBe(0);
+    expect(existsSync(join(cwd, ".claude"))).toBe(false);
+  });
+});
+
+describe("the advice for ignored pointers works as printed (found in review)", () => {
+  it.each([[".claude/"], [".claude"], ["**/.claude/"], [".claude/*"], [".claude/**"]])(
+    "un-ignores the pointers, and nothing else, under the rule %s",
+    (rule) => {
+      const cwd = emptyDir();
+      execFileSync("git", ["init", "-q"], { cwd });
+      writeFileSync(join(cwd, ".gitignore"), `${rule}\n`);
+      const printed = run("init --yes --tool claude", cwd).stderr;
+      const lines = printed.split("\n").map((l) => l.trim()).filter((l) => /^!?\.claude\//.test(l));
+
+      writeFileSync(join(cwd, ".gitignore"), `${rule}\n${lines.join("\n")}\n`);
+      const ignored = (path: string): boolean =>
+        spawnSync("git", ["check-ignore", "-q", "--", path], { cwd }).status === 0;
+
+      expect(ignored(".claude/skills/lytos-testing/SKILL.md")).toBe(false);
+      expect(ignored(".claude/settings.local.json")).toBe(true);
+      expect(ignored(".claude/skills/mine/SKILL.md")).toBe(true);
+      expect(run("upgrade", cwd).stderr).not.toContain("git ignores the pointers");
+    }
+  );
+});
+
 describe("descriptionEntry copies the description as written", () => {
   it.each([
     ["a quoted scalar", 'description: "Use when: invoicing."'],
@@ -313,6 +402,12 @@ describe("the floor: every tool is told to read the skills", () => {
     const lightweight = sessionStart.split("#### Lightweight startup")[1].split("#### Standard startup")[0];
     expect(lightweight).toContain("read the task skills that apply");
     expect(sessionStart).toContain("At every startup, lightweight included");
+  });
+
+  it("the reference loop briefs its builder with every skill that applies", () => {
+    const loop = read(join(METHOD, "skills/reference-loop/SKILL.md"));
+    const brief = loop.split("**Brief.**")[1].split("\n")[0];
+    expect(brief).toContain("whose `description` matches the task");
   });
 
   it("every skill path session-start names exists in the shipped skills", () => {

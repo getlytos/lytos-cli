@@ -29,7 +29,8 @@ import {
   QUALITY_LIBRARY_FILES,
 } from "./method-files.js";
 import { symlinkOnPath } from "./safe-write.js";
-import { pointerWarnings, syncSkillPointers } from "./skill-pointers.js";
+import { pointerWarnings } from "./pointer-warnings.js";
+import { syncSkillPointers } from "./skill-pointers.js";
 import { DEFAULT_DESIGN, type DesignChoice } from "./design.js";
 
 const METHOD_DIR = join(dirname(fileURLToPath(import.meta.url)), "method");

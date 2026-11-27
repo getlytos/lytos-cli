@@ -20,7 +20,6 @@
  * Zero dependencies.
  */
 
-import { execFileSync } from "child_process";
 import {
   existsSync,
   mkdirSync,
@@ -62,11 +61,19 @@ export interface PointerResult {
   keptForeign: string[];
   /** Pointers not written because a symbolic link is on their path. */
   behindLink: Array<{ path: string; link: string }>;
+  /** Pointers the file system refused: a directory in the way, no permission. */
+  failed: Array<{ path: string; reason: string }>;
   /** Skills that got no pointer, and why. */
   invalid: SkillProblem[];
 }
 
-const normalize = (text: string): string => text.replace(/\r\n/g, "\n");
+/** Without a byte order mark, and with `\n` line endings. */
+const normalize = (text: string): string =>
+  text.replace(/^\uFEFF/, "").replace(/\r\n/g, "\n");
+
+/** The error code of a refused file operation, or its message. */
+const reasonOf = (err: unknown): string =>
+  (err as NodeJS.ErrnoException).code ?? (err as Error).message;
 
 /**
  * The `description` entry of a SKILL.md frontmatter, with any indented
@@ -125,18 +132,25 @@ export function listTaskSkills(
   pending: ReadonlyMap<string, string> = new Map()
 ): { skills: TaskSkill[]; invalid: SkillProblem[] } {
   const contents = new Map(pending);
+  const invalid: SkillProblem[] = [];
   const skillsDir = join(lytosDir, "skills");
   if (existsSync(skillsDir)) {
     for (const entry of readdirSync(skillsDir, { withFileTypes: true })) {
       const source = join(skillsDir, entry.name, "SKILL.md");
-      if (existsSync(source)) {
+      if (!existsSync(source)) continue;
+      try {
         contents.set(entry.name, readFileSync(source, "utf-8"));
+      } catch (err) {
+        contents.delete(entry.name);
+        invalid.push({
+          name: entry.name,
+          problem: `its SKILL.md cannot be read (${reasonOf(err)})`,
+        });
       }
     }
   }
 
   const skills: TaskSkill[] = [];
-  const invalid: SkillProblem[] = [];
   for (const name of [...contents.keys()].sort()) {
     const result = toTaskSkill(name, contents.get(name) as string);
     if ("problem" in result) invalid.push(result);
@@ -149,6 +163,10 @@ const sourcePath = (name: string): string => `.lytos/skills/${name}/SKILL.md`;
 
 const marker = (name: string): string =>
   `<!-- lytos:skill-pointer source=${sourcePath(name)} -->`;
+
+/** Did `lyt` generate this file as the pointer to that skill? */
+export const isPointerOf = (content: string, name: string): boolean =>
+  content.includes(marker(name));
 
 export const pointerPath = (name: string): string =>
   `.claude/skills/${POINTER_PREFIX}${name}/SKILL.md`;
@@ -174,9 +192,47 @@ This file is a pointer. The skill is \`${source}\`, from the project root.
 `;
 }
 
+/** Bring the pointer of one skill up to date, and record what became of it. */
+function syncPointer(
+  cwd: string,
+  skill: TaskSkill,
+  dryRun: boolean,
+  result: PointerResult
+): void {
+  const relPath = pointerPath(skill.name);
+  const path = join(cwd, relPath);
+
+  // First: a dangling link reads as "absent", and a write would create its target.
+  const link = symlinkOnPath(path, cwd);
+  if (link) {
+    result.behindLink.push({ path: relPath, link: relative(cwd, link) });
+    return;
+  }
+
+  const expected = renderPointer(skill);
+  const current = existsSync(path)
+    ? normalize(readFileSync(path, "utf-8"))
+    : null;
+
+  if (current === expected) {
+    result.upToDate.push(relPath);
+    return;
+  }
+  if (current !== null && !isPointerOf(current, skill.name)) {
+    result.keptForeign.push(relPath);
+    return;
+  }
+  if (!dryRun) {
+    mkdirSync(dirname(path), { recursive: true });
+    writeFileSync(path, expected, "utf-8");
+  }
+  (current === null ? result.added : result.refreshed).push(relPath);
+}
+
 /**
  * Write the missing pointers and rewrite the generated ones that drifted.
  * Idempotent. Touches nothing it did not generate, and nothing behind a link.
+ * A file the system refuses costs its own pointer, not the run.
  */
 export function syncSkillPointers(
   cwd: string,
@@ -192,102 +248,19 @@ export function syncSkillPointers(
     upToDate: [],
     keptForeign: [],
     behindLink: [],
+    failed: [],
     invalid,
   };
 
   for (const skill of skills) {
-    const relPath = pointerPath(skill.name);
-    const path = join(cwd, relPath);
-
-    // First: a dangling link reads as "absent", and a write would create its target.
-    const link = symlinkOnPath(path, cwd);
-    if (link) {
-      result.behindLink.push({ path: relPath, link: relative(cwd, link) });
-      continue;
+    try {
+      syncPointer(cwd, skill, Boolean(options.dryRun), result);
+    } catch (err) {
+      result.failed.push({
+        path: pointerPath(skill.name),
+        reason: reasonOf(err),
+      });
     }
-
-    const expected = renderPointer(skill);
-    const current = existsSync(path)
-      ? normalize(readFileSync(path, "utf-8"))
-      : null;
-
-    if (current === expected) {
-      result.upToDate.push(relPath);
-      continue;
-    }
-    if (current !== null && !current.includes(marker(skill.name))) {
-      result.keptForeign.push(relPath);
-      continue;
-    }
-    if (!options.dryRun) {
-      mkdirSync(dirname(path), { recursive: true });
-      writeFileSync(path, expected, "utf-8");
-    }
-    (current === null ? result.added : result.refreshed).push(relPath);
   }
   return result;
-}
-
-/**
- * Does this project use the Claude Code bridge? Yes when its instructions for
- * Claude point at `.lytos/`, or when it already holds a generated pointer.
- */
-export function hasClaudeBridge(cwd: string): boolean {
-  const instructions = ["CLAUDE.md", join(".claude", "CLAUDE.md")];
-  for (const file of instructions) {
-    const path = join(cwd, file);
-    if (existsSync(path) && readFileSync(path, "utf-8").includes(".lytos/")) {
-      return true;
-    }
-  }
-  return listTaskSkills(join(cwd, ".lytos")).skills.some((skill) => {
-    const path = join(cwd, pointerPath(skill.name));
-    return (
-      existsSync(path) &&
-      readFileSync(path, "utf-8").includes(marker(skill.name))
-    );
-  });
-}
-
-/** Does git ignore this path? False outside a repository or without git. */
-function ignoredByGit(cwd: string, path: string): boolean {
-  try {
-    execFileSync("git", ["check-ignore", "-q", "--", path], {
-      cwd,
-      stdio: "ignore",
-    });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-/**
- * What a person has to be told after a sync: the pointers that could not be
- * written, and pointers git ignores — present here, absent from a fresh clone,
- * a worktree or a cloud session.
- */
-export function pointerWarnings(cwd: string, result: PointerResult): string[] {
-  const warnings = [
-    ...result.invalid.map(
-      ({ name, problem }) =>
-        `No Claude Code pointer for the skill "${name}": ${problem}.`
-    ),
-    ...result.behindLink.map(
-      ({ path, link }) =>
-        `${path} not written: ${link} is a symbolic link, and lyt does not write through one.`
-    ),
-    ...result.keptForeign.map(
-      (path) =>
-        `Kept ${path}: lyt did not generate it. Claude Code will not be pointed at that Lytos skill.`
-    ),
-  ];
-
-  const written = [...result.added, ...result.refreshed, ...result.upToDate];
-  if (written.some((path) => ignoredByGit(cwd, path))) {
-    warnings.push(
-      "git ignores the pointers in .claude/skills/: a fresh clone, a worktree or a cloud session will not have them. Un-ignore .claude/skills/lytos-*/ and commit them."
-    );
-  }
-  return warnings;
 }

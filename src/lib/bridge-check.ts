@@ -9,8 +9,8 @@
  * Read-only. Zero dependencies.
  */
 
-import { readFileSync, statSync } from "fs";
 import { join } from "path";
+import { readIfFile } from "./read-if-file.js";
 
 /**
  * The files each tool reads. Within a group, one file carrying the order is
@@ -27,15 +27,6 @@ const BRIDGE_GROUPS: ReadonlyArray<readonly string[]> = [
 
 /** The order names the task skills by their path, not only `session-start.md`. */
 const SKILLS_ORDER = /\.lytos\/skills\/(<name>|\*)\/SKILL\.md/;
-
-/** The content of a file, or null when it is absent or not a file. */
-function readIfFile(path: string): string | null {
-  try {
-    return statSync(path).isFile() ? readFileSync(path, "utf-8") : null;
-  } catch {
-    return null;
-  }
-}
 
 /**
  * The bridge files that point at `.lytos/` and whose tool is never told to read

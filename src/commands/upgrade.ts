@@ -55,11 +55,9 @@ import { UPGRADEABLE_FILES } from "../lib/method-files.js";
 import { symlinkOnPath } from "../lib/safe-write.js";
 import { bridgesWithoutSkillsOrder } from "../lib/bridge-check.js";
 import { TASK_SKILLS_SECTION } from "../lib/templates.js";
-import {
-  hasClaudeBridge,
-  pointerWarnings,
-  syncSkillPointers,
-} from "../lib/skill-pointers.js";
+import { hasClaudeBridge } from "../lib/claude-bridge.js";
+import { pointerWarnings } from "../lib/pointer-warnings.js";
+import { syncSkillPointers } from "../lib/skill-pointers.js";
 import { askConfirm, canPrompt } from "../lib/terminal.js";
 import {
   migrateCursorRules,
@@ -285,7 +283,10 @@ export const upgradeCommand = new Command("upgrade")
         added += pointers.added.length;
         if (opts.dryRun) skipped += pointers.refreshed.length;
         else updated += pointers.refreshed.length;
-        skipped += pointers.keptForeign.length + pointers.behindLink.length;
+        skipped +=
+          pointers.keptForeign.length +
+          pointers.behindLink.length +
+          pointers.failed.length;
         upToDate += pointers.upToDate.length;
       }
 
