@@ -1,0 +1,267 @@
+---
+id: ISS-0191
+title: The skills in .lytos/skills/ must be read, and the loop must hold after the push
+type: fix
+priority: P1-high
+effort: L
+complexity: standard
+domain: [method, cli, ci]
+skill: ""
+skills_aux: []
+status: 3-in-progress
+branch: fix/ISS-0191-lytos-skills-must-be-read
+depends: []
+related: [ISS-0046, ISS-0135, ISS-0148, ISS-0186]
+created: 2026-11-27
+updated: 2026-11-27
+schema_version: 2
+risk: medium
+assignee: fredericgalline
+started_at: 2026-11-27
+---
+# ISS-0191 — The skills in `.lytos/skills/` must be read
+
+## Context
+
+Found on 2026-11-27 while checking whether the Claude Code commands `/ship`,
+`/steward` and `/code-review` fit into Lytos. Code and method findings below were
+checked against `origin/main` (1.7.0). Line numbers refer to that state.
+
+**Part A is the blocker.** Parts B, C and D were found in the same pass.
+
+### A. Claude Code does not discover the Lytos task skills
+
+- `method/skills/session-start.md:130` says that Claude Code, Cursor, Codex,
+  Gemini CLI, Copilot and Goose discover `.lytos/skills/<name>/SKILL.md`
+  natively. `method/LYTOS.md:41` and
+  `method/issue-board/templates/issue-feature.md:9` say the same, and so does the
+  comment at `src/lib/scaffold.ts:56`.
+- The [Claude Code skills documentation](https://code.claude.com/docs/en/skills)
+  lists the locations it loads: `.claude/skills/` (project, nested, added
+  directories), `~/.claude/skills/`, managed settings, plugins and the claude.ai
+  account. `.lytos/skills/` is not one of them.
+- Observed in a Claude Code session on this repository: no Lytos skill such as
+  `reference-loop` or `git-workflow` was in the skill list.
+- A search of `src/` found no write to `.claude/skills/`. The `CLAUDE.md`
+  template names no skill other than `session-start.md`.
+- Effect: lightweight startup (`session-start.md:81`) relies on native
+  discovery, so an XS / light card with no `skill` field can run with no task
+  skill at all. On standard startup, the manual fallback (end of the "Task
+  skills" section) is reserved for tools without discovery, and the text tells
+  Claude Code that it has it.
+- **Not verified:** what Cursor, Codex, Gemini CLI, Copilot and Goose load.
+
+### B. Three holes in the CI cost guidance (`method/skills/git-workflow/SKILL.md`)
+
+ISS-0148 added the invariant "CI runs = code iterations". Elsewhere in the file:
+
+1. The standard cycle (lines 142-143) pushes, then opens the pull request and
+   moves the card to `4-review/`. If that move is committed and pushed after the
+   pull request opens, it can trigger another run, against the "one push" ordering
+   further down.
+2. The pull request checklist (line 212) asks for a branch up to date with `dev`,
+   which can cause base merges and pushes that change nothing under test.
+3. A search of the file found nothing against re-running a failed check with no
+   fix.
+
+### C. Nothing frames `/ship` and `/steward`
+
+Source: [Get a pull request ready with /ship and /steward](https://code.claude.com/docs/en/ship-command).
+
+- A watch lasts up to seven days. It pushes fixes, merges the base branch to
+  resolve conflicts **or to bring the branch up to date**, and re-runs failed
+  checks. The last two cut against part B.
+- `/ship` reviews from the session that did the work, with `/code-review`. That
+  is not the Lytos audit of the card against its Definition of done.
+- When the watch acts without a user message, its fetches, merges, commits and
+  pushes skip the repository's git hooks, so the hook `lyt init` installs does
+  not run for them.
+- "Claude never merges" has limits: auto-merge on the pull request can merge
+  after a watch push; in a terminal session, the watch limits are off while Claude
+  answers a message typed while it was idle; branch rules that need no approval
+  leave the merge open to the signed-in account.
+- `/ship` can commit **all** uncommitted files, new ones included (not in a public
+  repository), which can mix several cards in one commit.
+- The supported hook-in point is `.claude/skills/steward/SKILL.md`, which a watch
+  reads and follows as instructions. These are instructions, not a lock.
+
+### D. `lyt lint` does not see task skills
+
+`src/lib/linter.ts:211-224` counts only the flat `*.md` files in `skills/`. Task
+skills are folders, so `session-start.md` alone satisfies the check: a project
+with no task skill passes.
+
+## Proposed solution
+
+### A. Two layers: a floor for every tool, a bridge for Claude Code
+
+1. **Floor — explicit reading.** `session-start.md` and the six bridge templates
+   say that the agent reads `.lytos/skills/<name>/SKILL.md`: the one the card
+   names, otherwise those whose `description` matches the task. This holds on
+   lightweight startup too. The claim of native discovery goes, for every tool
+   that has no documented proof of loading `.lytos/skills/`.
+2. **Bridge — pointer skills.** For `--tool claude`, the CLI writes
+   `.claude/skills/lytos-<name>/SKILL.md` for each `.lytos/skills/*/SKILL.md`:
+   `name: lytos-<name>`, the same `description`, and a body that orders the agent
+   to read the source file and follow it. `.lytos/` stays the only source of
+   truth.
+
+The list comes from the folders on disk, never from a hardcoded list, so
+`reference-loop` and the skills a project adds are covered.
+
+The `lytos-` prefix is required. A project skill replaces the bundled command of
+the same name (documented example: `code-review` replaces `/code-review`).
+
+`lyt upgrade` must bring both layers to projects that already exist: today it
+writes method files under `.lytos/` and leaves the bridge files alone.
+
+#### Solution study
+
+| Option | Build cost | Run and maintenance cost at 10 / 100 / 500 projects | Robustness floor |
+|---|---|---|---|
+| 1. Text only (floor) | low | none at any size | Works in any tool, but nothing shows when the agent skips it |
+| 2. Pointer skills + floor | medium | no run cost; descriptions can drift, caught by `lyt doctor` and rewritten by `lyt upgrade` | Passes: drift is visible, rewrite is idempotent, deleting the pointers reverts, no symlink |
+| 3. Symlinks `.claude/skills/<name>` → `.lytos/skills/<name>` | low | no drift | Fails isolation: the linked file keeps `name: code-review`, which Claude Code can use as the command name, so renaming the link may not avoid the collision. Git symlinks on Windows need checking, and the CLI refuses to write through links |
+
+**Decision:** option 2. It is the cheapest one that gives Claude Code native
+discovery, keeps the bundled commands and does not depend on symlinks.
+
+### B. Fix the three holes
+
+- Commit the move to `4-review` **before** the single push.
+- Merge the base branch for a conflict, or when branch protection requires an
+  up-to-date branch. Not otherwise.
+- A failed check is not re-run without a fix.
+
+### C. Frame the watch
+
+- Ship `.claude/skills/steward/SKILL.md` with `--tool claude`. **Add-only:** an
+  existing file belongs to the project and is never overwritten. It says:
+  - the three rules of part B;
+  - `Refs: ISS-XXXX` on every commit;
+  - a skip marker only on intermediate card-only commits: the head that gets
+    merged has run CI;
+  - never `lyt close`, never `lyt review --verdict`, `--accept` or
+    `--countersign`, never `--force` or `--discovery-override`;
+  - never tick a `verify: human` or `verify: reviewer` item;
+  - a finding that needs code sends the card back to `3-in-progress` with a fix
+    list;
+  - the five stop cases of the reference loop apply, two failures in a row
+    included.
+- In `reference-loop` Part 2: the loop stops at `4-review`; the human types
+  `/ship`, which is their go for the push; the loop never starts it; its review is
+  a first filter and never a Lytos verdict.
+- In `git-workflow`: the limits listed in part C of the context, with what to do
+  about each (clean the tree before `/ship`, turn auto-merge off, require an
+  approval on the base branch).
+
+### D. Make the checks see the skills
+
+- `lyt lint` counts `skills/*/SKILL.md` and warns when there is none.
+- With a Claude bridge in place, `lyt doctor` reports a task skill with no
+  pointer, a pointer with no source and a description that drifted.
+
+## Ready
+
+- **Scope** — make `.lytos/skills/` actually read, close the three CI holes, frame
+  `/ship` and `/steward`, and make `lint` and `doctor` see the task skills.
+- **Constraints** — `.lytos/skills/` stays the only source of truth; no symlink;
+  never overwrite a file the project owns, and never write through a link; no
+  bundled Claude Code command is replaced; the CLI calls no AI and no forge; zero
+  new dependency; the method stays usable with other agents.
+- **Out of scope** — native bridges for tools other than Claude Code (one card
+  each, once their discovery is verified); scaffolding a CI workflow; running
+  `/ship` or `/steward` from the CLI or from the loop; the `lytos-method`
+  repository (ISS-0092) and the website.
+- **Solution** — the study above is written; option 2 is chosen.
+
+## Definition of done
+
+Order: part A first. B, C and D do not delay it.
+
+### A. Skills are read
+
+- [x] `lyt init --tool claude` writes one `lytos-<name>` pointer per task skill found on disk, `reference-loop` included, and a project-added skill gets one too (tests) — verify: auto
+- [x] No exposed pointer name equals `code-review` or another bundled command name; every one starts with `lytos-` (test) — verify: auto
+- [x] `lyt upgrade` on a project with a Claude bridge adds the missing pointers, refreshes a drifted description, is idempotent, overwrites no skill it did not generate and writes through no link (tests, forbidden cases included) — verify: auto
+- [x] In a fresh Claude Code session on a scaffolded project, the `lytos-*` skills are listed and invoking one leads the agent to read the matching `.lytos/skills/` file; the output is recorded in this card — verify: auto:e2e
+- [x] The six bridge templates and `session-start.md` order the explicit reading, lightweight startup included (tests) — verify: auto
+- [ ] Each tool still said to discover `.lytos/skills/` natively has a documentation link that shows it; otherwise the claim is removed, in `method/` and in this repository's `.lytos/` — verify: reviewer
+
+### B. CI guidance
+
+- [ ] The standard cycle commits the move to `4-review` before the single push, and agrees with the ordering table of the same file — verify: reviewer
+- [ ] The checklist no longer asks for an up-to-date branch without a conflict or a protection rule, and a rule forbids re-running a failed check with no fix — verify: reviewer
+
+### C. `/ship` and `/steward`
+
+- [ ] `lyt init --tool claude` and `lyt upgrade` add the steward file when absent and leave an existing one untouched (tests) — verify: auto
+- [ ] The steward file, the `reference-loop` paragraph and the `git-workflow` limits say what the proposed solution lists, and each claim about Claude Code is checked against its documentation on the day of writing — verify: reviewer
+- [ ] One real pull request of this repository goes through `/ship`, typed by the owner, with the steward file in place; this card records CI runs against code iterations, and the owner decides whether the file ships as is — verify: human:product-intent
+
+### D. Checks
+
+- [ ] `lyt lint` warns on a project with `session-start.md` and no task skill (test) — verify: auto
+- [ ] `lyt doctor` reports a missing pointer, an orphan pointer and a drifted description (tests) — verify: auto
+
+## Relevant files
+
+- `method/skills/session-start.md`, `method/skills/git-workflow/SKILL.md`, `method/skills/reference-loop/SKILL.md`
+- `method/LYTOS.md`, `method/issue-board/templates/issue-feature.md`
+- `src/lib/scaffold.ts`, `src/lib/templates.ts`, `src/lib/method-files.ts`
+- `src/commands/upgrade.ts`, `src/lib/linter.ts`, `src/lib/doctor.ts`
+- This repository's own copies under `.lytos/`
+
+## Notes
+
+- ISS-0046 adopted the agentskills.io folder format and expected native discovery
+  in every target tool. The format is in place; for Claude Code, the location is
+  not one it loads.
+- The open pull request #30 (ISS-0135) also edits `src/lib/templates.ts` and
+  `method/skills/git-workflow/SKILL.md`. Settle it first, or expect conflicts.
+- ISS-0186 fixes a stale skill path in `session-start.md`: same file.
+- The `/ship` facts come from documentation read on 2026-11-27. None of the three
+  commands had been run for this card.
+- If the card proves too large for one pull request, ship part A alone first.
+
+## Evidence — part A (2026-11-27)
+
+Tests: `tests/commands/skill-pointers.test.ts`. Full suite: 68 files, 1447 tests
+green; `eslint src/` and `tsc --noEmit` clean. Each safeguard was removed in turn
+to check that the tests see it: no link guard, 2 failures; no ownership guard,
+1 failure; no `lytos-` prefix, 11 failures.
+
+Fresh headless sessions (Claude Code 2.1.310, project settings only, `Skill` and
+`Read` pre-approved; the agent also ran shell commands) on a project scaffolded with `lyt init --tool claude`, plus one
+project-added skill, `billing-rules`, holding a code word found in no other file
+of the method, its pointer included.
+
+| Probe | Observed |
+|---|---|
+| "Invoke the skill lytos-billing-rules" (Haiku) | The 10 `lytos-*` skills are listed, the project-added one included, and `code-review` is still listed. Calls: `Skill lytos-billing-rules`, then `Read .lytos/skills/billing-rules/SKILL.md`. The answer holds the code word |
+| Control: same project with `.claude/` moved away (Haiku) | No `lytos-*` skill is listed |
+| A task about invoices that names no skill (Haiku, one run) | Read `.lytos/skills/billing-rules/SKILL.md` |
+| The same task (Sonnet, one run) | Read `.lytos/skills/billing-rules/SKILL.md` |
+
+In the last two runs the agent read the source file directly, as the floor
+orders, without calling the pointer. One run per model: an observation, not a
+guarantee. Nothing was run in Cursor, Codex, Gemini CLI, Copilot or Windsurf.
+
+A first probe asking for the code word itself proved nothing: the agent searched
+for it with a shell command, with and without the pointers.
+
+For the reviewer item: every claim of native discovery was removed, so no tool
+is left that needs a documentation link.
+
+Also fixed here: `session-start.md` named two skills by paths that no longer
+exist (`code-review.md`, `documentation.md`), so they could not be read. A test
+now checks every skill path it names. This overlaps the first half of ISS-0186.
+
+**Limit on existing projects.** `lyt upgrade` adds the pointers without asking.
+The floor reaches them only when they accept the new `session-start.md` (`y` or
+`--force`), and `upgrade` rewrites no bridge file: their `CLAUDE.md` or
+`AGENTS.md` does not gain the "Task skills" section. The solution above asks for
+both layers; for the bridge files this is not met.
+
+Remaining: the reviewer item of part A, that limit, then parts B, C and D.
+
