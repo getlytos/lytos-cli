@@ -11,6 +11,7 @@
 
 import { join } from "path";
 import { readIfFile } from "./read-if-file.js";
+import { TASK_SKILLS_MARKER } from "./templates.js";
 
 /**
  * The files each tool reads. Within a group, one file carrying the order is
@@ -25,8 +26,13 @@ const BRIDGE_GROUPS: ReadonlyArray<readonly string[]> = [
   [".windsurfrules"],
 ];
 
-/** The order names the task skills by their path, not only `session-start.md`. */
-const SKILLS_ORDER = /\.lytos\/skills\/(<name>|\*)\/SKILL\.md/;
+/**
+ * The marker, alone on its line. Whether a sentence orders the reading, forbids
+ * it or only mentions the skills cannot be told from the text, so no wording is
+ * guessed at: an unmarked bridge is reported.
+ */
+const hasMarker = (content: string): boolean =>
+  content.split("\n").some((line) => line.trim() === TASK_SKILLS_MARKER);
 
 /**
  * The bridge files that point at `.lytos/` and whose tool is never told to read
@@ -38,9 +44,7 @@ export function bridgesWithoutSkillsOrder(cwd: string): string[] {
     const bridges = group
       .map((file) => ({ file, content: readIfFile(join(cwd, file)) }))
       .filter(({ content }) => content?.includes(".lytos/"));
-    const ordered = bridges.some(({ content }) =>
-      SKILLS_ORDER.test(content as string)
-    );
+    const ordered = bridges.some(({ content }) => hasMarker(content as string));
     return ordered ? [] : bridges.map(({ file }) => file);
   });
 }

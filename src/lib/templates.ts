@@ -569,10 +569,19 @@ _No issues._
 }
 
 /**
+ * The line that says a bridge carries the order to read the task skills.
+ * `lyt upgrade` looks for it alone on its line, because a mention of the
+ * skills' path is not an order. A project that words the order its own way adds
+ * this line.
+ */
+export const TASK_SKILLS_MARKER = "<!-- lytos:task-skills -->";
+
+/**
  * The order to read the task skills (ISS-0191). No tool is assumed to load
  * `.lytos/skills/` on its own, so every bridge says to read them.
  */
 export const TASK_SKILLS_SECTION = `## Task skills
+${TASK_SKILLS_MARKER}
 
 Task skills live in \`.lytos/skills/<name>/SKILL.md\`. Do not assume your tool loads that folder on its own: read them yourself, on a small task too.
 
@@ -580,7 +589,8 @@ Task skills live in \`.lytos/skills/<name>/SKILL.md\`. Do not assume your tool l
 - List \`.lytos/skills/\`, read the frontmatter of each \`SKILL.md\`, then read in full every other skill whose \`description\` matches the task`;
 
 /** The same order, for the bridges written as plain rule files. */
-const TASK_SKILLS_RULES = `Task skills (.lytos/skills/<name>/SKILL.md): do not assume your tool loads that folder on its own. On every task, small ones too:
+const TASK_SKILLS_RULES = `${TASK_SKILLS_MARKER}
+Task skills (.lytos/skills/<name>/SKILL.md): do not assume your tool loads that folder on its own. On every task, small ones too:
 - read the SKILL.md of every skill the issue names, in skill or skills_aux
 - list .lytos/skills/, read the frontmatter of each SKILL.md, then read in full every other skill whose description matches the task`;
 

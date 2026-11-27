@@ -22,11 +22,8 @@
  *     like the library, to a project whose `config.yml` says `design:
  *     claude-design` and to no other (ISS-0169).
  *
- * One thing is written outside `.lytos/`: for a project with the Claude Code
- * bridge, the pointer skills in `.claude/skills/lytos-*` (ISS-0191), added when
- * missing and rewritten when they drifted. A file `lyt` did not generate is
- * never rewritten, and the bridge files themselves are never touched: one with
- * no order to read the task skills is named, with the section to add.
+ * Outside `.lytos/`, only the Claude Code skill pointers are written
+ * (`lib/upgrade-skills.ts`, ISS-0191). A bridge file is never touched.
  */
 
 import { Command } from "commander";
@@ -34,30 +31,21 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
 import { join, dirname, relative } from "path";
 import { fileURLToPath } from "url";
 import { createRequire } from "module";
-import {
-  ok,
-  info,
-  warn,
-  error,
-  cyan,
-  bold,
-  green,
-  dim,
-} from "../lib/output.js";
+import { info, warn, error, cyan, green, dim } from "../lib/output.js";
 import { KANBAN_DIRS } from "../lib/scaffold.js";
 import {
   bundledKitUrl,
   deliverAdditions,
   kitGatesMissing,
   notWrittenLine,
+  printUpgradeSummary,
 } from "../lib/upgrade-library.js";
 import { UPGRADEABLE_FILES } from "../lib/method-files.js";
 import { symlinkOnPath } from "../lib/safe-write.js";
-import { bridgesWithoutSkillsOrder } from "../lib/bridge-check.js";
-import { TASK_SKILLS_SECTION } from "../lib/templates.js";
-import { hasClaudeBridge } from "../lib/claude-bridge.js";
-import { pointerWarnings } from "../lib/pointer-warnings.js";
-import { syncSkillPointers } from "../lib/skill-pointers.js";
+import {
+  upgradeSkillPointers,
+  warnSilentBridges,
+} from "../lib/upgrade-skills.js";
 import { askConfirm, canPrompt } from "../lib/terminal.js";
 import {
   migrateCursorRules,
@@ -68,25 +56,6 @@ const METHOD_DIR = join(dirname(fileURLToPath(import.meta.url)), "method");
 
 const _require = createRequire(import.meta.url);
 const { version: VERSION } = _require("../package.json");
-
-/**
- * The bundled task skills the project lacks and `upgrade` would add: name to
- * content. One behind a symbolic link will not be written, so is not counted.
- */
-function missingTaskSkills(lytosDir: string): Map<string, string> {
-  const missing = new Map<string, string>();
-  for (const relPath of UPGRADEABLE_FILES) {
-    const name = relPath.match(/^skills\/([^/]+)\/SKILL\.md$/)?.[1];
-    if (!name) continue;
-    const localPath = join(lytosDir, relPath);
-    const bundledPath = join(METHOD_DIR, relPath);
-    if (symlinkOnPath(localPath, lytosDir) || existsSync(localPath)) continue;
-    if (existsSync(bundledPath)) {
-      missing.set(name, readFileSync(bundledPath, "utf-8"));
-    }
-  }
-  return missing;
-}
 
 export const upgradeCommand = new Command("upgrade")
   .description("Update method files in .lytos/ from the bundled version")
@@ -262,33 +231,16 @@ export const upgradeCommand = new Command("upgrade")
         added++;
       }
 
-      // Last among the method files, so a pointer describes the skill as the
-      // loop above left it. A dry run added nothing: it is told what would be.
-      if (hasClaudeBridge(cwd)) {
-        const pointers = syncSkillPointers(cwd, {
-          dryRun: opts.dryRun,
-          pending: opts.dryRun ? missingTaskSkills(lytosDir) : undefined,
-        });
-        for (const path of pointers.added) {
-          console.error(`  ${green("+")} ${dim(path)} ${dim("(new)")}`);
-        }
-        for (const path of pointers.refreshed) {
-          console.error(
-            opts.dryRun
-              ? `  ${cyan("~")} ${dim(path)} ${dim("(differs)")}`
-              : `  ${green("✓")} ${dim(path)} ${dim("(updated)")}`
-          );
-        }
-        for (const message of pointerWarnings(cwd, pointers)) warn(message);
-        added += pointers.added.length;
-        if (opts.dryRun) skipped += pointers.refreshed.length;
-        else updated += pointers.refreshed.length;
-        skipped +=
-          pointers.keptForeign.length +
-          pointers.behindLink.length +
-          pointers.failed.length;
-        upToDate += pointers.upToDate.length;
-      }
+      // Last among the method files: a pointer describes a skill as left above.
+      const pointers = upgradeSkillPointers({
+        cwd,
+        methodDir: METHOD_DIR,
+        dryRun: Boolean(opts.dryRun),
+      });
+      added += pointers.added;
+      updated += pointers.updated;
+      skipped += pointers.skipped;
+      upToDate += pointers.upToDate;
 
       // Surface the legacy .cursorrules even when --migrate-cursor wasn't
       // passed. Otherwise `lyt upgrade` happily reports "Already up to date"
@@ -333,31 +285,11 @@ export const upgradeCommand = new Command("upgrade")
       }
 
       // After the migration, so a bridge it just wrote is read as it is now.
-      const silentBridges = bridgesWithoutSkillsOrder(cwd);
-      if (silentBridges.length > 0) {
-        warn(
-          `${silentBridges.join(", ")}: no order to read the task skills. upgrade never rewrites a bridge file, so add this section yourself:`
-        );
-        console.error(`\n${TASK_SKILLS_SECTION}`);
-      }
+      warnSilentBridges(cwd);
 
-      console.error("");
-
-      if (opts.dryRun) {
-        info(`${added} new · ${skipped} differ · ${upToDate} up to date`);
-        info("Run `lyt upgrade` to apply changes.");
-      } else {
-        const parts = [];
-        if (added > 0) parts.push(`${added} added`);
-        if (updated > 0) parts.push(`${updated} updated`);
-        if (skipped > 0) parts.push(`${skipped} skipped`);
-        if (upToDate > 0) parts.push(`${upToDate} already up to date`);
-
-        if (added === 0 && updated === 0 && skipped === 0) {
-          ok(`Already up to date. ${dim(`(${upToDate} files checked)`)}`);
-        } else {
-          ok(cyan(bold("Method files upgraded")) + " — " + parts.join(" · "));
-        }
-      }
+      printUpgradeSummary(
+        { added, updated, skipped, upToDate },
+        Boolean(opts.dryRun)
+      );
     }
   );

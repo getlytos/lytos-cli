@@ -22,7 +22,7 @@ import {
 } from "./method-files.js";
 import { missingBundledGates } from "./quality.js";
 import { symlinkOnPath } from "./safe-write.js";
-import { yellow } from "./output.js";
+import { bold, cyan, dim, info, ok, yellow } from "./output.js";
 
 export interface LibraryResult {
   /** Files that were missing and were added (or would be, on a dry run). */
@@ -128,4 +128,36 @@ export function kitGatesMissing(lytosDir: string, methodDir: string): string[] {
 /** The line for a file `upgrade` refused to write because a link is on its path. */
 export function notWrittenLine(relPath: string, link: string): string {
   return `  ${yellow("!")} ${relPath} not written: ${link} is a symbolic link, and upgrade does not write through one`;
+}
+
+export interface UpgradeCounts {
+  added: number;
+  updated: number;
+  skipped: number;
+  upToDate: number;
+}
+
+/** The last lines of a run: what changed, or what would on a dry run. */
+export function printUpgradeSummary(
+  counts: UpgradeCounts,
+  dryRun: boolean
+): void {
+  const { added, updated, skipped, upToDate } = counts;
+  console.error("");
+
+  if (dryRun) {
+    info(`${added} new · ${skipped} differ · ${upToDate} up to date`);
+    info("Run `lyt upgrade` to apply changes.");
+    return;
+  }
+  if (added === 0 && updated === 0 && skipped === 0) {
+    ok(`Already up to date. ${dim(`(${upToDate} files checked)`)}`);
+    return;
+  }
+  const parts = [];
+  if (added > 0) parts.push(`${added} added`);
+  if (updated > 0) parts.push(`${updated} updated`);
+  if (skipped > 0) parts.push(`${skipped} skipped`);
+  if (upToDate > 0) parts.push(`${upToDate} already up to date`);
+  ok(cyan(bold("Method files upgraded")) + " — " + parts.join(" · "));
 }

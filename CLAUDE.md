@@ -19,6 +19,7 @@ Read in order:
 4. .lytos/rules/cli-rules.md — CLI-specific rules
 
 ## Task skills
+<!-- lytos:task-skills -->
 
 Task skills live in `.lytos/skills/<name>/SKILL.md`. Do not assume your tool loads that folder on its own: read them yourself, on a small task too.
 
