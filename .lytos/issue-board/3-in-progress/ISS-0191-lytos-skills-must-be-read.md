@@ -264,8 +264,31 @@ reaches them through `session-start.md` when they accept the new version (`y` or
 add (`src/lib/bridge-check.ts`, `tests/commands/bridge-check.test.ts`). Adding it
 stays a manual step.
 
-After that change, the suite is at 69 files and 1461 tests, and the CI gates run
-locally are green: `format:check`, `lint`, `typecheck`, `secrets:scan`, build and
-tests.
+## Independent review — part A (2026-11-27)
 
-Remaining: the reviewer item of part A, then parts B, C and D.
+Reviewer: a sub-agent with a fresh context, read-only, on Claude Opus; the code
+was written on Claude Sonnet. A different model from the same vendor, started by
+the implementing session. This is not an `lyt review` verdict.
+
+| Pass | Code read | Result |
+|---|---|---|
+| 1 | `fdd00a6` | No high finding. 1 medium: `upgrade` crashed on a bad file in a skill folder. 4 low: the ignore advice did not work as printed, a byte order mark hid the description, a `CLAUDE.md` that only imports the bridge got no pointer, and two texts disagreed (the reference-loop brief; one cosmetic point) |
+| 2 | `984c4b8` | The pass 1 findings it re-ran are closed. 1 new medium: the new ignore lines, not anchored, would have exposed the personal files of nested `.claude/` folders in a monorepo |
+
+Reproducing pass 1 also showed one more crash: a directory named `CLAUDE.md`.
+All fixed, except the cosmetic point: the section `upgrade` prints has no line
+about the `lytos-<name>` pointers.
+
+The fix for pass 2 anchors every line. It came **after the reviewer's last read**:
+its tests failed before it and pass after, and the reviewer had tried the anchored
+form when reporting. The final diff has had no further read.
+
+**Ruling on the `verify: reviewer` item: PASS** (pass 1, on `fdd00a6`: no text
+left says a tool discovers `.lytos/skills/` on its own; the claim about Claude
+Code is documented). The box stays unticked: the implementer does not tick a
+reviewer item.
+
+The suite is at 69 files and 1476 tests, and the CI gates run locally are green:
+`format:check`, `lint`, `typecheck`, `secrets:scan`, build and tests.
+
+Remaining: accepting the reviewer item of part A, then parts B, C and D.

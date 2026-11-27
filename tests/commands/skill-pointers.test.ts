@@ -336,25 +336,54 @@ describe("a CLAUDE.md that imports the bridge is a Claude bridge (found in revie
 });
 
 describe("the advice for ignored pointers works as printed (found in review)", () => {
+  /** The ignore lines the CLI printed, as a person would copy them. */
+  const printedLines = (stderr: string): string[] =>
+    stderr.split("\n").map((l) => l.trim()).filter((l) => /^!?\/?\.claude\//.test(l));
+
+  const isIgnored = (cwd: string, path: string): boolean =>
+    spawnSync("git", ["check-ignore", "-q", "--", path], { cwd }).status === 0;
+
+  /** Personal files, at the project root and in a nested package. */
+  const PERSONAL = [
+    ".claude/settings.local.json",
+    ".claude/skills/mine/SKILL.md",
+    "pkg/.claude/settings.local.json",
+    "pkg/.claude/skills/theirs/SKILL.md",
+  ];
+
   it.each([[".claude/"], [".claude"], ["**/.claude/"], [".claude/*"], [".claude/**"]])(
-    "un-ignores the pointers, and nothing else, under the rule %s",
+    "un-ignores the pointers, and nothing that was ignored besides, under the rule %s",
     (rule) => {
       const cwd = emptyDir();
       execFileSync("git", ["init", "-q"], { cwd });
       writeFileSync(join(cwd, ".gitignore"), `${rule}\n`);
-      const printed = run("init --yes --tool claude", cwd).stderr;
-      const lines = printed.split("\n").map((l) => l.trim()).filter((l) => /^!?\.claude\//.test(l));
+      const lines = printedLines(run("init --yes --tool claude", cwd).stderr);
+      expect(lines.length).toBeGreaterThan(0);
+      const before = PERSONAL.filter((path) => isIgnored(cwd, path));
 
       writeFileSync(join(cwd, ".gitignore"), `${rule}\n${lines.join("\n")}\n`);
-      const ignored = (path: string): boolean =>
-        spawnSync("git", ["check-ignore", "-q", "--", path], { cwd }).status === 0;
 
-      expect(ignored(".claude/skills/lytos-testing/SKILL.md")).toBe(false);
-      expect(ignored(".claude/settings.local.json")).toBe(true);
-      expect(ignored(".claude/skills/mine/SKILL.md")).toBe(true);
+      expect(isIgnored(cwd, ".claude/skills/lytos-testing/SKILL.md")).toBe(false);
+      expect(PERSONAL.filter((path) => isIgnored(cwd, path))).toEqual(before);
       expect(run("upgrade", cwd).stderr).not.toContain("git ignores the pointers");
     }
   );
+
+  it("works for a project in a subfolder, from that folder's .gitignore", () => {
+    const repo = emptyDir();
+    execFileSync("git", ["init", "-q"], { cwd: repo });
+    writeFileSync(join(repo, ".gitignore"), ".claude/\n");
+    const app = join(repo, "app");
+    mkdirSync(app);
+    const lines = printedLines(run("init --yes --tool claude", app).stderr);
+
+    writeFileSync(join(app, ".gitignore"), `${lines.join("\n")}\n`);
+
+    expect(isIgnored(repo, "app/.claude/skills/lytos-testing/SKILL.md")).toBe(false);
+    expect(isIgnored(repo, "app/.claude/settings.local.json")).toBe(true);
+    expect(isIgnored(repo, ".claude/settings.local.json")).toBe(true);
+    expect(isIgnored(repo, "app/sub/.claude/settings.local.json")).toBe(true);
+  });
 });
 
 describe("descriptionEntry copies the description as written", () => {

@@ -8,18 +8,22 @@ import { execFileSync } from "child_process";
 import type { PointerResult } from "./skill-pointers.js";
 
 /**
- * Appended to a `.gitignore` that ignores all of `.claude/`, these let git see
- * the pointers and nothing else. Re-including the pointer folders alone does
- * nothing: git never looks inside an excluded directory. Each level has to be
- * re-included, then closed again. The last line answers a `.claude/**` rule.
+ * Appended to the `.gitignore` of the project's folder, for a project that
+ * ignores all of `.claude/`, these let git see the pointers. Re-including the
+ * pointer folders alone does nothing: git never looks inside an excluded
+ * directory. Each level has to be re-included, then closed again. The last line
+ * answers a `.claude/**` rule.
+ *
+ * Every line starts with a slash. Without it, `!.claude/` would re-include the
+ * `.claude/` of every nested folder, personal settings included.
  */
 export const UNIGNORE_LINES: readonly string[] = [
-  "!.claude/",
-  ".claude/*",
-  "!.claude/skills/",
-  ".claude/skills/*",
-  "!.claude/skills/lytos-*/",
-  "!.claude/skills/lytos-*/**",
+  "!/.claude/",
+  "/.claude/*",
+  "!/.claude/skills/",
+  "/.claude/skills/*",
+  "!/.claude/skills/lytos-*/",
+  "!/.claude/skills/lytos-*/**",
 ];
 
 /** Does git ignore this path? False outside a repository or without git. */
@@ -62,7 +66,7 @@ export function pointerWarnings(cwd: string, result: PointerResult): string[] {
   if (written.some((path) => ignoredByGit(cwd, path))) {
     warnings.push(
       [
-        "git ignores the pointers in .claude/skills/: a fresh clone, a worktree or a cloud session will not have them. If you ignore all of .claude/, add these lines at the end of .gitignore, then commit the pointers:",
+        "git ignores the pointers in .claude/skills/: a fresh clone, a worktree or a cloud session will not have them. If you ignore all of .claude/, add these lines at the end of the .gitignore in this folder, then commit the pointers:",
         ...UNIGNORE_LINES.map((line) => `    ${line}`),
       ].join("\n")
     );
