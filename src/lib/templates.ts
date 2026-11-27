@@ -572,7 +572,7 @@ _No issues._
  * The order to read the task skills (ISS-0191). No tool is assumed to load
  * `.lytos/skills/` on its own, so every bridge says to read them.
  */
-const TASK_SKILLS_SECTION = `## Task skills
+export const TASK_SKILLS_SECTION = `## Task skills
 
 Task skills live in \`.lytos/skills/<name>/SKILL.md\`. Do not assume your tool loads that folder on its own: read them yourself, on a small task too.
 

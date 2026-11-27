@@ -25,7 +25,8 @@
  * One thing is written outside `.lytos/`: for a project with the Claude Code
  * bridge, the pointer skills in `.claude/skills/lytos-*` (ISS-0191), added when
  * missing and rewritten when they drifted. A file `lyt` did not generate is
- * never rewritten, and the bridge files themselves are never touched.
+ * never rewritten, and the bridge files themselves are never touched: one with
+ * no order to read the task skills is named, with the section to add.
  */
 
 import { Command } from "commander";
@@ -52,6 +53,8 @@ import {
 } from "../lib/upgrade-library.js";
 import { UPGRADEABLE_FILES } from "../lib/method-files.js";
 import { symlinkOnPath } from "../lib/safe-write.js";
+import { bridgesWithoutSkillsOrder } from "../lib/bridge-check.js";
+import { TASK_SKILLS_SECTION } from "../lib/templates.js";
 import {
   hasClaudeBridge,
   pointerWarnings,
@@ -326,6 +329,15 @@ export const upgradeCommand = new Command("upgrade")
             info("No legacy .cursorrules to migrate.");
             break;
         }
+      }
+
+      // After the migration, so a bridge it just wrote is read as it is now.
+      const silentBridges = bridgesWithoutSkillsOrder(cwd);
+      if (silentBridges.length > 0) {
+        warn(
+          `${silentBridges.join(", ")}: no order to read the task skills. upgrade never rewrites a bridge file, so add this section yourself:`
+        );
+        console.error(`\n${TASK_SKILLS_SECTION}`);
       }
 
       console.error("");

@@ -257,11 +257,15 @@ Also fixed here: `session-start.md` named two skills by paths that no longer
 exist (`code-review.md`, `documentation.md`), so they could not be read. A test
 now checks every skill path it names. This overlaps the first half of ISS-0186.
 
-**Limit on existing projects.** `lyt upgrade` adds the pointers without asking.
-The floor reaches them only when they accept the new `session-start.md` (`y` or
-`--force`), and `upgrade` rewrites no bridge file: their `CLAUDE.md` or
-`AGENTS.md` does not gain the "Task skills" section. The solution above asks for
-both layers; for the bridge files this is not met.
+**Existing projects.** `lyt upgrade` adds the pointers without asking. The floor
+reaches them through `session-start.md` when they accept the new version (`y` or
+`--force`). `upgrade` rewrites no bridge file: it names each one that points at
+`.lytos/` and carries no order to read the task skills, and prints the section to
+add (`src/lib/bridge-check.ts`, `tests/commands/bridge-check.test.ts`). Adding it
+stays a manual step.
 
-Remaining: the reviewer item of part A, that limit, then parts B, C and D.
+After that change, the suite is at 69 files and 1461 tests, and the CI gates run
+locally are green: `format:check`, `lint`, `typecheck`, `secrets:scan`, build and
+tests.
 
+Remaining: the reviewer item of part A, then parts B, C and D.

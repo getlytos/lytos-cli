@@ -246,9 +246,7 @@ function writeSkillPointers(
   result: ScaffoldResult
 ): void {
   const pending = options.dryRun
-    ? new Map(
-        TASK_SKILLS.map((s) => [s, readBundled(`skills/${s}/SKILL.md`)])
-      )
+    ? new Map(TASK_SKILLS.map((s) => [s, readBundled(`skills/${s}/SKILL.md`)]))
     : undefined;
   const pointers = syncSkillPointers(options.cwd, {
     dryRun: options.dryRun,
