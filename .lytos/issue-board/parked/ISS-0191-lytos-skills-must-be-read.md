@@ -8,7 +8,7 @@ complexity: standard
 domain: [method, cli, ci]
 skill: ""
 skills_aux: []
-status: 3-in-progress
+status: parked
 branch: fix/ISS-0191-lytos-skills-must-be-read
 depends: []
 related: [ISS-0046, ISS-0135, ISS-0148, ISS-0186]
@@ -27,6 +27,8 @@ ai_reviewer:
 review: no-go
 review_at: 2026-11-28
 reviewer: fredericgalline
+park_reason: gate-failed
+parked_at: 2026-11-28
 ---
 # ISS-0191 — The skills in `.lytos/skills/` must be read
 
@@ -400,3 +402,19 @@ The reviewer item passes for active method and repository instructions: no unsup
 
 ### To fix before next review
 - [ ] Ignore markers inside YAML frontmatter when checking bridge instructions, and test a bridge that mentions `.lytos/` but has no reading order.
+
+## Parked — 2026-11-28
+
+Parked as `gate-failed` after a third NO_GO, as agreed with the owner when the
+third pass was authorized.
+
+The third finding was reproduced and **is not fixed**: a bridge with the marker
+only inside its YAML header gets no warning. The same file without that header
+gets one. No file is written or lost, and none of the six bridges `lyt` generates
+puts the marker in a header. A fix would skip the header before looking for the
+marker.
+
+The first and third audits each found a way to silence the bridge warning. The
+warning is in the Ready scope line; no Definition of done item names it.
+
+Returning this card to the sprint is the owner's call (`lyt unpark`).
