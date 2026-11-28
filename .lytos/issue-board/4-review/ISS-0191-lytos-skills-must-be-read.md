@@ -8,7 +8,7 @@ complexity: standard
 domain: [method, cli, ci]
 skill: ""
 skills_aux: []
-status: 3-in-progress
+status: 4-review
 branch: fix/ISS-0191-lytos-skills-must-be-read
 depends: []
 related: [ISS-0046, ISS-0135, ISS-0148, ISS-0186]
@@ -438,3 +438,17 @@ command wrote them.
 `lyt close` stay with the owner.
 
 The agent then ran `lyt unpark` and `lyt start`.
+
+## Last fix — 2026-11-28
+
+The marker is no longer searched in the YAML header (`src/lib/bridge-check.ts`).
+Four tests added: the header case with LF, CRLF and a byte order mark failed
+before the fix; a marker placed after a header passed before and after.
+
+Locally, `format:check`, `lint`, `typecheck`, `secrets:scan`, build and tests
+(72 files, 1507 tests) are green. The auditor's case, replayed with
+`upgrade --dry-run`, now gets the warning and the file is unchanged. A project
+with all the generated bridges, the Cursor one and its header included, gets
+none.
+
+Only the implementer has read this diff, as accepted above.
