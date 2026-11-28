@@ -10,6 +10,7 @@
  */
 
 import { join } from "path";
+import { bodyOf, splitFrontmatter } from "./frontmatter.js";
 import { readIfFile } from "./read-if-file.js";
 import { TASK_SKILLS_MARKER } from "./templates.js";
 
@@ -33,11 +34,14 @@ const FENCE = /^ {0,3}(`{3,}|~{3,})/;
  * Is the marker there as a line of its own? Whether a sentence orders the
  * reading, forbids it or only mentions the skills cannot be told from the text,
  * so no wording is guessed at. A marker that is shown rather than set does not
- * count: in a fenced block, closed or not, or indented as code.
+ * count: in a fenced block, closed or not, or indented as code. Nor does one in
+ * the YAML header, which is data about the file.
  */
 function hasMarker(content: string): boolean {
+  const text = content.replace(/^\uFEFF/, "");
+  const body = splitFrontmatter(text) ? bodyOf(text) : text;
   let fence: string | null = null;
-  for (const line of content.replace(/^\uFEFF/, "").split(/\r?\n/)) {
+  for (const line of body.split(/\r?\n/)) {
     const found = line.match(FENCE)?.[1];
     if (fence) {
       // Only the same character, at least as long, closes a block.

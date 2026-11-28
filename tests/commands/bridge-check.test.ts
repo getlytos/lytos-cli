@@ -159,6 +159,30 @@ describe("lyt upgrade and the bridge files", () => {
     }
   );
 
+  const HEADER = `---\nexample: |\n  ${MARKER}\n---\n`;
+
+  // Found by the third cross-model audit: a header is data, not the order.
+  it.each([
+    ["LF", HEADER + OLD_BRIDGE],
+    ["CRLF", (HEADER + OLD_BRIDGE).replace(/\n/g, "\r\n")],
+    ["a byte order mark", `﻿${HEADER}${OLD_BRIDGE}`],
+  ])(
+    "still warns when only the YAML header holds the marker (%s)",
+    (_label, content) => {
+      const cwd = project();
+      write(cwd, "AGENTS.md", content);
+
+      expect(warningLine(run("upgrade", cwd).stderr)).toContain("AGENTS.md");
+    }
+  );
+
+  it("still reads the marker that follows a YAML header", () => {
+    const cwd = project();
+    write(cwd, "AGENTS.md", `${HEADER}${MARKER}\n${OLD_BRIDGE}`);
+
+    expect(run("upgrade", cwd).stderr).not.toContain(WARNING);
+  });
+
   it("says that the marker line alone is enough for such a bridge", () => {
     const cwd = project();
     write(cwd, "AGENTS.md", OLD_BRIDGE);
