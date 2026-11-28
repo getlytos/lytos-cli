@@ -18,6 +18,16 @@ Read in order:
 3. .lytos/rules/default-rules.md — quality criteria
 4. .lytos/rules/cli-rules.md — CLI-specific rules
 
+## Task skills
+<!-- lytos:task-skills -->
+
+Task skills live in `.lytos/skills/<name>/SKILL.md`. Do not assume your tool loads that folder on its own: read them yourself, on a small task too.
+
+- Read the `SKILL.md` of every skill the issue names, in `skill` or `skills_aux`
+- List `.lytos/skills/`, read the frontmatter of each `SKILL.md`, then read in full every other skill whose `description` matches the task
+
+Claude Code also lists them as `lytos-<name>`, through the pointers in `.claude/skills/`. A pointer holds no instructions: read the file it names.
+
 ## To work on a task
 
 5. .lytos/issue-board/BOARD.md — current board state

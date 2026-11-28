@@ -38,7 +38,7 @@ These 5 pillars are the method. Everything else (agent documentation, tool adapt
 | `quality/rubrics/*.md` | The grids a review follows (`FORMAT.md` is the common format) — what a `reviewer` line of the kit points at | When you are the reviewer |
 | `quality/checklists/*.md` | The lists a person works through — what a `human` line of the kit points at | When you ask the accountable human for a call |
 | `skills/session-start.md` | Lytos bootstrap protocol — what to read at the start of any session | At each session |
-| `skills/<name>/SKILL.md` | Task skills in the [agentskills.io](https://agentskills.io) open standard format (code-review, testing, documentation, etc.) | Discovered natively by AI tools via progressive disclosure; the issue's optional `skill` field is a hint |
+| `skills/<name>/SKILL.md` | Task skills in the [agentskills.io](https://agentskills.io) open standard format (code-review, testing, documentation, etc.) | When their `description` matches the task, or the issue names them: the agent reads them itself (`skills/session-start.md`, "Task skills"). Claude Code also lists them through the pointers in `.claude/skills/` |
 | `skills/reference-loop/SKILL.md` | The reference wrapper of the loop: the contract any wrapper must honor (select with `npx lyt next`, prove with the gates, hand over a review packet, park instead of guessing, stop and call the human in five cases) and how to run it in Claude Code | When the owner asks you to work through the sprint without a turn between cards |
 | `design/exchanges/README.md` | The guide to the design exchanges: one small file per turn between the design tool and the code, under `design/exchanges/<epic>/`. Only in a project whose `config.yml` says `design: claude-design`; `npx lyt exchanges` lists the open entries | When you write or resolve a design exchange |
 | `issue-board/BOARD.md` | Kanban view — task progress status, including the review gate before done | When working on a task |
@@ -99,7 +99,7 @@ If the human says "write clean code", reformulate it as a verifiable trade-off.
 
 Issues have YAML frontmatter. The important fields:
 - `complexity: light | standard | heavy` — determines which model to use (see table in the manifest)
-- `skill` — **optional** hint: name a specific task skill to prefer for this issue. Most tools discover the right skill automatically via agentskills.io progressive disclosure; only set this for borderline tasks
+- `skill` — **optional**: names a task skill that must be read for this issue. The others are picked by their `description` (`skills/session-start.md`, "Task skills"); set this for borderline tasks
 - `depends` — issues that must be completed before this one
 - `status` — the canonical status (source of truth). The file should also be in the matching folder, but if there's a conflict, the frontmatter takes precedence
 

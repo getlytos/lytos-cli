@@ -86,7 +86,7 @@ Every bridge points at the same `.lytos/` directory, so switching tools does not
 | `lyt review [ISS-XXXX]` | Cross-model audit for issues in `4-review/` — prints a self-contained prompt or ingests a returned audit block (`--accept`). The prompt targets the branch declared by the issue's `branch:` field (and instructs the auditor to check it out); the export warns when `branch:` is empty or missing on origin. Run from a **fresh AI session**, ideally a different vendor than the implementer. Three verdicts: `GO`, `NO_GO`, and `GO_PENDING_HUMAN` — the last one for when every machine gate is green but `verify: human` items remain, which no model may tick. `--verdict` is refused when the review is less independent than the card's `risk` requires, and `--countersign` records the owner's countersignature (see [Reviewer independence](#reviewer-independence)) |
 | `lyt migrate-frontmatter` | Backfill schema v2 fields (`schema_version`, lifecycle dates) on existing issues. Dry-run by default |
 | `lyt absorb` | Merge the AI-wrapper session journal into an issue's audit fields (cost, model, tokens). Dry-run by default |
-| `lyt upgrade` | Pull the latest method files into `.lytos/`. What is yours is never written: `quality/kit.md` and `stack.md` (linked to your stack — it only names the bundled gates your kit lacks), the design register, the config, the manifest. New rubrics and checklists are added but a modified one is never overwritten, even with `--force`. The design exchanges guide is added to a `design: claude-design` project and, once written, is yours too. `--migrate-cursor` converts a legacy `.cursorrules` to `.cursor/rules/lytos.mdc`. |
+| `lyt upgrade` | Pull the latest method files into `.lytos/`. What is yours is never written: `quality/kit.md` and `stack.md` (linked to your stack — it only names the bundled gates your kit lacks), the design register, the config, the manifest. New rubrics and checklists are added but a modified one is never overwritten, even with `--force`. The design exchanges guide is added to a `design: claude-design` project and, once written, is yours too. With the Claude Code bridge, it also adds the missing skill pointers in `.claude/skills/` and rewrites the ones that drifted. It never rewrites a bridge file. It names each one that has no `<!-- lytos:task-skills -->` line, which the generated "Task skills" section carries, and prints that section. A bridge that already gives the order in its own words only needs the line, alone on its line. `--migrate-cursor` converts a legacy `.cursorrules` to `.cursor/rules/lytos.mdc`. |
 | `lyt update` | Update lytos-cli to the latest version |
 
 ### Loop primitives
@@ -150,6 +150,8 @@ project/
 ```
 
 `lyt init` also detects the project's stack (language, framework, test runner, package manager) and pre-fills the manifest. It generates the appropriate adapter file for the chosen AI tool — `CLAUDE.md`, `.cursor/rules/lytos.mdc`, `AGENTS.md`, `.github/copilot-instructions.md`, `GEMINI.md`, or `.windsurfrules`.
+
+Task skills live in `.lytos/skills/<name>/SKILL.md`. No tool is assumed to load that folder on its own, so every adapter file orders the agent to read the skills that apply. Claude Code loads project skills from `.claude/skills/`: with `--tool claude`, `lyt init` also writes one pointer per task skill, `.claude/skills/lytos-<name>/SKILL.md`, including the skills you add yourself (run `lyt upgrade` after adding one). A pointer holds the description and sends the agent to the source file, which stays the only place a skill is written. The `lytos-` prefix keeps Claude Code's own commands, such as `/code-review`, in place. Commit the pointers: if git ignores them, a fresh clone, a worktree or a cloud session will not have them, and the CLI warns you.
 
 A pre-commit hook is installed to enforce branch naming conventions (`type/ISS-XXXX-slug`). This prevents untracked work on `main` — regardless of which AI tool or model is used.
 
@@ -245,7 +247,7 @@ Defaults: `minimum` is `any`, `fresh-session` and `level-2`, and `below_minimum`
 
 | Tool | What `lyt init` generates |
 |------|--------------------------|
-| **Claude Code** | `CLAUDE.md` at project root |
+| **Claude Code** | `CLAUDE.md` at project root, plus `.claude/skills/lytos-*/` pointers |
 | **Cursor** | `.cursor/rules/lytos.mdc` (modern Cursor rule with YAML front-matter) |
 | **Codex (OpenAI)** | `AGENTS.md` at project root |
 | **GitHub Copilot** | `.github/copilot-instructions.md` |

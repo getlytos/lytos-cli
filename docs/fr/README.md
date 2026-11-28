@@ -80,7 +80,7 @@ Chaque bridge pointe vers le même dossier `.lytos/`, donc changer d'outil ne de
 | `lyt close` | Ferme en lot toutes les issues de 4-review/ → 5-done/ (demande confirmation ; `--yes` saute le prompt ; `--dry-run` previewe) |
 | `lyt review [ISS-XXXX]` | Audit cross-model pour les issues en `4-review/` — imprime un prompt autonome ou ingère un bloc audit retourné (`--accept`). À lancer depuis une **session IA fraîche**, idéalement un vendor différent de l'implémenteur. `--verdict` est refusé quand la relecture est moins indépendante que ne l'exige le `risk` de l'issue, et `--countersign` consigne la contre-signature du propriétaire (voir [Indépendance du relecteur](#indépendance-du-relecteur)) |
 | `lyt exchanges` | Lecture seule. Les échanges de design ouverts entre le design et le code, une ligne par entrée, dérivés de `.lytos/design/exchanges/` à chaque appel (`--json` pour les scripts). Pour les projets `design: claude-design` ; voir [Facultatif : un registre Claude Design](#facultatif--un-registre-claude-design) |
-| `lyt upgrade` | Récupère les derniers fichiers méthode dans `.lytos/`. Ce qui est à vous n'est jamais écrit : `quality/kit.md` et `stack.md` (liés à votre stack — il se contente de nommer les gates fournies que votre kit n'a pas), le registre de design, la config, le manifest. Les nouvelles grilles et listes sont ajoutées, mais une version modifiée n'est jamais écrasée, même avec `--force`. Le guide des échanges de design est ajouté à un projet `design: claude-design` et, une fois écrit, il est à vous aussi. `--migrate-cursor` convertit un legacy `.cursorrules` vers `.cursor/rules/lytos.mdc`. |
+| `lyt upgrade` | Récupère les derniers fichiers méthode dans `.lytos/`. Ce qui est à vous n'est jamais écrit : `quality/kit.md` et `stack.md` (liés à votre stack — il se contente de nommer les gates fournies que votre kit n'a pas), le registre de design, la config, le manifest. Les nouvelles grilles et listes sont ajoutées, mais une version modifiée n'est jamais écrasée, même avec `--force`. Le guide des échanges de design est ajouté à un projet `design: claude-design` et, une fois écrit, il est à vous aussi. Avec le bridge Claude Code, il ajoute aussi les renvois de skills manquants dans `.claude/skills/` et réécrit ceux qui ont dérivé. Il ne réécrit jamais un fichier de bridge. Il nomme chacun de ceux qui n'ont pas la ligne `<!-- lytos:task-skills -->`, que porte la section « Task skills » générée, et affiche cette section. Un bridge qui donne déjà la consigne avec ses propres mots n'a besoin que de cette ligne, seule sur sa ligne. `--migrate-cursor` convertit un legacy `.cursorrules` vers `.cursor/rules/lytos.mdc`. |
 | `lyt update` | Met à jour lytos-cli vers la dernière version |
 
 Le skill `reference-loop` (`.lytos/skills/reference-loop/SKILL.md`, installé comme les autres task skills) enchaîne les primitives de la boucle pour un agent : choisir avec `lyt next`, démarrer l'issue, construire, prouver avec `lyt gates`, remettre avec `lyt report`, mettre l'issue de côté (`lyt park`) plutôt que deviner, et s'arrêter pour appeler l'humain dans cinq cas. Il ne ferme jamais une issue, et le CLI lui-même ne lance aucune boucle et n'appelle aucune IA.
@@ -132,6 +132,8 @@ project/
 ```
 
 `lyt init` détecte aussi la stack du projet (langage, framework, runner de tests, package manager) et pré-remplit le manifest. Il génère le fichier d'adaptateur approprié pour l'outil IA choisi — `CLAUDE.md`, `.cursor/rules/lytos.mdc`, `AGENTS.md`, `.github/copilot-instructions.md`, `GEMINI.md`, ou `.windsurfrules`.
+
+Les skills de tâche sont dans `.lytos/skills/<nom>/SKILL.md`. On ne suppose d'aucun outil qu'il charge ce dossier de lui-même : chaque fichier d'adaptateur ordonne donc à l'agent de lire les skills qui s'appliquent. Claude Code charge les skills d'un projet depuis `.claude/skills/` : avec `--tool claude`, `lyt init` écrit aussi un renvoi par skill de tâche, `.claude/skills/lytos-<nom>/SKILL.md`, y compris pour les skills que vous ajoutez (lancez `lyt upgrade` après en avoir ajouté un). Un renvoi contient la description et envoie l'agent vers le fichier source, seul endroit où le skill est écrit. Le préfixe `lytos-` préserve les commandes de Claude Code, comme `/code-review`. Committez les renvois : si git les ignore, un clone neuf, un worktree ou une session cloud ne les aura pas, et la CLI vous en avertit.
 
 Un hook pre-commit est installé pour faire respecter les conventions de nommage de branches (`type/ISS-XXXX-slug`). Cela évite tout travail non tracé sur `main` — quel que soit l'outil IA ou le modèle utilisé.
 
@@ -227,7 +229,7 @@ Par défaut, `minimum` vaut `any`, `fresh-session` et `level-2`, et `below_minim
 
 | Outil | Ce que `lyt init` génère |
 |-------|--------------------------|
-| **Claude Code** | `CLAUDE.md` à la racine du projet |
+| **Claude Code** | `CLAUDE.md` à la racine du projet, plus les renvois `.claude/skills/lytos-*/` |
 | **Cursor** | `.cursor/rules/lytos.mdc` (règle Cursor moderne avec front-matter YAML) |
 | **Codex (OpenAI)** | `AGENTS.md` à la racine |
 | **GitHub Copilot** | `.github/copilot-instructions.md` |

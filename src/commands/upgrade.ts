@@ -21,6 +21,9 @@
  *   - The design exchanges guide (`design/exchanges/README.md`) is added, add-only
  *     like the library, to a project whose `config.yml` says `design:
  *     claude-design` and to no other (ISS-0169).
+ *
+ * Outside `.lytos/`, only the Claude Code skill pointers are written
+ * (`lib/upgrade-skills.ts`, ISS-0191). A bridge file is never touched.
  */
 
 import { Command } from "commander";
@@ -28,25 +31,21 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
 import { join, dirname, relative } from "path";
 import { fileURLToPath } from "url";
 import { createRequire } from "module";
-import {
-  ok,
-  info,
-  warn,
-  error,
-  cyan,
-  bold,
-  green,
-  dim,
-} from "../lib/output.js";
+import { info, warn, error, cyan, green, dim } from "../lib/output.js";
 import { KANBAN_DIRS } from "../lib/scaffold.js";
 import {
   bundledKitUrl,
   deliverAdditions,
   kitGatesMissing,
   notWrittenLine,
+  printUpgradeSummary,
 } from "../lib/upgrade-library.js";
 import { UPGRADEABLE_FILES } from "../lib/method-files.js";
 import { symlinkOnPath } from "../lib/safe-write.js";
+import {
+  upgradeSkillPointers,
+  warnSilentBridges,
+} from "../lib/upgrade-skills.js";
 import { askConfirm, canPrompt } from "../lib/terminal.js";
 import {
   migrateCursorRules,
@@ -232,6 +231,17 @@ export const upgradeCommand = new Command("upgrade")
         added++;
       }
 
+      // Last among the method files: a pointer describes a skill as left above.
+      const pointers = upgradeSkillPointers({
+        cwd,
+        methodDir: METHOD_DIR,
+        dryRun: Boolean(opts.dryRun),
+      });
+      added += pointers.added;
+      updated += pointers.updated;
+      skipped += pointers.skipped;
+      upToDate += pointers.upToDate;
+
       // Surface the legacy .cursorrules even when --migrate-cursor wasn't
       // passed. Otherwise `lyt upgrade` happily reports "Already up to date"
       // while the project is still on the deprecated Cursor convention.
@@ -274,23 +284,12 @@ export const upgradeCommand = new Command("upgrade")
         }
       }
 
-      console.error("");
+      // After the migration, so a bridge it just wrote is read as it is now.
+      warnSilentBridges(cwd);
 
-      if (opts.dryRun) {
-        info(`${added} new · ${skipped} differ · ${upToDate} up to date`);
-        info("Run `lyt upgrade` to apply changes.");
-      } else {
-        const parts = [];
-        if (added > 0) parts.push(`${added} added`);
-        if (updated > 0) parts.push(`${updated} updated`);
-        if (skipped > 0) parts.push(`${skipped} skipped`);
-        if (upToDate > 0) parts.push(`${upToDate} already up to date`);
-
-        if (added === 0 && updated === 0 && skipped === 0) {
-          ok(`Already up to date. ${dim(`(${upToDate} files checked)`)}`);
-        } else {
-          ok(cyan(bold("Method files upgraded")) + " — " + parts.join(" · "));
-        }
-      }
+      printUpgradeSummary(
+        { added, updated, skipped, upToDate },
+        Boolean(opts.dryRun)
+      );
     }
   );

@@ -29,6 +29,8 @@ import {
   QUALITY_LIBRARY_FILES,
 } from "./method-files.js";
 import { symlinkOnPath } from "./safe-write.js";
+import { pointerWarnings } from "./pointer-warnings.js";
+import { syncSkillPointers } from "./skill-pointers.js";
 import { DEFAULT_DESIGN, type DesignChoice } from "./design.js";
 
 const METHOD_DIR = join(dirname(fileURLToPath(import.meta.url)), "method");
@@ -52,8 +54,9 @@ export const KANBAN_DIRS = [
 ];
 
 // Task skills follow the agentskills.io format: a folder containing a
-// SKILL.md with `name` + `description` frontmatter. Loaded on demand by
-// the AI tool's native skill discovery.
+// SKILL.md with `name` + `description` frontmatter. No tool is assumed to
+// scan `.lytos/skills/`: the bridges and session-start order the agent to read
+// them, and the Claude Code bridge also gets pointer skills (ISS-0191).
 const TASK_SKILLS = [
   "code-review",
   "testing",
@@ -235,6 +238,29 @@ function writeDesignFile(
   }
 }
 
+/**
+ * The Claude Code half of the bridge: one pointer skill per task skill on disk
+ * (ISS-0191). A dry run has written nothing yet, so it is told what would ship.
+ */
+function writeSkillPointers(
+  options: Pick<ScaffoldOptions, "cwd" | "dryRun">,
+  result: ScaffoldResult
+): void {
+  const pending = options.dryRun
+    ? new Map(TASK_SKILLS.map((s) => [s, readBundled(`skills/${s}/SKILL.md`)]))
+    : undefined;
+  const pointers = syncSkillPointers(options.cwd, {
+    dryRun: options.dryRun,
+    pending,
+  });
+  result.filesCreated.push(
+    ...[...pointers.added, ...pointers.refreshed].map((p) =>
+      join(options.cwd, p)
+    )
+  );
+  result.warnings.push(...pointerWarnings(options.cwd, pointers));
+}
+
 export function scaffold(options: ScaffoldOptions): ScaffoldResult {
   const result: ScaffoldResult = {
     filesCreated: [],
@@ -363,6 +389,7 @@ export function scaffold(options: ScaffoldOptions): ScaffoldResult {
         options,
         result
       );
+      writeSkillPointers(options, result);
     } else if (tool === "cursor") {
       // Modern Cursor convention: per-rule .mdc file under .cursor/rules/
       // (the legacy `.cursorrules` flat file is still read but is on the way

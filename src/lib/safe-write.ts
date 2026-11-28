@@ -7,10 +7,13 @@
  * first link found between a target and the directory the CLI owns, so the
  * caller can skip the write and say why.
  *
+ * A hard link is the same trap without a link to see (ISS-0191): the file has
+ * another name somewhere, and writing it in place rewrites that one too.
+ *
  * Zero dependencies.
  */
 
-import { lstatSync } from "fs";
+import { lstatSync, statSync } from "fs";
 import { dirname, resolve } from "path";
 
 /**
@@ -31,3 +34,7 @@ export function symlinkOnPath(path: string, root: string): string | null {
   }
   return null;
 }
+
+/** Does this existing file have another name, which a write would change too? */
+export const hasOtherHardLinks = (path: string): boolean =>
+  statSync(path).nlink > 1;
