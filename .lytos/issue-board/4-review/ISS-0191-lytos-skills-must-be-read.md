@@ -8,7 +8,7 @@ complexity: standard
 domain: [method, cli, ci]
 skill: ""
 skills_aux: []
-status: 3-in-progress
+status: 4-review
 branch: fix/ISS-0191-lytos-skills-must-be-read
 depends: []
 related: [ISS-0046, ISS-0135, ISS-0148, ISS-0186]
@@ -346,3 +346,38 @@ The reviewer item passes for the active method and repository instructions: no u
 
 ### To fix before next review
 - [ ] Prevent pointer refresh from changing other files through hard links, and test the forbidden case.
+
+## Response to the second audit — 2026-11-28
+
+Two NO_GO in a row is a stop case of the reference loop. The loop stopped, and
+the owner authorized a third pass.
+
+| Point | Answer |
+|---|---|
+| Audit: refreshing a pointer that has another hard link also rewrote the other file | Fixed. A drifted pointer with more than one link is not rewritten; `lyt` says so and tells how to get a fresh one (delete it, run `lyt upgrade`). Tested on `upgrade`, `--force`, `--dry-run` and `init --force`, and the advice itself. Those tests failed before the fix |
+
+Found while answering, by reading `memory/cortex/bugs.md` ("a checker reads
+prose as data"), which should have been read before the first line of code:
+
+- **`upgrade` destroyed a file of the project** that only quoted the pointer
+  marker, for instance in a sentence. The ticked item "overwrites no skill it did
+  not generate" was **not true** until this fix. Neither review had seen it. A
+  file is now a pointer only when the marker is the first line of its body.
+- The first audit's fix was incomplete: a bridge showing the marker inside a code
+  block silenced the warning. A fenced block, closed or not, and an indented one
+  no longer count. `withoutCode` was not reused because it misses a block that is
+  never closed.
+
+All three were reproduced before and checked again after. The tests of what `lyt`
+may write are in `tests/commands/skill-pointers-ownership.test.ts`.
+
+**Outside this card, moved to ISS-0192:** the other writes of the CLI also go
+through a hard link (reproduced on `upgrade --force` for a method file, as on
+`main`); and the `reviewer` field above was filled by the auditor's own
+`lyt review --verdict` from the git user name. It does not mean that a person
+reviewed this card.
+
+Suite: 72 files, 1503 tests; `format:check`, `lint`, `typecheck`, `secrets:scan`
+and build green locally. The text of the pointers and of the bridge templates has
+not changed since the sessions replayed above.
+

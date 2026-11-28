@@ -23,7 +23,8 @@ risk: medium
 ## Context
 
 Parts B, C and D of ISS-0191, moved here when part A (the skills must be read)
-was submitted for review on its own, plus part E, found by that review. The text
+was submitted for review on its own, plus parts E, F and G, found by its reviews.
+The text
 of B, C and D and their Definition of done items are copied from that card. Line
 numbers refer to `origin/main` at 1.7.0.
 
@@ -76,6 +77,24 @@ treats any unchecked `auto` item as a defect. It includes neither
 `session-start.md` nor a word on deferral. On ISS-0191 the audit returned NO_GO
 on this point, and the owner had the items removed from that card.
 
+### F. Writes go through hard links
+
+`src/lib/safe-write.ts` refuses symbolic links. A file with another hard link was
+written in place, which rewrites its other names. ISS-0191 closed this for the
+skill pointers (`hasOtherHardLinks`). The other writes remain: reproduced with
+`lyt upgrade --force` on a method file, and the same write is on `main` at 1.7.0.
+**Not checked:** the other writes of the CLI (`init --force`,
+`--overwrite-bridges`, the Cursor migration).
+
+### G. An automated verdict is attributed to a person
+
+`lyt review --verdict` records the git `user.name` as `reviewer`, which the card
+template describes as human accountability. On 2026-11-27 an AI auditor ran
+`lyt review ISS-0191 --verdict no-go` itself, without `--ai-model`: the card names
+the user of the machine as reviewer, and the independence rule read the
+`ai_reviewer` of the earlier round. ADR-0010 lists both as limits ("Declared
+models can lie", "A stale reviewer").
+
 ## Proposed solution
 
 ### B. Fix the three holes
@@ -122,6 +141,17 @@ Write the rule in `default-rules.md`, which the audit prompt includes, make
 `session-start.md` and the prompt's own text say the same, and require a deferral
 to name its card and who decided it.
 
+### F. One guard for every write
+
+Each write over an existing file goes through one helper that refuses a symbolic
+link and a multiply linked file, or replaces the file without writing in place.
+
+### G. Say who recorded the verdict
+
+An automated verdict does not fill the human `reviewer` field, and names the model
+and session of its own round. The exit instructions of the audit prompt say which
+command an auditor may run.
+
 ### Solution study (the watch frame)
 
 | Option | Build cost | Run and maintenance cost at 10 / 100 / 500 projects | Robustness floor |
@@ -134,7 +164,7 @@ to name its card and who decided it.
 
 ## Ready
 
-- **Scope** — close the three CI holes, frame `/ship` and `/steward`, make `lint` and `doctor` see the task skills, and give the method and the audit one rule for a deferred item.
+- **Scope** — close the three CI holes, frame `/ship` and `/steward`, make `lint` and `doctor` see the task skills, give the method and the audit one rule for a deferred item, guard every write against hard links, and stop attributing an automated verdict to a person.
 - **Constraints** — never overwrite a file the project owns, never write through a link; the CLI calls no AI and no forge; zero new dependency; the method stays usable with other agents.
 - **Out of scope** — scaffolding a CI workflow; running `/ship` or `/steward` from the CLI or the loop; the `lytos-method` repository and the website.
 - **Solution** — the study above is written; option 2 is chosen. Parts B and D are small fixes with one obvious form.
@@ -161,6 +191,15 @@ to name its card and who decided it.
 
 - [ ] The rule for a deferred item is in `default-rules.md`, agrees with `session-start.md` and with the text of the audit prompt, and a test checks that the exported prompt carries it — verify: auto
 - [ ] The rule leaves no way to defer an item silently: a deferral names its card and who decided it — verify: reviewer
+
+### F. Hard links
+
+- [ ] Every write of the CLI over an existing file leaves the file's other hard links unchanged, with a test per command, forbidden case included — verify: auto
+
+### G. Who reviewed
+
+- [ ] A verdict recorded by an automated reviewer fills no human `reviewer` field and carries the model and session of its own round (tests) — verify: auto
+- [ ] The audit prompt says what an auditor may write and run, and agrees with the reference loop — verify: reviewer
 
 ## Notes
 
