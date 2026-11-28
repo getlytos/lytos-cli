@@ -8,7 +8,7 @@ complexity: standard
 domain: [method, cli, ci]
 skill: ""
 skills_aux: []
-status: parked
+status: 3-in-progress
 branch: fix/ISS-0191-lytos-skills-must-be-read
 depends: []
 related: [ISS-0046, ISS-0135, ISS-0148, ISS-0186]
@@ -27,8 +27,6 @@ ai_reviewer:
 review: no-go
 review_at: 2026-11-28
 reviewer: fredericgalline
-park_reason: gate-failed
-parked_at: 2026-11-28
 ---
 # ISS-0191 — The skills in `.lytos/skills/` must be read
 
@@ -418,3 +416,25 @@ The first and third audits each found a way to silence the bridge warning. The
 warning is in the Ready scope line; no Definition of done item names it.
 
 Returning this card to the sprint is the owner's call (`lyt unpark`).
+
+## Owner decision — 2026-11-28
+
+The implementing agent offered three ways on, in French, in the working session.
+Option A, translated:
+
+> **A, which I recommend: fix, then merge without a fourth audit.** I would skip
+> the header, with a test. You would accept in writing that this last fix is not
+> re-read by Codex. The card would therefore never have received a GO.
+
+It added that on a reply of A it would quote the dated answer here as agreement,
+run `lyt unpark`, and leave the merge to the owner. The owner replied « À »
+(option A) on 2026-11-28.
+
+**Accepted deviation:** the last fix has no cross-model audit, and the last
+recorded verdict stays NO_GO. The `review` fields above are left as the auditor's
+command wrote them.
+
+**Not covered:** the `verify: reviewer` box stays unticked, and merging and
+`lyt close` stay with the owner.
+
+The agent then ran `lyt unpark` and `lyt start`.
