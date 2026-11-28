@@ -8,7 +8,7 @@ complexity: standard
 domain: [method, cli, ci]
 skill: ""
 skills_aux: []
-status: 4-review
+status: 3-in-progress
 branch: fix/ISS-0191-lytos-skills-must-be-read
 depends: []
 related: [ISS-0046, ISS-0135, ISS-0148, ISS-0186]
@@ -23,9 +23,9 @@ ai_implementer:
 skills_used: [testing]
 ai_reviewer:
   model: gpt-6.1-terra
-  session: 01a21dd8-ff26-74f1-bdeb-f314576a24a0
+  session: 01a220d1-4523-7521-9e76-76923c1a8157
 review: no-go
-review_at: 2026-11-27
+review_at: 2026-11-28
 reviewer: fredericgalline
 ---
 # ISS-0191 — The skills in `.lytos/skills/` must be read
@@ -381,3 +381,22 @@ Suite: 72 files, 1503 tests; `format:check`, `lint`, `typecheck`, `secrets:scan`
 and build green locally. The text of the pointers and of the bridge templates has
 not changed since the sessions replayed above.
 
+
+## Audit — 2026-11-28
+
+**Verdict:** NO_GO
+
+### Checks
+- [x] Tests pass: 72 files, 1,503 tests; build, lint, typecheck, format check and secret scan pass.
+- [ ] Machine-verifiable DoD items (`verify: auto`) complete.
+- [ ] Rules respected (file/fn size, params, coverage as defined in default-rules.md).
+- [ ] Documentation aligned.
+
+### Notes
+[WARNING] src/lib/bridge-check.ts:38
+The marker scanner counts a marker inside YAML frontmatter as an active instruction. I reproduced this with `AGENTS.md` containing a YAML block scalar `example: |` whose indented value is `<!-- lytos:task-skills -->`, followed only by `Read .lytos/manifest.md.`. `lyt upgrade --dry-run` reports no missing order even though the bridge contains none. This also affects bridge files with YAML frontmatter, such as Cursor rules. The claimed warning for existing bridges therefore misses a real case. Exclude frontmatter from the marker search and add a regression test.
+
+The reviewer item passes for active method and repository instructions: no unsupported claim remains that a tool discovers `.lytos/skills/` directly. The recorded fresh Claude Code session was not independently replayed. The branch matches the existing local `origin/fix/ISS-0191-lytos-skills-must-be-read` ref; its current state on the remote was not independently fetched. Coverage was not independently measured.
+
+### To fix before next review
+- [ ] Ignore markers inside YAML frontmatter when checking bridge instructions, and test a bridge that mentions `.lytos/` but has no reading order.
