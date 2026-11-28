@@ -8,12 +8,12 @@ complexity: standard
 domain: [method, cli, ci]
 skill: ""
 skills_aux: []
-status: 4-review
+status: 3-in-progress
 branch: fix/ISS-0191-lytos-skills-must-be-read
 depends: []
 related: [ISS-0046, ISS-0135, ISS-0148, ISS-0186]
 created: 2026-11-27
-updated: 2026-11-27
+updated: 2026-11-28
 schema_version: 2
 risk: medium
 assignee: fredericgalline
@@ -23,7 +23,10 @@ ai_implementer:
 skills_used: [testing]
 ai_reviewer:
   model: gpt-6.1-terra
-  session: 01a21d92-0774-7ee1-a40a-ffa90bf091f6
+  session: 01a21dd8-ff26-74f1-bdeb-f314576a24a0
+review: no-go
+review_at: 2026-11-27
+reviewer: fredericgalline
 ---
 # ISS-0191 — The skills in `.lytos/skills/` must be read
 
@@ -325,3 +328,21 @@ Fresh sessions replayed on the final build (same settings as above): invoking
 `.lytos/skills/lytos-billing-rules/SKILL.md`, which does not exist, then read the
 right file with a shell command; Sonnet called the pointer, then read the source.
 One run each.
+## Audit — 2026-11-27
+
+**Verdict:** NO_GO
+
+### Checks
+- [x] Tests pass: 71 files, 1,488 tests; build, lint, typecheck, format check and secret scan pass.
+- [ ] Machine-verifiable DoD items (`verify: auto`) complete.
+- [ ] Rules respected (file/fn size, params, coverage as defined in default-rules.md).
+- [x] Documentation aligned.
+
+### Notes
+[CRITICAL] src/lib/skill-pointers.ts:205
+The link guard detects symbolic links only. If a generated pointer has another hard link to a project-owned file, refreshing the pointer with `writeFileSync` truncates and overwrites that other file too. I reproduced this with a marked pointer hard-linked to a separate file: `lyt upgrade` exited successfully and destroyed the other file's contents. This violates the issue's no-write-through-links and ownership constraints. Reject multiply linked pointer files before writing, with a regression test.
+
+The reviewer item passes for the active method and repository instructions: no unsupported claim remains that a tool discovers `.lytos/skills/` directly. The recorded fresh Claude Code session was not independently replayed. The offline dependency audit reported zero vulnerabilities using cached data; its freshness could not be verified.
+
+### To fix before next review
+- [ ] Prevent pointer refresh from changing other files through hard links, and test the forbidden case.
