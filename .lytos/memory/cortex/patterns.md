@@ -75,3 +75,12 @@ table, the rules file — not only in the fiche that decided it.
 `method/rules/default-rules.md` (the `effort` threshold).
 **Why it works**: A rule a reader cannot apply the way the tool does is the drift that produces
 the next audit finding.
+
+### Refresh the toolchain narrowly, and compare what ships
+
+**What**: Update only the vulnerable packages and the parents they require, with `--before` set a
+few days back, then compare `dist/` byte for byte with what the previous tools built.
+**Where**: `package-lock.json` (ISS-0143).
+**Why it works**: A blanket `npm audit fix` had moved 137 packages, the formatter included. In zsh,
+options held in one string reach npm as a single argument and are ignored: pass an array, and look
+for `Unknown cli config` in the log.

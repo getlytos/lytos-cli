@@ -21,7 +21,7 @@ Lytos is built with Lytos: the work is tracked as cards under `.lytos/issue-boar
 
 1. Branch from an up-to-date `main`: `<type>/ISS-XXXX-<slug>` (`feat`, `fix`, `docs`, `chore`).
 2. Commit with a conventional title that carries the card, and the trailer: `feat(ISS-0123): what changed` then `Refs: ISS-0123`.
-3. Run what CI runs: `npm ci`, `npm run format:check`, `npm run lint`, `npm run typecheck`, `npm run secrets:scan`, `npm run build`, `npm test`. Node 22 or newer.
+3. Run what CI runs: `npm ci`, `npm run format:check`, `npm run lint`, `npm run typecheck`, `npm run secrets:scan`, `npm run build`, `npm test`. The build tool needs Node 22.18 or later on the 22 line, 24.11 or later on the 24 line, or Node 26 and later.
 4. Tests come first: a bug fix starts with a failing test; a behavior change says so in the pull request.
 5. Open the pull request with the template. Keep it to one card.
 
