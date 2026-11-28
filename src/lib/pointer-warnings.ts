@@ -53,6 +53,10 @@ export function pointerWarnings(cwd: string, result: PointerResult): string[] {
       ({ path, link }) =>
         `${path} not written: ${link} is a symbolic link, and lyt does not write through one.`
     ),
+    ...result.hardLinked.map(
+      (path) =>
+        `${path} not rewritten: it has another hard link, and writing it would change that other file too. Delete this pointer and run \`lyt upgrade\` to get a fresh one.`
+    ),
     ...result.failed.map(
       ({ path, reason }) => `${path} not written (${reason}).`
     ),

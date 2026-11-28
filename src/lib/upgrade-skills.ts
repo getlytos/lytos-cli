@@ -89,6 +89,7 @@ export function upgradeSkillPointers(
   const refused =
     pointers.keptForeign.length +
     pointers.behindLink.length +
+    pointers.hardLinked.length +
     pointers.failed.length;
   return {
     added: pointers.added.length,

@@ -29,7 +29,7 @@ import {
 } from "fs";
 import { dirname, join, relative } from "path";
 import { splitFrontmatter } from "./frontmatter.js";
-import { symlinkOnPath } from "./safe-write.js";
+import { hasOtherHardLinks, symlinkOnPath } from "./safe-write.js";
 
 export const POINTER_PREFIX = "lytos-";
 
@@ -61,6 +61,8 @@ export interface PointerResult {
   keptForeign: string[];
   /** Pointers not written because a symbolic link is on their path. */
   behindLink: Array<{ path: string; link: string }>;
+  /** Drifted pointers not rewritten: the file has another hard link. */
+  hardLinked: string[];
   /** Pointers the file system refused: a directory in the way, no permission. */
   failed: Array<{ path: string; reason: string }>;
   /** Skills that got no pointer, and why. */
@@ -164,9 +166,15 @@ const sourcePath = (name: string): string => `.lytos/skills/${name}/SKILL.md`;
 const marker = (name: string): string =>
   `<!-- lytos:skill-pointer source=${sourcePath(name)} -->`;
 
-/** Did `lyt` generate this file as the pointer to that skill? */
-export const isPointerOf = (content: string, name: string): boolean =>
-  content.includes(marker(name));
+/**
+ * Did `lyt` generate this file as the pointer to that skill? Only the place it
+ * writes the marker counts: the first line of the body. A file that quotes the
+ * marker anywhere else is the project's own.
+ */
+export function isPointerOf(content: string, name: string): boolean {
+  const body = splitFrontmatter(normalize(content))?.rest.split("\n").slice(1);
+  return body?.find((line) => line !== "") === marker(name);
+}
 
 export const pointerPath = (name: string): string =>
   `.claude/skills/${POINTER_PREFIX}${name}/SKILL.md`;
@@ -222,6 +230,10 @@ function syncPointer(
     result.keptForeign.push(relPath);
     return;
   }
+  if (current !== null && hasOtherHardLinks(path)) {
+    result.hardLinked.push(relPath);
+    return;
+  }
   if (!dryRun) {
     mkdirSync(dirname(path), { recursive: true });
     writeFileSync(path, expected, "utf-8");
@@ -248,6 +260,7 @@ export function syncSkillPointers(
     upToDate: [],
     keptForeign: [],
     behindLink: [],
+    hardLinked: [],
     failed: [],
     invalid,
   };

@@ -26,13 +26,30 @@ const BRIDGE_GROUPS: ReadonlyArray<readonly string[]> = [
   [".windsurfrules"],
 ];
 
+/** A line that opens or closes a fenced code block, with its fence. */
+const FENCE = /^ {0,3}(`{3,}|~{3,})/;
+
 /**
- * The marker, alone on its line. Whether a sentence orders the reading, forbids
- * it or only mentions the skills cannot be told from the text, so no wording is
- * guessed at: an unmarked bridge is reported.
+ * Is the marker there as a line of its own? Whether a sentence orders the
+ * reading, forbids it or only mentions the skills cannot be told from the text,
+ * so no wording is guessed at. A marker that is shown rather than set does not
+ * count: in a fenced block, closed or not, or indented as code.
  */
-const hasMarker = (content: string): boolean =>
-  content.split("\n").some((line) => line.trim() === TASK_SKILLS_MARKER);
+function hasMarker(content: string): boolean {
+  let fence: string | null = null;
+  for (const line of content.replace(/^\uFEFF/, "").split(/\r?\n/)) {
+    const found = line.match(FENCE)?.[1];
+    if (fence) {
+      // Only the same character, at least as long, closes a block.
+      if (found?.startsWith(fence)) fence = null;
+    } else if (found) {
+      fence = found;
+    } else if (line.replace(/^ {0,3}/, "").trimEnd() === TASK_SKILLS_MARKER) {
+      return true;
+    }
+  }
+  return false;
+}
 
 /**
  * The bridge files that point at `.lytos/` and whose tool is never told to read

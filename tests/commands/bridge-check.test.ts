@@ -124,6 +124,17 @@ describe("lyt upgrade and the bridge files", () => {
     ["a path it forbids", "Do not read `.lytos/skills/<name>/SKILL.md`."],
     ["a path it only mentions", "New skills go in .lytos/skills/*/SKILL.md."],
     ["the marker quoted in a sentence", `Add the \`${MARKER}\` line one day.`],
+    [
+      "the marker shown in a code block",
+      `To silence it, add:\n\n\`\`\`\n${MARKER}\n\`\`\``,
+    ],
+    ["the marker shown in a tilde block", `Add:\n\n~~~md\n${MARKER}\n~~~`],
+    ["the marker in an indented code block", `Add:\n\n    ${MARKER}`],
+    ["the marker in a block never closed", `Add:\n\n\`\`\`\n${MARKER}`],
+    [
+      "the marker in a longer fence around a shorter one",
+      `\`\`\`\`\n\`\`\`\n${MARKER}\n\`\`\`\n\`\`\`\``,
+    ],
   ])("still warns about %s: a mention is not the order", (_label, sentence) => {
     const cwd = project();
     write(cwd, "AGENTS.md", `${OLD_BRIDGE}\n${sentence}\n`);
